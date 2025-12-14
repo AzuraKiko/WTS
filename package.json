@@ -1,0 +1,52 @@
+{
+  "name": "playwright",
+  "version": "1.0.0",
+  "type": "es2020",
+  "description": "✅ npx playwright install\r ✅ npm i -D @playwright/test allure-playwright\r ✅ npm i -g allure-commandline\r     npx playwright test --reporter=html\r     npx playwright show-report\r ✅ npx playwright test --reporter=allure-playwright\r ✅ allure serve allure-results",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test:dev": "cross-env NODE_ENV=dev npx playwright test",
+    "test:uat": "cross-env NODE_ENV=uat npx playwright test",
+    "test:prod": "cross-env NODE_ENV=prod npx playwright test",
+    "test:dev:chrome": "cross-env NODE_ENV=dev npx playwright test --config=playwright.config.ts --project=Chrome",
+    "test:uat:chrome": "cross-env NODE_ENV=uat npx playwright test --config=playwright.config.ts --project=Chrome",
+    "test:prod:chrome": "cross-env NODE_ENV=prod npx playwright test --config=playwright.config.ts --project=Chrome"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "automation",
+    "pom"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@faker-js/faker": "^9.6.0",
+    "@playwright/test": "^1.51.1",
+    "@types/crypto-js": "^4.2.2",
+    "@types/qs": "^6.14.0",
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.8.4",
+    "crypto-js": "^4.2.0",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.5.0",
+    "qs": "^6.14.0",
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/dotenv": "^8.2.3",
+    "@types/node": "^24.0.7",
+    "allure-commandline": "^2.33.0",
+    "allure-playwright": "^3.2.1",
+    "circular-dependency-plugin": "^5.2.2",
+    "cross-env": "^7.0.3",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.8.3"
+  }
+}
