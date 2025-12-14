@@ -1,5 +1,4 @@
 import { Page, Locator } from '@playwright/test';
-import { FormUtils } from '../../helpers/uiUtils';
 
 class SelectSubacc {
     page: Page;
@@ -14,9 +13,6 @@ class SelectSubacc {
         this.page = page;
         this.dropdownSubacc = page.locator('[class*="user-select__control"]');
         this.listSubacc = page.locator('.user-select__menu-list');
-        // this.futureSubacc = page.locator('#react-select-2-option-0');
-        // this.marginSubacc = page.locator('#react-select-2-option-1');
-        // this.normalSubacc = page.locator('#react-select-2-option-2');
         this.normalSubacc = this.listSubacc.locator('.user-select__option').filter({ hasText: 'Thường' });
         this.marginSubacc = this.listSubacc.locator('.user-select__option').filter({ hasText: 'Margin' });
         this.futureSubacc = this.listSubacc.locator('.user-select__option').filter({ hasText: 'Phái sinh' });
