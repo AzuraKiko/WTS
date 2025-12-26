@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
 import ApiHelper from '../../helpers/ApiHelper';
+import { TEST_CONFIG } from '../utils/testConfig';
 
 let apiHelper: ApiHelper;
 
 // Configuration constants
 const CONFIG = {
-  BASE_URL: 'https://uat-gateway.pinetree.com.vn',
+  BASE_URL: TEST_CONFIG.BASE_URL || 'https://gw.pinetree.vn',
   MAX_RESPONSE_TIME: 5000,
   JSON_CONTENT_TYPE: 'application/json'
 };

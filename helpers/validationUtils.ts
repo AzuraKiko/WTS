@@ -2,6 +2,8 @@
  * Common validation utilities for form data, numbers, and formats
  */
 
+import { text } from "stream/consumers";
+
 // Interface definitions
 export interface ValidationResult {
     isValid: boolean;
@@ -197,6 +199,17 @@ export class NumberValidator {
      */
     static parseNumberWithCommas(value: string): number {
         return parseFloat(value.replace(/,/g, ''));
+    }
+
+    /**
+     * Parse number from string with no comma format
+     */
+    static parseNumber(value: string): number {
+        const normalized = value.trim()
+            .replace(/[()%]/g, '') // Remove parentheses and percentage sign
+            .replace(/,/g, '') // Remove commas
+            .replace(/\s+/g, ''); // Remove spaces
+        return Number.parseFloat(normalized); // Parse number
     }
 
     /**

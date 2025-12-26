@@ -74,6 +74,7 @@ export const TEST_CONFIG = {
     TEST_USER: process.env[`${ENV}_TEST_USER`] as string,
     TEST_PASS: process.env[`${ENV}_TEST_PASS`] as string,
     TEST_PASS_ENCRYPT: process.env[`${ENV}_TEST_PASS_ENCRYPT`] as string,
+    BASE_URL: process.env[`${ENV}_BASE_URL`] as string,
     ENV,
 } as const;
 

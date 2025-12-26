@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { MarketWatchPage } from '../../page/ui/PriceBoard';
+import { TEST_CONFIG } from '../utils/testConfig';
 
 
 test.describe('Market Watch Automation Suite', () => {
     let marketWatchPage: MarketWatchPage;
-
+    const MARKET_WATCH_URL =
+        TEST_CONFIG.WEB_LOGIN_URL ??
+        'https://trade.pinetree.vn/#/home/bang-gia/vn30';
 
     const parseNumber = (text: string): number => {
         // Handles: "1,791.52", " 442.46", "-18.38", "0.47%", "(9)"...
