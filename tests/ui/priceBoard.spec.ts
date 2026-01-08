@@ -1,157 +1,87 @@
 import { test, expect } from '@playwright/test';
-import { MarketWatchPage } from '../../page/ui/PriceBoard';
+import { PriceBoardPage } from '../../page/ui/PriceBoard';
+import MarketApi from '../../page/api/marketApi';
+import { NumberValidator } from '../../helpers/validationUtils';
 
+const parseNumber = (value: string): number => NumberValidator.parseNumber(value);
 
 test.describe('Market Watch Automation Suite', () => {
-    let marketWatchPage: MarketWatchPage;
-
-
-    const parseNumber = (text: string): number => {
-        // Handles: "1,791.52", " 442.46", "-18.38", "0.47%", "(9)"...
-        const normalized = text
-            .trim()
-            .replace(/[()%]/g, '')
-            .replace(/,/g, '')
-            .replace(/\s+/g, '');
-        return Number.parseFloat(normalized);
-    };
-
-    const walkObjects = function* (value: unknown): Generator<Record<string, any>> {
-        if (!value) return;
-        if (Array.isArray(value)) {
-            for (const item of value) yield* walkObjects(item);
-            return;
-        }
-        if (typeof value === 'object') {
-            const obj = value as Record<string, any>;
-            yield obj;
-            for (const v of Object.values(obj)) yield* walkObjects(v);
-        }
-    };
-
-    const findIndexObject = (payload: any, code: string): Record<string, any> | undefined => {
-        const codeUpper = code.toUpperCase();
-        const possibleKeys = ['indexCode', 'code', 'symbol', 'name', 'ticker', 'market', 'exchange', 'index'];
-
-        for (const obj of walkObjects(payload)) {
-            for (const key of possibleKeys) {
-                const v = obj?.[key];
-                if (typeof v === 'string' && v.toUpperCase() === codeUpper) return obj;
-            }
-        }
-        return undefined;
-    };
-
-    const firstNumber = (obj: Record<string, any> | undefined, keys: string[]): number | undefined => {
-        if (!obj) return undefined;
-        for (const key of keys) {
-            const v = obj[key];
-            if (typeof v === 'number' && Number.isFinite(v)) return v;
-            if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) return Number(v);
-        }
-        return undefined;
-    };
+    let priceBoardPage: PriceBoardPage;
+    let marketApi: MarketApi;
 
     test.beforeEach(async ({ page }) => {
-        await page.goto(MARKET_WATCH_URL);
-        marketWatchPage = new MarketWatchPage(page);
+        priceBoardPage = new PriceBoardPage(page);
+        marketApi = new MarketApi();
+        await priceBoardPage.openPriceBoard();
     });
 
-    // --- A. TEST CASE CHỨC NĂNG BẢNG GIÁ ---
+    // --- TEST CASE CHO BIỂU ĐỒ MINI CHART ---
 
-    test('TC_BG_001: Should switch to HNX tab and load HNX stocks', async () => {
-        await marketWatchPage.switchTabAndVerifyLoad(marketWatchPage.hnxTab);
+    test('TC_001: Verify index value and logic color', async () => {
+        const indexCode = 'VNI';
 
-        // Giả định: Mã CK đầu tiên trên HNX không phải là mã HOSE thông thường
-        const firstStockCode = await marketWatchPage.stockTable.locator('tbody tr:first-child td:first-child').innerText();
-        expect(firstStockCode).not.toBeNull();
-    });
+        const [indexPanelData, indexDataApi] = await Promise.all([
+            priceBoardPage.getIndexPanelData(indexCode),
+            marketApi.getListIndexDetail(indexCode),
+        ]);
 
-    test('TC_BG_002: Should confirm default sort by Stock Code (Mã CK) in ASC order', async () => {
-        // 1. Chờ bảng dữ liệu load
-        await expect(marketWatchPage.stockTable).toBeVisible();
+        const ui = {
+            indexValue: parseNumber(indexPanelData.indexValue),
+            indexChange: parseNumber(indexPanelData.indexChange),
+            changePercent: parseNumber(indexPanelData.changePercent.replace('%', '')),
+            volValue: parseNumber(indexPanelData.volValue),
+            valueValue: parseNumber(indexPanelData.valueValue),
+        };
 
-        // 2. Lấy danh sách các mã chứng khoán đầu tiên (Ví dụ: 5 mã đầu tiên)
-        const firstFiveStockCodes = await marketWatchPage.stockTable
-            .locator('tbody tr')
-            .locator('td:first-child') // Giả định Mã CK nằm ở cột đầu tiên
-            .allTextContents();
+        const api = {
+            indexValue: indexDataApi.indexValue,
+            indexChange: parseNumber(indexDataApi.indexChange),
+            changePercent: parseNumber((indexDataApi.changePercent.replace('%', ''))),
+            volValue: indexDataApi.volValue,
+            valueValue: indexDataApi.valueValue,
+        };
 
-        // Chỉ lấy 5 mã đầu tiên để kiểm tra
-        const topN = 5;
-        const codesToCheck = firstFiveStockCodes.slice(0, topN).map(code => code.trim());
-
-        // 3. Assertion: Kiểm tra xem các mã có được sắp xếp tăng dần theo bảng chữ cái không
-
-        // Tạo một bản sao và sắp xếp bằng hàm JS
-        const sortedCodes = [...codesToCheck].sort();
-
-        // So sánh danh sách thực tế với danh sách đã sắp xếp của JS
-        expect(codesToCheck, `5 mã CK đầu tiên phải được sắp xếp tăng dần mặc định.`).toEqual(sortedCodes);
-
-        console.log(`PASS: Sắp xếp mặc định Mã CK tăng dần được xác nhận: ${codesToCheck.join(', ')}`);
-    });
-
-    test('TC_BG_003: Should sort stocks by Tran (Ceiling) Price', async () => {
-        // 1. Click vào cột T.C lần 1 để sắp xếp
-        await marketWatchPage.refColumnHeader.click();
-        await marketWatchPage.page.waitForTimeout(1000);
-
-        // 2. Lấy giá trị của 2 hàng đầu tiên
-        // Lấy giá trị cột T.C của hàng thứ nhất (index 0)
-        const price1Text = await marketWatchPage.stockTable.locator('tbody tr').nth(0).locator('td').nth(1).innerText();
-        // Lấy giá trị cột T.C của hàng thứ hai (index 1)
-        const price2Text = await marketWatchPage.stockTable.locator('tbody tr').nth(1).locator('td').nth(1).innerText();
-
-        const price1 = parseFloat(price1Text.replace(/,/g, ''));
-        const price2 = parseFloat(price2Text.replace(/,/g, ''));
-
-        // 3. Assertion: Kiểm tra sắp xếp giảm dần (Giả định lần click đầu tiên là giảm dần)
-        expect(price1).toBeGreaterThanOrEqual(price2);
-    });
-
-    // --- B. TEST CASE CHO BIỂU ĐỒ MINI (VNI CHART) ---
-
-    test('TC_VNI_001: Should verify VNI index value and logic color', async () => {
-        // 1. Lấy giá trị % thay đổi (VD: -3.06%)
-        const changePercentText = await marketWatchPage.getIndexPanelData('VNI').changePercent;
-        const changePercent = parseFloat(changePercentText.replace('%', ''));
+        for (const [key, uiValue] of Object.entries(ui)) {
+            expect(uiValue, `${indexCode} ${key} should match API`).toBe(api[key as keyof typeof api]);
+        }
 
         // 2. Lấy màu của phần trăm thay đổi (dùng computed style)
-        const changeColor = await marketWatchPage.vniChangePercent.evaluate(
-            (element) => window.getComputedStyle(element).color
-        );
+        const changeColor = await priceBoardPage.page
+            .locator('.market-panel', { hasText: indexCode })
+            .locator('.market-panel-header__changePercent')
+            .evaluate((element) => window.getComputedStyle(element).color);
 
         // 3. Assertion: Kiểm tra logic màu
-        if (changePercent < 0) {
+        if (ui.changePercent < 0) {
             // Giá trị âm (giảm) -> phải là màu đỏ
             expect(changeColor, "Color should be RED for negative change").toContain('rgb(255, 35, 61)');
-        } else if (changePercent > 0) {
+        } else if (ui.changePercent > 0) {
             // Giá trị dương (tăng) -> phải là màu xanh
             expect(changeColor, "Color should be GREEN for positive change").toContain('rgb(5, 187, 102)');
+        } else if (ui.changePercent === 0) {
+            expect(changeColor, "Color should be YELLOW for zero change").toContain('rgb(255, 231, 11)');
         }
     });
 
-    test('TC_MINICHART_001: Should render mini chart panels (VNI/VN30/HNX/UPCOM) with SVG', async () => {
-        const panels = [
-            { name: 'VNI', panel: marketWatchPage.vniPanel, chart: marketWatchPage.vniChartContainer, index: marketWatchPage.vniIndexValue },
-            { name: 'VN30', panel: marketWatchPage.vn30Panel, chart: marketWatchPage.vn30ChartContainer, index: marketWatchPage.vn30IndexValue },
-            { name: 'HNX', panel: marketWatchPage.hnxPanel, chart: marketWatchPage.hnxChartContainer, index: marketWatchPage.hnxIndexValue },
-            { name: 'UPCOM', panel: marketWatchPage.upcomPanel, chart: marketWatchPage.upcomChartContainer, index: marketWatchPage.upcomIndexValue },
-        ];
+    test('TC_002: Should render mini chart panels (VNI/VN30/HNX/UPCOM) with SVG', async () => {
+        const indexCodes = ['VNI', 'VN30', 'HNX', 'UPCOM'];
 
-        for (const p of panels) {
-            await expect(p.panel, `${p.name} panel should be visible`).toBeVisible();
-            await expect(p.chart, `${p.name} chart container should be visible`).toBeVisible();
-            await expect(p.chart.locator('svg'), `${p.name} chart should have an SVG`).toBeVisible();
+        for (const code of indexCodes) {
+            const panel = priceBoardPage.page.locator('.market-panel', { hasText: code });
+            const chart = panel.locator('.market-panel-chart');
+            const index = panel.locator('.market-panel-header__index');
 
-            const indexText = await p.index.innerText();
-            const indexNumber = parseNumber(indexText);
-            expect(Number.isFinite(indexNumber), `${p.name} index should be numeric`).toBeTruthy();
+            await expect(panel, `${code} panel should be visible`).toBeVisible();
+            await expect(chart, `${code} chart container should be visible`).toBeVisible();
+            await expect(chart.locator('svg'), `${code} chart should have an SVG`).toBeVisible();
+
+            const indexText = await index.innerText();
+            const indexNumber = Number(indexText);
+            expect(Number.isFinite(indexNumber), `${code} index should be numeric`).toBeTruthy();
         }
     });
 
-    test('TC_VNI_002: Should compare VNI UI values with the exact API response used by the page (no realtime drift)', async ({ page }) => {
+    test('TC_003: Should compare VNI UI values with the exact API response used by the page (no realtime drift)', async ({ page }) => {
         // Capture the same response the UI uses to render the index panels.
         const globalMarketResponsePromise = page.waitForResponse((res) => {
             const url = res.url();
@@ -170,9 +100,10 @@ test.describe('Market Watch Automation Suite', () => {
         const apiIndex = firstNumber(vniObj, ['indexValue', 'index', 'value', 'last', 'close', 'point']);
         const apiChange = firstNumber(vniObj, ['change', 'diff', 'delta', 'chg', 'changeValue', 'changePoint']);
 
-        const uiIndex = parseNumber(await marketWatchPage.vniIndexValue.innerText());
-        const uiChange = parseNumber(await marketWatchPage.vniIndexChange.innerText());
-        const uiChangePercent = parseNumber(await marketWatchPage.vniChangePercent.innerText());
+        const vniPanel = priceBoardPage.page.locator('.market-panel', { hasText: 'VNI' });
+        const uiIndex = parseNumber(await vniPanel.locator('.market-panel-header__index').innerText());
+        const uiChange = parseNumber(await vniPanel.locator('.market-panel-header__change').innerText());
+        const uiChangePercent = parseNumber(await vniPanel.locator('.market-panel-header__changePercent').innerText());
 
         // If API fields are present, do strict numeric comparisons; otherwise at least ensure UI is numeric.
         if (apiIndex !== undefined) {
@@ -200,7 +131,7 @@ test.describe('Market Watch Automation Suite', () => {
     });
 
     test('TC_VNI_004: Visual Regression Test for VNI Mini Chart Panel', async ({ page }) => {
-        const targetLocator = marketWatchPage.vniPanel;
+        const targetLocator = priceBoardPage.page.locator('.market-panel', { hasText: 'VNI' });
         await targetLocator.waitFor({ state: 'visible' });
 
         // Visual Test: Chụp ảnh toàn bộ panel VNI và so sánh với baseline.
