@@ -168,6 +168,117 @@ export async function expectResponse(response: APIResponse) {
   expect(responseData).toBeDefined();
 }
 
+// ========== DATA COMPARISON ASSERTIONS ==========
+
+export async function expectDataEquals(actual: any, expected: any, message: string = 'Data should be equal') {
+  expect(actual).toEqual(expected);
+}
+
+export async function expectDataDeepEquals(actual: any, expected: any, message: string = 'Data should be deeply equal') {
+  expect(actual).toStrictEqual(expected);
+}
+
+export async function expectDataContains(actual: any, expected: any, message: string = 'Data should contain expected values') {
+  if (Array.isArray(actual) && Array.isArray(expected)) {
+    expected.forEach(item => {
+      expect(actual).toContain(item);
+    });
+  } else if (typeof actual === 'object' && typeof expected === 'object') {
+    expect(actual).toMatchObject(expected);
+  } else {
+    expect(actual).toContain(expected);
+  }
+}
+
+export async function expectArraysEqual(actual: any[], expected: any[], message: string = 'Arrays should be equal') {
+  expect(actual).toEqual(expected);
+}
+
+export async function expectArraysContain(actual: any[], expected: any[], message: string = 'Array should contain expected items') {
+  expected.forEach(item => {
+    expect(actual).toContain(item);
+  });
+}
+
+export async function expectObjectsEqual(actual: any, expected: any, message: string = 'Objects should be equal') {
+  expect(actual).toEqual(expected);
+}
+
+export async function expectObjectsMatch(actual: any, expected: any, message: string = 'Object should match expected structure') {
+  expect(actual).toMatchObject(expected);
+}
+export async function expectDataType(actual: any, expectedType: string, message: string = 'Data should be of expected type') {
+  let actualType: string = typeof actual;
+
+  // Xử lý các trường hợp đặc biệt của JavaScript
+  if (actual === null) {
+    actualType = 'null';
+  } else if (Array.isArray(actual)) {
+    actualType = 'array';
+  }
+
+  expect(actualType).toBe(expectedType);
+}
+
+// ========== NUMERIC DATA COMPARISON ASSERTIONS ==========
+
+export async function expectNumericEquals(actual: string | number, expected: string | number, tolerance: number = 0, message: string = 'Numeric values should be equal') {
+  const actualNum = typeof actual === 'string' ? parseFloat(actual.replace(/,/g, '')) : actual;
+  const expectedNum = typeof expected === 'string' ? parseFloat(expected.replace(/,/g, '')) : expected;
+
+  if (tolerance === 0) {
+    expect(actualNum).toBe(expectedNum);
+  } else {
+    expect(Math.abs(actualNum - expectedNum)).toBeLessThanOrEqual(tolerance);
+  }
+}
+
+export async function expectNumericGreaterThan(actual: string | number, expected: string | number, message: string = 'Actual should be greater than expected') {
+  const actualNum = typeof actual === 'string' ? parseFloat(actual.replace(/,/g, '')) : actual;
+  const expectedNum = typeof expected === 'string' ? parseFloat(expected.replace(/,/g, '')) : expected;
+
+  expect(actualNum).toBeGreaterThan(expectedNum);
+}
+
+export async function expectNumericLessThan(actual: string | number, expected: string | number, message: string = 'Actual should be less than expected') {
+  const actualNum = typeof actual === 'string' ? parseFloat(actual.replace(/,/g, '')) : actual;
+  const expectedNum = typeof expected === 'string' ? parseFloat(expected.replace(/,/g, '')) : expected;
+
+  expect(actualNum).toBeLessThan(expectedNum);
+}
+
+export async function expectPriceEquals(actual: string, expected: string | number, tolerance: number = 0, message: string = 'Prices should be equal') {
+  const actualNum = parseFloat(actual.replace(/,/g, '').replace(/[^\d.-]/g, ''));
+  const expectedNum = typeof expected === 'string' ? parseFloat(expected.replace(/,/g, '').replace(/[^\d.-]/g, '')) : expected;
+
+  expect(Math.abs(actualNum - expectedNum)).toBeLessThanOrEqual(tolerance);
+}
+
+export async function expectPercentageEquals(actual: string, expected: string | number, tolerance: number = 0, message: string = 'Percentages should be equal') {
+  const actualNum = parseFloat(actual.replace('%', '').replace(/,/g, ''));
+  const expectedNum = typeof expected === 'string' ? parseFloat(expected.replace('%', '').replace(/,/g, '')) : expected;
+
+  expect(Math.abs(actualNum - expectedNum)).toBeLessThanOrEqual(tolerance);
+}
+
+// ========== STRING DATA COMPARISON ASSERTIONS ==========
+
+export async function expectStringEqualsIgnoreCase(actual: string, expected: string, message: string = 'Strings should be equal (case insensitive)') {
+  expect(actual.toLowerCase()).toBe(expected.toLowerCase());
+}
+
+export async function expectStringContainsIgnoreCase(actual: string, expected: string, message: string = 'String should contain expected text (case insensitive)') {
+  expect(actual.toLowerCase()).toContain(expected.toLowerCase());
+}
+
+export async function expectFormattedNumber(actual: string, expected: string, message: string = 'Formatted numbers should match') {
+  // Remove all formatting (commas, spaces) and compare as numbers
+  const actualClean = actual.replace(/[,.\s]/g, '');
+  const expectedClean = expected.replace(/[,.\s]/g, '');
+
+  expect(actualClean).toBe(expectedClean);
+}
+
 // ========== DATA VALIDATION ASSERTIONS ==========
 
 export async function expectNumberFormat(value: string, fieldName: string = 'Value') {
@@ -321,6 +432,28 @@ export const Assertions = {
   expectArrayNotEmpty,
   expectObjectHasProperty,
   expectStringNotEmpty,
+
+  // Data comparison
+  expectDataEquals,
+  expectDataDeepEquals,
+  expectDataContains,
+  expectArraysEqual,
+  expectArraysContain,
+  expectObjectsEqual,
+  expectObjectsMatch,
+  expectDataType,
+
+  // Numeric data comparison
+  expectNumericEquals,
+  expectNumericGreaterThan,
+  expectNumericLessThan,
+  expectPriceEquals,
+  expectPercentageEquals,
+
+  // String data comparison
+  expectStringEqualsIgnoreCase,
+  expectStringContainsIgnoreCase,
+  expectFormattedNumber,
 
   // Wait-based assertions
   expectEventually,

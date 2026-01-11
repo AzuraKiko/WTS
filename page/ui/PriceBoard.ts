@@ -74,8 +74,12 @@ export class PriceBoardPage {
     /**
      * Tạo locators cho một index panel
      */
-    private createIndexPanelLocators(indexName: string): IndexPanelLocators {
+    private async createIndexPanelLocators(indexName: string): Promise<IndexPanelLocators> {
         const panel = this.page.locator(`.market-panel:has-text("${indexName}")`);
+        if (!panel.isVisible()) {
+            await this.rightSlider.click();
+            await panel.waitFor({ state: 'visible', timeout: 10000 });
+        }
 
         return {
             panel,
@@ -105,41 +109,78 @@ export class PriceBoardPage {
      */
     async openPriceBoard() {
         await this.page.goto(TEST_CONFIG.WEB_LOGIN_URL);
-        await this.page.waitForTimeout(10000);
+        await this.page.waitForTimeout(3000);
 
         if (await this.page.locator('.adv-modal__body').isVisible()) {
             await this.page.click('.btn-icon.btn--cancel');
-            await this.page.waitForTimeout(10000);
+            await this.page.waitForTimeout(3000);
         }
     }
+
 
     /**
      * Mở trang Trading View
      */
     async openTradingView(indexName: string) {
-        const indexPanel = this.createIndexPanelLocators(indexName);
+        const indexPanel = await this.createIndexPanelLocators(indexName);
         await indexPanel.openTradingView.click();
-        await expect(this.page.locator('.modal-dialog .market-index-modal__header')).toHaveText('Chỉ số thị trường');
+        await expect(this.page.locator('.modal-dialog .market-index-modal__header')).toContainText('Chỉ số thị trường');
     }
 
     /**
      * Lấy data của trang Trading View
      */
     async getTradingViewData() {
-        return {
-            valueClose: await this.page
-                .locator('.valueItem-l31H9iuA:has(.valueTitle-l31H9iuA:text("C")) .valueValue-l31H9iuA')
-                .innerText(),
-            valueOpen: await this.page
-                .locator('.valueItem-l31H9iuA:has(.valueTitle-l31H9iuA:text("O")) .valueValue-l31H9iuA')
-                .innerText(),
-            valueHigh: await this.page
-                .locator('.valueItem-l31H9iuA:has(.valueTitle-l31H9iuA:text("H")) .valueValue-l31H9iuA')
-                .innerText(),
-            valueLow: await this.page
-                .locator('.valueItem-l31H9iuA:has(.valueTitle-l31H9iuA:text("L")) .valueValue-l31H9iuA')
-                .innerText(),
+        const iframeSelector = 'iframe[title="exchangeChart"]';
+
+        // 1. Wait for the iframe to be visible on the main page first
+        // This ensures the modal/dialog animation has finished
+        const chartIframe = this.page.locator(iframeSelector).filter({ visible: true }).first();
+        await chartIframe.waitFor({ state: 'visible', timeout: 15000 });
+
+        // 2. Ensure the iframe has actually started loading content
+        // Check that 'src' is present and not just 'about:blank'
+        await expect(chartIframe).toHaveAttribute('src', /.+/, { timeout: 10000 });
+
+        // 3. Define the frame context
+        const tvFrame = chartIframe.contentFrame();
+        // Using chartIframe.contentFrame() directly is often more stable
+        // than frameLocator when dealing with dynamic modals.
+
+        // 4. Wait for the canvas - ensure the TradingView library has drawn the UI
+        const canvas = tvFrame.locator('canvas').first();
+        await expect(canvas).toBeAttached({ timeout: 20000 });
+
+        // 5. Interact to trigger legend rendering
+        await canvas.hover().catch(() => { });
+        await canvas.click({ position: { x: 50, y: 50 } }).catch(() => { });
+
+        const getValue = async (label: string) => {
+            // Use filter with hasText for exact matches to avoid 'C' matching 'Close'
+            const row = tvFrame.locator('[class*="valueItem-"]').filter({
+                has: tvFrame.locator('[class*="valueTitle-"]').filter({ hasText: label })
+            }).first();
+
+            return (await row.locator('[class*="valueValue-"]').innerText()).trim();
         };
+
+        try {
+            // Wait for data to settle from "n/a" or "0"
+            await this.page.waitForTimeout(1500);
+
+            const [valueClose, valueOpen, valueHigh, valueLow] = await Promise.all([
+                getValue('C'),
+                getValue('O'),
+                getValue('H'),
+                getValue('L'),
+            ]);
+
+            return { valueClose, valueOpen, valueHigh, valueLow };
+        } catch (error) {
+            const path = `debug-tv-${Date.now()}.png`;
+            await this.page.screenshot({ path, fullPage: true });
+            throw new Error(`Data extraction failed. Values might not be rendered. See: ${path}`);
+        }
     }
 
     /**
@@ -154,7 +195,7 @@ export class PriceBoardPage {
      * Lấy dữ liệu của một index panel
      */
     async getIndexPanelData(indexName: string): Promise<IndexPanelData> {
-        const indexPanel = this.createIndexPanelLocators(indexName);
+        const indexPanel = await this.createIndexPanelLocators(indexName);
 
         return {
             indexValue: await indexPanel.indexValue.innerText(),
