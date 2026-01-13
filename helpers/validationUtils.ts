@@ -212,6 +212,25 @@ export class NumberValidator {
         return Number.parseFloat(normalized); // Parse number
     }
 
+    static parseNumberWithUnit(value: string): number {
+        const raw = String(value ?? '').trim();
+        if (raw === '') return Number.NaN;
+        // Normalize common minus variants (e.g. "−18.38")
+        const minusNormalized = raw.replace(/[−–—]/g, '-');
+
+        // Remove common separators/symbols, then strip any remaining units/letters (e.g. "(tỷ)", "M", "VNĐ")
+        let normalized = minusNormalized
+            .replace(/[,%]/g, '')
+            .replace(/\s+/g, '')
+            .replace(/[()]/g, '');
+
+        normalized = normalized.replace(/[^\d.-]/g, '');
+
+        const parsed = Number.parseFloat(normalized);
+        return parsed;
+    }
+
+
     /**
      * Format number with comma thousands separator
      */

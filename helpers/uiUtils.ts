@@ -263,6 +263,26 @@ export class WaitUtils {
         await page.waitForLoadState('networkidle', { timeout });
         await page.waitForLoadState('domcontentloaded', { timeout });
     }
+
+
+    static async ensureItemVisible(
+        item: Locator,
+        slider: Locator,
+        page: Page,
+        maxClick = 10
+    ): Promise<void> {
+        for (let i = 0; i < maxClick; i++) {
+            if (await item.isVisible()) {
+                return;
+            }
+
+            await slider.click();
+            await page.waitForTimeout(300); // chờ UI trượt
+        }
+
+        throw new Error('Item not visible after sliding');
+    }
+
 }
 
 /**

@@ -319,3 +319,5 @@ export default class LoginApi {
         return { session, cif, token, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio };
     }
 }
+
+

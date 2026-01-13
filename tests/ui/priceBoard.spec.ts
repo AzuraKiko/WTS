@@ -7,12 +7,17 @@ const parseNumber = (value: string): number => {
     return NumberValidator.parseNumber(value);
 };
 
+const parseNumberWithUnit = (value: string): number => {
+    return NumberValidator.parseNumberWithUnit(value);
+};
+
 const formatVolumeValue = (value: number): number => {
-    if (value < 1000) {
+    const absValue = Math.abs(value);
+    if (absValue < 1000) {
         return value;
-    } else if (value >= 1000000000) { // Tỷ
+    } else if (absValue >= 1000000000) { // Tỷ
         return Math.round((value / 1000000000) * 100) / 100;
-    } else if (value >= 1000000) { // Triệu
+    } else if (absValue >= 1000000) { // Triệu
         return Math.round((value / 1000000) * 100) / 100;
     } else { // Nghìn
         return Math.round((value / 1000) * 100) / 100;
@@ -148,7 +153,7 @@ test.describe('Market Watch Automation Suite', () => {
         }
     });
 
-    test.only('TC_004: Check trading view data for Mini Chart Panels', async () => {
+    test('TC_004: Check trading view data for Mini Chart Panels', async () => {
         const latestDvx = await marketApi.getLatestDvx();
         const indexCode = latestDvx.indexCode;
         const indexCodes = ['VNI', 'VN30', 'HNX', 'UPCOM', 'VN100', indexCode];
@@ -160,12 +165,47 @@ test.describe('Market Watch Automation Suite', () => {
             ]);
             const uiIndexValue = parseNumber(indexPanelData.indexValue);
             const tradingViewIndexValue = parseNumber(tradingViewData.valueClose);
-            expect(uiIndexValue, `${code} index value should match API`).toBe(tradingViewIndexValue);
+            const currentHour = new Date().getHours();
+
+            if (currentHour >= 15 || currentHour < 8) {
+                // Ngoài giờ giao dịch
+                expect(
+                    uiIndexValue,
+                    `${code} index value should match API`
+                ).toBe(tradingViewIndexValue);
+            } else {
+                // Trong giờ giao dịch
+                expect(
+                    tradingViewIndexValue,
+                    `${code} index value should be greater than 0 during trading hours`
+                ).toBeGreaterThan(0);
+            }
             const [valueOpen, valueHigh, valueLow] = [tradingViewData.valueOpen, tradingViewData.valueHigh, tradingViewData.valueLow];
-            expect(valueOpen).toBeGreaterThan(0);
-            expect(valueHigh).toBeGreaterThan(0);
-            expect(valueLow).toBeGreaterThan(0);
+            expect(parseNumber(valueOpen)).toBeGreaterThan(0);
+            expect(parseNumber(valueHigh)).toBeGreaterThan(0);
+            expect(parseNumber(valueLow)).toBeGreaterThan(0);
             await priceBoardPage.closeTradingView();
+        }
+    });
+
+    test('TC_005: Check overview data', async () => {
+        const [overviewData, overviewDataApi] = await Promise.all([
+            priceBoardPage.getOverviewData(),
+            marketApi.getOverViewlData(),
+        ]);
+        const ui = {
+            // totalVolume: parseNumberWithUnit(overviewData.totalVolume),
+            totalValue: parseNumberWithUnit(overviewData.totalValue),
+            roomNN: parseNumberWithUnit(overviewData.roomNN),
+        };
+        const api = {
+            // totalVolume: formatVolumeValue(overviewDataApi.totalVolume),
+            totalValue: formatValueValue(overviewDataApi.totalValue),
+            roomNN: Math.round(formatVolumeValue(overviewDataApi.roomNN)),
+        };
+
+        for (const [key, uiValue] of Object.entries(ui)) {
+            expect(uiValue, `Overview ${key} should match API`).toBe(api[key as keyof typeof api]);
         }
     });
 });

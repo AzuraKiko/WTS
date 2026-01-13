@@ -6,6 +6,7 @@ const API_ENDPOINTS = {
     GET_LIST_INDEX_DETAIL: `/getlistindexdetail/10,11,02,03,25`,
     GET_LATEST_DVX: `/getliststockdata`,
     GET_LIST_DVX: `/getListDvx`,
+    GET_SUMMARY: `/getSummary`,
 };
 
 export default class MarketApi extends apiHelper {
@@ -57,6 +58,23 @@ export default class MarketApi extends apiHelper {
             changePercent: signedChangePercent,
             volValue: indexData.vol,
             valueValue: indexData.value,
+        };
+    }
+
+    async getTotalValue(): Promise<any> {
+        const response = await this.apiHelper.getFullResponse(API_ENDPOINTS.GET_LIST_INDEX_DETAIL);
+        const data = response.data.filter((index: any) => index.mc == '10' || index.mc == '02');
+        const totalValue = data.reduce((total: number, index: any) => total + Number(index.value), 0);
+        return totalValue;
+    }
+
+    async getOverViewlData(): Promise<any> {
+        const response = await this.apiHelper.get(API_ENDPOINTS.GET_SUMMARY);
+        const totalValue = await this.getTotalValue();
+        return {
+            totalVolume: response.ptvalue,
+            totalValue: totalValue,
+            roomNN: response.frvalue,
         };
     }
 
