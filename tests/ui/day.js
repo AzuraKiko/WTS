@@ -16,9 +16,12 @@
 // console.log(result);
 const moment = require('moment');
 
-const toDate = moment().subtract(1, 'day').format('YYYYMMDD');
-const frDate = moment().subtract(3, 'month').format('YYYYMMDD');
+const toDate = moment().subtract(1, 'day'); // giữ dạng moment
+const frDate = toDate.clone().subtract(1, 'month');
 
-console.log({ frDate, toDate });
+console.log({
+    frDate: frDate.format('YYYYMMDD'),
+    toDate: toDate.format('YYYYMMDD'),
+});
 
 

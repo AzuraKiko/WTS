@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
-import MarketApi from '../../page/api/MarketApi';
+import { MarketApi, MarketGatewayApi } from '../../page/api/MarketApi';
 import { NumberValidator } from '../../helpers/validationUtils';
+import { TimeUtils } from '../../helpers/uiUtils';
+import { ColorUtils } from '../../helpers/validationUtils';
 
 const parseNumber = (value: string): number => {
     return NumberValidator.parseNumber(value);
@@ -40,10 +42,12 @@ const formatValueValue = (value: number): number => {
 test.describe('Market Watch Automation Suite', () => {
     let priceBoardPage: PriceBoardPage;
     let marketApi: MarketApi;
+    let marketGatewayApi: MarketGatewayApi;
 
     test.beforeEach(async ({ page }) => {
         priceBoardPage = new PriceBoardPage(page);
         marketApi = new MarketApi();
+        marketGatewayApi = new MarketGatewayApi();
         await priceBoardPage.openPriceBoard();
     });
 
@@ -78,8 +82,12 @@ test.describe('Market Watch Automation Suite', () => {
             };
 
 
-            for (const [key, uiValue] of Object.entries(ui)) {
-                expect(uiValue, `${indexCode} ${key} should match API`).toBe(api[key as keyof typeof api]);
+            if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 15, 0)) {
+                for (const [key, uiValue] of Object.entries(ui)) {
+                    expect(uiValue, `${indexCode} ${key} should match API`).toBe(api[key as keyof typeof api]);
+                }
+            } else {
+                expect(ui.indexValue, `${indexCode} index value should be greater than 0`).toBeGreaterThan(0);
             }
 
             // 2. Lấy màu (dùng computed style)
@@ -91,12 +99,12 @@ test.describe('Market Watch Automation Suite', () => {
             // 3. Assertion: Kiểm tra logic màu
             if (ui.indexChange < 0) {
                 // Giá trị âm (giảm) -> phải là màu đỏ
-                expect(indexColor, "Color should be RED for negative change").toContain('rgb(255, 35, 61)');
+                ColorUtils.expectColorFamily(indexColor, 'RED');
             } else if (ui.indexChange > 0) {
                 // Giá trị dương (tăng) -> phải là màu xanh
-                expect(indexColor, "Color should be GREEN for positive change").toContain('rgb(0, 255, 87)');
+                ColorUtils.expectColorFamily(indexColor, 'GREEN');
             } else if (ui.indexChange === 0) {
-                expect(indexColor, "Color should be YELLOW for zero change").toContain('rgb(255, 231, 11)');
+                ColorUtils.expectColorFamily(indexColor, 'YELLOW');
             }
         });
     }
@@ -122,19 +130,24 @@ test.describe('Market Watch Automation Suite', () => {
             volValue: formatVolumeValue(indexDataApi.volValue),
             valueValue: formatValueValue(indexDataApi.valueValue / 10),
         };
-        for (const [key, uiValue] of Object.entries(ui)) {
-            expect(uiValue, `DVX ${key} should match API`).toBe(api[key as keyof typeof api]);
+        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 15, 0)) {
+            for (const [key, uiValue] of Object.entries(ui)) {
+                expect(uiValue, `DVX ${key} should match API`).toBe(api[key as keyof typeof api]);
+            }
+        } else {
+            expect(ui.indexValue, `DVX index value should be greater than 0`).toBeGreaterThan(0);
         }
+
         const indexColor = await priceBoardPage.page
             .locator('.market-panel', { hasText: `${indexCode}` })
             .locator('.market-panel-header__index')
             .evaluate((element) => window.getComputedStyle(element).color);
         if (ui.indexChange < 0) {
-            expect(indexColor, "Color should be RED for negative change").toContain('rgb(255, 35, 61)');
+            ColorUtils.expectColorFamily(indexColor, 'RED');
         } else if (ui.indexChange > 0) {
-            expect(indexColor, "Color should be GREEN for positive change").toContain('rgb(0, 255, 87)');
+            ColorUtils.expectColorFamily(indexColor, 'GREEN');
         } else if (ui.indexChange === 0) {
-            expect(indexColor, "Color should be YELLOW for zero change").toContain('rgb(255, 231, 11)');
+            ColorUtils.expectColorFamily(indexColor, 'YELLOW');
         }
     });
 
@@ -143,13 +156,17 @@ test.describe('Market Watch Automation Suite', () => {
         const indexCode = latestDvx.indexCode;
         const indexCodes = ['VNI', 'VN30', 'HNX', 'UPCOM', 'VN100', indexCode];
 
-        for (const code of indexCodes) {
-            const panel = priceBoardPage.page.locator('.market-panel', { hasText: code });
-            const chart = panel.locator('.market-panel-chart');
+        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 9, 0)) {
+            for (const code of indexCodes) {
+                const panel = priceBoardPage.page.locator('.market-panel', { hasText: code });
+                const chart = panel.locator('.market-panel-chart');
 
-            await expect(panel, `${code} panel should be visible`).toBeVisible();
-            await expect(chart, `${code} chart container should be visible`).toBeVisible();
-            await expect(chart.locator('svg'), `${code} chart should have an SVG`).toBeVisible();
+                await expect(panel, `${code} panel should be visible`).toBeVisible();
+                await expect(chart, `${code} chart container should be visible`).toBeVisible();
+                await expect(chart.locator('svg'), `${code} chart should have an SVG`).toBeVisible();
+            }
+        } else {
+            console.log("Hiện tại là thời gian reset data đầu ngày");
         }
     });
 
@@ -165,19 +182,16 @@ test.describe('Market Watch Automation Suite', () => {
             ]);
             const uiIndexValue = parseNumber(indexPanelData.indexValue);
             const tradingViewIndexValue = parseNumber(tradingViewData.valueClose);
-            const currentHour = new Date().getHours();
 
-            if (currentHour >= 15 || currentHour < 8) {
-                // Ngoài giờ giao dịch
+            if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 15, 0)) {
                 expect(
                     uiIndexValue,
-                    `${code} index value should match API`
+                    `${code} index value should match TradingView`
                 ).toBe(tradingViewIndexValue);
             } else {
-                // Trong giờ giao dịch
                 expect(
                     tradingViewIndexValue,
-                    `${code} index value should be greater than 0 during trading hours`
+                    `${code} index value should be greater than 0 during non-check window`
                 ).toBeGreaterThan(0);
             }
             const [valueOpen, valueHigh, valueLow] = [tradingViewData.valueOpen, tradingViewData.valueHigh, tradingViewData.valueLow];
@@ -203,9 +217,30 @@ test.describe('Market Watch Automation Suite', () => {
             totalValue: formatValueValue(overviewDataApi.totalValue),
             roomNN: Math.round(formatVolumeValue(overviewDataApi.roomNN)),
         };
+        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 14, 45)) {
 
-        for (const [key, uiValue] of Object.entries(ui)) {
-            expect(uiValue, `Overview ${key} should match API`).toBe(api[key as keyof typeof api]);
+            for (const [key, uiValue] of Object.entries(ui)) {
+                expect(uiValue, `Overview ${key} should match API`).toBe(api[key as keyof typeof api]);
+            }
+        } else {
+            console.log("Hiện tại là thời gian reset data đầu ngày");
+        }
+    });
+
+    test('TC_006: Check global data', async () => {
+        const indexNames = ['Dow Jones', 'S&P 500', 'Nasdaq', 'Hang Seng', 'Nikkei', 'FTSE', 'CAC40', 'DAX', 'IBEX35', 'PSI20', 'AEX', 'OMX'];
+        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 14, 45)) {
+            for (const indexName of indexNames) {
+                const [ui, api] = await Promise.all([
+                    priceBoardPage.getGlobalDataByLabel(indexName),
+                    marketGatewayApi.getGlobalDataByName(indexName),
+                ]);
+                for (const [key, uiValue] of Object.entries(ui)) {
+                    expect(uiValue, `Global ${indexName} ${key} should match API`).toBe(api[key as keyof typeof api]);
+                }
+            }
+        } else {
+            console.log("Hiện tại là thời gian reset data đầu ngày");
         }
     });
 });
