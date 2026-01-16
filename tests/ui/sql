@@ -1,0 +1,560 @@
+ select ac.vsd_acnt_no, a.*
+from BIZKRX.TPB_BD_PROD_CUST_DL_DETL a,
+      BIZKRX.TPB_PRODUCT_ITEM_INFO B,
+    (SELECT C.BUY_DATE, C.BUY_SEQ, SUM(C.DL_QTY) DL_QTY
+     FROM BIZKRX.TPB_BD_PROD_CUST_SELL_DTL C, BIZKRX.TPB_BD_PROD_CUST_DL_DETL A
+     WHERE A.TRAN_DATE          = C.TRAN_DATE
+           AND A.DL_SEQ         = C.DL_SEQ
+           AND A.PROD_TRD_TP    = '1'
+           AND A.PROD_DEAL_STAT IN ('1','2','3')
+     GROUP BY C.BUY_DATE, C.BUY_SEQ) C,
+      BIZKRX.TPB_BND_ITEM_INFO F,
+      BIZKRX.tab_account ac
+where  A.BD_PROD_CODE       = B.BD_PROD_CODE
+AND A.PROD_DEAL_STAT = '3'
+AND A.PROD_TRD_TP    = '2'
+AND B.PROD_TP        = '2'
+AND A.TRAN_DATE      = C.BUY_DATE(+)
+AND A.DL_SEQ         = C.BUY_SEQ(+)
+AND B.MTHR_BD_SYMBOL = F.SYMBOL
+AND F.LIST_TP        = '3'
+and A.DL_QTY - NVL(C.DL_QTY,0) > 0
+and F.EXPRDT > '20251005'
+and a.acnt_no = ac.acnt_no;
+
+select ac.vsd_acnt_no, a.*
+from BIZKRX.TPB_BD_PROD_CUST_DL_DETL a,
+      BIZKRX.TPB_PRODUCT_ITEM_INFO B,
+    (SELECT C.BUY_DATE, C.BUY_SEQ, SUM(C.DL_QTY) DL_QTY
+     FROM BIZKRX.TPB_BD_PROD_CUST_SELL_DTL C, BIZKRX.TPB_BD_PROD_CUST_DL_DETL A
+     WHERE A.TRAN_DATE          = C.TRAN_DATE
+           AND A.DL_SEQ         = C.DL_SEQ
+           AND A.PROD_TRD_TP    = '1'
+           AND A.PROD_DEAL_STAT IN ('1','2','3')
+     GROUP BY C.BUY_DATE, C.BUY_SEQ) C,
+      BIZKRX.TPB_BND_ITEM_INFO F,
+      BIZKRX.tab_account ac
+where  A.BD_PROD_CODE       = B.BD_PROD_CODE
+AND A.PROD_DEAL_STAT = '3'
+AND A.PROD_TRD_TP    = '2'
+AND B.PROD_TP        = '2'
+AND A.TRAN_DATE      = C.BUY_DATE(+)
+AND A.DL_SEQ         = C.BUY_SEQ(+)
+AND B.MTHR_BD_SYMBOL = F.SYMBOL
+AND F.LIST_TP        = '3'
+and A.DL_QTY - NVL(C.DL_QTY,0) > 0
+and F.EXPRDT > '20250611'
+and a.acnt_no = ac.acnt_no;
+
+010C001069
+010C000255
+PHDB124006_14
+
+SELECT * FROM BIZKRX.TAA_CUSTOMER t WHERE t.CUST_NO = '00190434';
+
+SELECT * FROM  BIZKRX.TPB_BD_PROD_CUST_DL_DETL A WHERE A.SUB_ACNT_NO = '00002092';
+
+select a.Exch_RESP_ORDR_ID, a.QUOTE_ID, a.* from BIZKRX.tta_put_through a where a.trd_date = '20251008';
+
+-- a.Exch_RESP_ORDR_ID, a.QUOTE_ID 
+
+SELECT * FROM BIZKRX.TPB_BND_GUARANTEE_INFO tbgi 
+
+INSERT INTO BIZKRX.TPB_BND_GUARANTEE_INFO
+(SYMBOL, ASSET_TP, VAL_DATE, VAL_TERM, VAL_AMT, RATE, RATE_TP, TRAN_DATE)
+VALUES('HDB124006', 'Quyền sử dụng đất với 103 lô đất tại tỉnh Bình Dương', '20251008', 3, 5000000000, 50, '2', '20251008');
+
+SELECT * FROM BIZKRX.TPB_BND_ITEM_INFO tbii;
+SELECT * FROM BIZKRX.TPB_OB_BD_CUST_DL_DETL tobcdd 
+
+SELECT * FROM  BIZ.TPB_BD_PROD_CUST_DL_DETL tbpcdd WHERE TRAN_DATE ='20251118'; -- sửa ngày chờ có thể bán là MIN_HOLD_DAYS=0
+ 00001013
+ 
+ SELECT t.CPHN_NO, t.cust_id, t.CONN_SECR_NO, t.CONN_ID, t.* FROM BIZ.TAA_CUSTOMER t
+WHERE t.CPHN_NO  = '0924234238' OR t.CONN_ID  = '0394189779' OR t.CUST_ID ='087197000441' OR t.CUST_NO LIKE '%00034824%' ORDER BY t.CPHN_NO DESC;
+
+
+SELECT *
+FROM (
+    SELECT
+           a.SUB_ACNT_NO,
+           c.CONN_ID,
+           c.CONN_SECR_NO,
+           b.*,
+           ROW_NUMBER() OVER (
+               PARTITION BY a.SUB_ACNT_NO
+               ORDER BY b.ACNT_NO
+           ) rn
+    FROM BIZ.tcd_pref_info a
+    JOIN BIZ.TAB_ACCOUNT b
+      ON a.ACNT_NO = b.ACNT_NO
+    JOIN BIZ.TAA_CUSTOMER c
+      ON b.CUST_NO = c.CUST_NO
+    WHERE a.PREF_CD = 'MR3'
+      AND a.SUB_ACNT_NO LIKE '%M%'
+)
+WHERE rn = 1;
+
+•	Dư nợ gốc MR = 0 trong vòng 90 ngày gần nhất
+•	Tổng giá trị giao dịch trên tài khoản KH < 100 triệu trong vòng 90 ngày gần nhất
+•	NAV cuối ngày trung bình trên tài khoản trong vòng 90 ngày gần nhất (bao gồm Tiền, cổ phiếu, CW và ETF) < 100 triệu
+
+Dư nơ gốc trong vòng 90 ngày: Set up trên bảng tia_deposit_balance . 
+Config giá trị cho các biến: crd_amt/nrdmp_crd_amt/ expr_crd_amt thỏa mãn: (crd_amt + nrdmp_crd_amt + expr_crd_amt ) = 0.
+
+SELECT
+    ACNT_NO,
+    SUB_ACNT_NO,
+    crd_amt,
+    nrdmp_crd_amt,
+    expr_crd_amt,
+    PROC_DATE
+FROM BIZ.tia_deposit_balance
+WHERE ACNT_NO = '00186821'
+  AND TO_DATE(PROC_DATE, 'YYYYMMDD') >= TRUNC(SYSDATE) - 90 ORDER BY PROC_DATE desc;
+
+SELECT
+    ACNT_NO,
+    SUB_ACNT_NO,
+    crd_amt,
+    nrdmp_crd_amt,
+    expr_crd_amt,
+    PROC_DATE
+FROM BIZ.tia_deposit_balance
+WHERE TO_DATE(PROC_DATE, 'YYYYMMDD') >= TRUNC(SYSDATE) - 90
+  AND (
+        NVL(crd_amt, 0)
+      + NVL(nrdmp_crd_amt, 0)
+      + NVL(expr_crd_amt, 0)
+      ) = 0
+ORDER BY PROC_DATE DESC;
+
+
+Tổng giá trị giao dịch trên tài khoản KH < 100 triệu trong vòng 90 ngày gần nhất:  Set up trên bảng tia_total_assest. Config giá trị cho biến: total_trade_value.
+
+SELECT a.ROR, a.PNL, a.* FROM BIZ.tia_total_assest a WHERE a.SUB_ACNT_NO = 'N00023789';
+
+SELECT
+    ACNT_NO,
+    SUB_ACNT_NO,
+    total_trade_value,
+    PROC_DATE,
+    NAV_CHECKMR 
+FROM BIZ.tia_total_assest
+WHERE ACNT_NO = '00190617'
+  AND TO_DATE(PROC_DATE, 'YYYYMMDD') >= TRUNC(SYSDATE) - 90 ORDER BY PROC_DATE desc;
+
+SELECT
+    ACNT_NO,
+    SUB_ACNT_NO,
+    SUM(NVL(total_trade_value, 0)) AS total_90_days
+FROM BIZ.tia_total_assest
+WHERE PROC_DATE >= TO_CHAR(TRUNC(SYSDATE) - 90, 'YYYYMMDD')
+GROUP BY
+    ACNT_NO,
+    SUB_ACNT_NO
+HAVING SUM(NVL(total_trade_value, 0)) = 0;
+
+
+WITH NAV_LAST AS (
+    SELECT
+        ACNT_NO,
+        SUB_ACNT_NO,
+        NAV_CHECKMR,
+        ROW_NUMBER() OVER (
+            PARTITION BY ACNT_NO, SUB_ACNT_NO
+            ORDER BY PROC_DATE DESC
+        ) rn
+    FROM BIZ.tia_total_assest
+    WHERE PROC_DATE >= TO_CHAR(TRUNC(SYSDATE) - 90, 'YYYYMMDD')
+),
+NO_TRADE AS (
+    SELECT
+        ACNT_NO,
+        SUB_ACNT_NO
+    FROM BIZ.tia_total_assest
+    WHERE PROC_DATE >= TO_CHAR(TRUNC(SYSDATE) - 90, 'YYYYMMDD')
+    GROUP BY ACNT_NO, SUB_ACNT_NO
+    HAVING SUM(NVL(total_trade_value, 0)) = 0
+),
+CUS AS (
+    SELECT
+        a.ACNT_NO,
+        a.SUB_ACNT_NO,
+        a.OPNDT      AS SUB_OPNDT,
+        a.ACNT_STAT,
+        t.CPHN_NO,
+        t.CUST_NO,
+        t.CONN_SECR_NO,
+        t.CONN_ID,
+        t.INDV_CORP_TP,
+        t.NATV_FRNR_TP,
+        t.OPNDT      AS CUST_OPNDT,
+        t.MATRIX_REG_YN,
+        t.MATRIX_SEQ
+    FROM BIZ.tab_sub_account a
+    JOIN BIZ.TAA_CUSTOMER t
+      ON a.ACNT_NO = t.CUST_NO
+    WHERE a.SUB_ACNT_NO LIKE '%M%'
+)
+SELECT
+    c.*,
+    n.NAV_CHECKMR AS NAV_LATEST
+FROM CUS c
+JOIN NO_TRADE nt
+  ON nt.ACNT_NO = c.ACNT_NO
+ AND nt.SUB_ACNT_NO = c.SUB_ACNT_NO
+JOIN NAV_LAST n
+  ON n.ACNT_NO = c.ACNT_NO
+ AND n.SUB_ACNT_NO = c.SUB_ACNT_NO
+ AND n.rn = 1
+WHERE NVL(n.NAV_CHECKMR, 0) < 100000000;
+
+
+
+
+NAV cuối ngày trung bình trên tài khoản trong vòng 90 ngày gần nhất (bao gồm Tiền, cổ phiếu, CW và ETF) < 100 triệu.  
+Set up trên bảng tia_total_assest. Config giá trị cho biến: nav_checkMr.
+
+SELECT a.ACNT_NO, t.CPHN_NO, a.SUB_ACNT_NO, t.CUST_NO , t.CONN_SECR_NO, t.CONN_ID, a.OPNDT, a.ACNT_STAT, 
+t.INDV_CORP_TP, t.NATV_FRNR_TP, t.OPNDT, t.MATRIX_REG_YN, t.MATRIX_SEQ FROM BIZ.TAA_CUSTOMER t 
+JOIN BIZ.tab_sub_account a ON a.acnt_no = t.cust_no
+where a.ACNT_NO LIKE '%00008166%' AND a.SUB_ACNT_NO LIKE '%M%';
+
+
+SELECT a.ACNT_NO, t.CPHN_NO, t.CUST_NO , t.CONN_SECR_NO, t.CONN_ID, a.OPNDT, a.ACNT_STAT, t.INDV_CORP_TP, t.NATV_FRNR_TP, t.MATRIX_REG_YN, t.MATRIX_SEQ 
+FROM BIZ.TAA_CUSTOMER t JOIN BIZ.tab_sub_account a ON a.acnt_no = t.cust_no
+where a.SUB_ACNT_NO LIKE '%M%' AND a.OPNDT < 20251118 AND a.ACNT_STAT = 1 
+
+
+SELECT a.ACNT_NO, t.CPHN_NO, t.CUST_NO , t.CONN_SECR_NO, t.CONN_ID, a.OPNDT, a.ACNT_STAT, t.INDV_CORP_TP, t.NATV_FRNR_TP, t.MATRIX_REG_YN, t.MATRIX_SEQ 
+FROM BIZ.TAA_CUSTOMER t JOIN BIZ.tab_sub_account a ON a.acnt_no = t.cust_no
+where a.ACNT_STAT = 1 AND t.CUST_STAT = 1
+
+
+10019912
+SELECT t.CPHN_NO, t.cust_id, a.ACNT_NO, t.cust_no, t.CONN_SECR_NO, t.CONN_ID, t.INDV_CORP_TP, t.NATV_FRNR_TP, 
+t.MATRIX_REG_YN, t.MATRIX_SEQ FROM BIZ.TAA_CUSTOMER t JOIN BIZ.tab_sub_account a ON a.acnt_no = t.cust_no
+where t.NATV_FRNR_TP = 2 AND a.ACNT_STAT = 1 AND t.INDV_CORP_TP = 1 AND a.SUB_ACNT_NO LIKE '%M%' ;
+
+SELECT * FROM SMSLOG s ORDER BY s.TRANSDATE DESC;
+
+select * from BIZ.tcd_pref_info a WHERE a.PREF_CD  = 'MR3'-- CHECK tk dùng gói nào 
+
+select * from BIZ.tcd_pref_conf a  -- thông tin gói
+
+  SELECT * FROM BIZ.TAB_ACCOUNT WHERE VSD_ACNT_NO = '010C010938';
+
+    SELECT * FROM BIZ.tab_sub_account WHERE ACNT_NO = '00008166';
+
+select * from BIZ.tib_broker_subacct_dtl a where a.acnt_no = '00015859';
+
+SELECT * FROM BIZ.TAD_LOAN_MASTER tlm WHERE tlm.SUB_ACNT_NO LIKE '%M%'AND tlm.LOAN_EXT_AVAL_YN = 'Y' ;
+
+
+SELECT a.ACNT_NO, t.CPHN_NO, t.CUST_NO , t.CONN_SECR_NO, t.CONN_ID, a.OPNDT, a.ACNT_STAT, t.INDV_CORP_TP, t.NATV_FRNR_TP, t.MATRIX_REG_YN, t.MATRIX_SEQ 
+FROM BIZ.TAA_CUSTOMER t JOIN BIZ.tab_sub_account a ON a.acnt_no = t.cust_no
+where  a.ACNT_STAT = 1 AND a.OMS_NO = '01' AND t.NATV_FRNR_TP = 1 AND t.INDV_CORP_TP = 1 AND a.OPNDT > 20211118;
+
+
+SELECT
+    a.ACNT_NO,
+    a.SUB_ACNT_NO,
+    t.CPHN_NO,
+    t.CUST_NO,
+    t.CONN_SECR_NO,
+    t.CONN_ID,
+    a.OPNDT,
+    a.ACNT_STAT,
+    t.INDV_CORP_TP,
+    t.NATV_FRNR_TP,
+    t.MATRIX_REG_YN,
+    t.MATRIX_SEQ,
+    d.crd_amt,
+    d.nrdmp_crd_amt,
+    d.expr_crd_amt,
+    d.PROC_DATE
+FROM BIZ.tab_sub_account a
+JOIN BIZ.TAA_CUSTOMER t
+  ON a.ACNT_NO = t.CUST_NO
+JOIN BIZ.tia_deposit_balance d
+  ON d.ACNT_NO = a.ACNT_NO
+ AND d.SUB_ACNT_NO = a.SUB_ACNT_NO
+WHERE a.ACNT_STAT = 1
+  AND a.OMS_NO = '01'
+  AND t.NATV_FRNR_TP = 1
+  AND t.INDV_CORP_TP = 1
+  AND a.OPNDT > 20211118
+  AND (
+        NVL(d.crd_amt, 0)
+      + NVL(d.nrdmp_crd_amt, 0)
+      + NVL(d.expr_crd_amt, 0)
+      ) > 0
+ORDER BY d.PROC_DATE DESC;
+
+
+SELECT DISTINCT
+    p.ACNT_NO,
+    p.SUB_ACNT_NO,
+    t.CUST_NO,
+    t.CPHN_NO
+FROM BIZ.TTE_PF_STOCK_BAL p
+JOIN BIZ.tab_sub_account a
+  ON p.ACNT_NO = a.ACNT_NO
+ AND p.SUB_ACNT_NO = a.SUB_ACNT_NO
+JOIN BIZ.TAA_CUSTOMER t
+  ON a.ACNT_NO = t.CUST_NO
+WHERE (p.BAL_QTY > 0 OR p.SEL_WAIT_DIVD_QTY > 0 OR p.SEL_WAIT_QTY > 0 )
+  AND a.ACNT_STAT = 1
+  AND a.OMS_NO = '01'
+  AND t.NATV_FRNR_TP = 1
+  AND t.INDV_CORP_TP = 1
+  AND a.OPNDT > 20201118;
+
+
+
+SELECT a.ROR, a.PNL, a.*
+FROM BIZ.tia_total_assest a
+WHERE a.ACNT_NO = '00190178'
+  AND a.PROC_DATE BETWEEN
+      TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE), -3), 'YYYYMMDD')
+      AND TO_CHAR(TRUNC(SYSDATE) - 1, 'YYYYMMDD') ORDER BY a.PROC_DATE ASC ;
+
+
+INSERT INTO BIZ.TIA_TOTAL_ASSEST
+(ROR, PNL, PROC_DATE, ACNT_NO, SUB_ACNT_NO, STOCKVALUE_INVEST, STOCKVALUE_EOD, STOCK_PNL_AMT, STOCK_PNL_RATE, STOCKDIV, CASHBALANCE, CASHTN, CASHDIV, TOTALDEBT, TTA, NAV, RTT, RFS, COUPON_CASH, IP_CASH, SUB_ACNT_CLSS, CASH_DEPO, CASH_WITHDRAWAL, STOCK_DEPO_VALUE, STOCK_WITHDRAWAL_VALUE, DRVT_DEPO_AMT, ADJUST_RIGHT_VALUE, MARGIN_DEBT, TOTAL_FEE, NAV_PREV, PNL, ROR, SELL_MATCH, TOTAL_TRADE_VALUE, RIGHT_VALUE, NAV_CHECKMR, NAV_NOBOND)
+VALUES(0, 0, '20260108', '00190562', 'M00025212', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 100, 0, 0, 'N', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+SELECT a.ROR, a.PNL, a.*
+FROM BIZ.tia_total_assest a
+JOIN (
+    SELECT ACNT_NO
+    FROM BIZ.tia_total_assest
+    WHERE PROC_DATE BETWEEN
+          TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE), -3), 'YYYYMMDD')
+          AND TO_CHAR(TRUNC(SYSDATE) - 1, 'YYYYMMDD')
+    GROUP BY ACNT_NO
+) b
+  ON a.ACNT_NO = b.ACNT_NO
+WHERE a.PROC_DATE BETWEEN
+      TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE), -3), 'YYYYMMDD')
+      AND TO_CHAR(TRUNC(SYSDATE) - 1, 'YYYYMMDD') AND a.SUB_ACNT_NO LIKE '%D%' AND a.PNL <> 0
+ORDER BY a.ACNT_NO, a.PROC_DATE ASC;
+
+
+SELECT a.ROR, a.PNL, a.*
+FROM BIZ.tia_total_assest a
+WHERE a.SUB_ACNT_NO = 'N00000119'
+  AND a.PROC_DATE BETWEEN
+      TO_CHAR(TRUNC(SYSDATE) - 15, 'YYYYMMDD')
+      AND TO_CHAR(TRUNC(SYSDATE) - 1, 'YYYYMMDD') ORDER BY a.PROC_DATE ASC ;4
+      
+      M00000012
+      D00001955
+      N00000119
+
+M00001307
+N00001795
+D00005813
+
+
+N00000237
+M00000023
+
+WITH base_data AS (
+    SELECT
+        a.*,
+        -- Convert PROC_DATE sang DATE để sort & window function
+        TO_DATE(a.PROC_DATE, 'YYYYMMDD') AS proc_dt,
+        -- ROR dạng decimal
+        (1 + NVL(a.ROR, 0) / 100) AS ror_factor
+    FROM BIZ.tia_total_assest a
+    WHERE a.SUB_ACNT_NO = 'M00000012'
+      AND a.PROC_DATE BETWEEN
+            TO_CHAR(TRUNC(SYSDATE) - 10, 'YYYYMMDD')
+        AND TO_CHAR(TRUNC(SYSDATE) - 1, 'YYYYMMDD')
+),
+calc AS (
+    SELECT
+        base_data.*,
+
+        /* =========================
+           PNL tích luỹ
+           ========================= */
+        SUM(NVL(PNL, 0)) OVER (
+            ORDER BY proc_dt
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS accumula_pnl_raw,
+
+        /* =========================
+           ROR tích luỹ (log-sum-exp trick)
+           ========================= */
+        EXP(
+            SUM(
+                LN(ror_factor)
+            ) OVER (
+                ORDER BY proc_dt
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            )
+        ) - 1 AS ror_tn_raw
+
+    FROM base_data
+)
+SELECT
+    ROR,
+    PNL,
+    PROC_DATE,
+
+    /* Ngày T0 = bắt đầu từ 0 */
+    CASE
+        WHEN proc_dt = MIN(proc_dt) OVER ()
+        THEN 0
+        ELSE ROUND(accumula_pnl_raw, 2)
+    END AS accumulaPnl,
+
+    CASE
+        WHEN proc_dt = MIN(proc_dt) OVER ()
+        THEN 0
+        ELSE ROUND(ror_tn_raw * 100, 2)
+    END AS rorTN
+
+FROM calc
+ORDER BY proc_dt ASC;
+
+SELECT * FROM BIZ.tia_deposit_balance a WHERE a.SUB_ACNT_NO = 'M00001307'
+
+
+WITH base_data AS (
+    SELECT
+        a.*,
+        TO_DATE(a.PROC_DATE, 'YYYYMMDD') AS proc_dt,
+        (1 + NVL(a.ROR, 0) / 100) AS ror_factor
+    FROM BIZ.tia_total_assest a
+    WHERE a.ACNT_NO = '00000119' AND a.PROC_DATE BETWEEN TO_CHAR(TRUNC(SYSDATE) - 10, 'YYYYMMDD')
+                          AND TO_CHAR(TRUNC(SYSDATE) - 1, 'YYYYMMDD')
+        -- nếu muốn lọc sub account cụ thể thì mở dòng dưới
+        -- AND a.SUB_ACNT_NO = 'XXXX'
+),
+
+calc AS (
+    SELECT
+        b.*,
+
+        /* =========================
+           PNL tích luỹ theo SUB_ACNT_NO
+           ========================= */
+        SUM(NVL(b.PNL, 0)) OVER (
+            PARTITION BY b.SUB_ACNT_NO
+            ORDER BY b.proc_dt
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS accumula_pnl_raw,
+
+        /* =========================
+           ROR tích luỹ theo SUB_ACNT_NO
+           log-sum-exp
+           ========================= */
+        EXP(
+            SUM(LN(b.ror_factor)) OVER (
+                PARTITION BY b.SUB_ACNT_NO
+                ORDER BY b.proc_dt
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            )
+        ) - 1 AS ror_tn_raw
+    FROM base_data b
+)
+
+SELECT
+    SUB_ACNT_NO,
+    ROR,
+    PNL,
+    PROC_DATE,
+
+    /* Ngày đầu tiên của mỗi SUB_ACNT_NO = 0 */
+    CASE
+        WHEN proc_dt = MIN(proc_dt) OVER (PARTITION BY SUB_ACNT_NO)
+        THEN 0
+        ELSE ROUND(accumula_pnl_raw, 2)
+    END AS accumulaPnl,
+
+    CASE
+        WHEN proc_dt = MIN(proc_dt) OVER (PARTITION BY SUB_ACNT_NO)
+        THEN 0
+        ELSE ROUND(ror_tn_raw * 100, 2)
+    END AS rorTN
+
+FROM calc
+ORDER BY SUB_ACNT_NO, proc_dt ASC;
+
+-----------------------------
+
+WITH base_data AS (
+    SELECT
+        a.*,
+        TO_DATE(a.PROC_DATE, 'YYYYMMDD') AS proc_dt,
+        (1 + NVL(a.ROR, 0) / 100) AS ror_factor
+    FROM BIZ.tia_total_assest a
+    WHERE a.ACNT_NO = '00000119' AND a.PROC_DATE BETWEEN TO_CHAR(TRUNC(SYSDATE) - 15, 'YYYYMMDD')
+                          AND TO_CHAR(TRUNC(SYSDATE) - 1, 'YYYYMMDD')
+),
+
+calc AS (
+    SELECT
+        b.*,
+
+        /* =========================
+           PNL tích luỹ (raw)
+           ========================= */
+        SUM(NVL(b.PNL, 0)) OVER (
+            PARTITION BY b.SUB_ACNT_NO
+            ORDER BY b.proc_dt
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS accumula_pnl_raw,
+
+        /* =========================
+           ROR tích luỹ (raw factor)
+           ========================= */
+        EXP(
+            SUM(LN(b.ror_factor)) OVER (
+                PARTITION BY b.SUB_ACNT_NO
+                ORDER BY b.proc_dt
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            )
+        ) AS ror_factor_raw
+    FROM base_data b
+)
+
+SELECT
+    SUB_ACNT_NO,
+    ROR,
+    PNL,
+    PROC_DATE,
+
+    /* =========================
+       RESET fromDate = 0 (KHÔNG đảo dấu)
+       ========================= */
+    ROUND(
+        accumula_pnl_raw
+        - FIRST_VALUE(accumula_pnl_raw) OVER (
+            PARTITION BY SUB_ACNT_NO
+            ORDER BY proc_dt
+        ),
+        2
+    ) AS accumulaPnl,
+
+    ROUND(
+        (
+            ror_factor_raw
+            / FIRST_VALUE(ror_factor_raw) OVER (
+                PARTITION BY SUB_ACNT_NO
+                ORDER BY proc_dt
+            )
+            - 1
+        ) * 100,
+        2
+    ) AS rorTN
+
+FROM calc
+ORDER BY SUB_ACNT_NO, proc_dt;
+
+
+
