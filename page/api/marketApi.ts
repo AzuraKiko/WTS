@@ -7,9 +7,21 @@ const API_ENDPOINTS = {
     GET_LATEST_DVX: `/getliststockdata`,
     GET_LIST_DVX: `/getListDvx`,
     GET_SUMMARY: `/getSummary`,
+
+
+    CATEGORY_ALL: '/market/public/category/all',
+    CATEGORY_STOCKS: '/market/public/category/stocks?categoryCode=SAN_XUAT&sortBy=VOLUME&market=HOSE',
+    GLOBAL_MARKET: '/market/public/market/global',
+    HEAT_MAP: '/market/public/category/heat-map',
+    BREADTH_DATA: '/market/public/market/breadth/data?exchange=HOSE',
+    INDEX_LIQUIDITY: '/market/public/index/liquidity/data?exchange=HOSE',
+    STOCK_INFLUENCE: '/market/public/stock/influence?exchange=HOSE',
+    INDEX_FOREIGN: '/market/public/index/foreign/data?exchange=HOSE&numberOfSessions=1',
+    STOCK_TOP: '/market/public/stock/top?type=TOP_VOLUME&exchange=HOSE&tradingValue=5000000&limit=1',
+    STOCK_INFLUENCE_LIMIT: '/market/public/stock/influence?exchange=HOSE&limit=1'
 };
 
-export default class MarketApi extends apiHelper {
+export class MarketApi extends apiHelper {
     apiHelper = new apiHelper({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
 
     async getListIndexDetail(indexCode: string): Promise<any> {
@@ -124,5 +136,19 @@ export default class MarketApi extends apiHelper {
         const endpoint = `${API_ENDPOINTS.GET_LATEST_DVX}/${indexCode}`;
         const response = await this.apiHelper.getFullResponse(endpoint);
         return response.data[0];
+    }
+}
+
+export class MarketGatewayApi extends apiHelper {
+    apiHelper = new apiHelper({ baseUrl: TEST_CONFIG.BASE_URL });
+
+    async getGlobalDataByName(indexName: string): Promise<any> {
+        const response = await this.apiHelper.get(API_ENDPOINTS.GLOBAL_MARKET);
+        const data = response.find((index: any) => index?.name === indexName);
+        return {
+            indexValue: data.closePrice,
+            indexChange: data.changePriceValue,
+            indexChangePercent: data.changePercentValue,
+        };
     }
 }

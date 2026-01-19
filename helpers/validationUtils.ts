@@ -2,7 +2,7 @@
  * Common validation utilities for form data, numbers, and formats
  */
 
-import { text } from "stream/consumers";
+import { expect } from "@playwright/test";
 
 // Interface definitions
 export interface ValidationResult {
@@ -454,12 +454,61 @@ export class DataConsistencyValidator {
     }
 }
 
+type RGB = { r: number; g: number; b: number };
+
+export class ColorUtils {
+    private static parseCssRgb(color: string): RGB {
+        const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if (!match) {
+            throw new Error(`Unsupported color format: ${color}`);
+        }
+
+        return {
+            r: Number(match[1]),
+            g: Number(match[2]),
+            b: Number(match[3]),
+        };
+    }
+
+    static expectColorFamily(
+        color: string,
+        family: 'RED' | 'GREEN' | 'YELLOW'
+    ): void {
+        const { r, g, b } = this.parseCssRgb(color);
+
+        let isMatch = false;
+
+        switch (family) {
+            case 'RED':
+                // Đỏ: R nổi trội hơn G và B
+                isMatch = r > g && r > b;
+                break;
+
+            case 'GREEN':
+                // Xanh: G nổi trội hơn R và B
+                isMatch = g > r && g > b;
+                break;
+
+            case 'YELLOW':
+                // Vàng: R & G cao, B thấp
+                isMatch = r > b && g > b;
+                break;
+        }
+
+        expect(
+            isMatch,
+            `Expected ${family} color but got rgb(${r}, ${g}, ${b})`
+        ).toBeTruthy();
+    }
+}
+
 // Export all validators as a single object for convenience
 export const Validators = {
     StockCode: StockCodeValidator,
     Number: NumberValidator,
     Form: FormValidator,
-    DataConsistency: DataConsistencyValidator
+    DataConsistency: DataConsistencyValidator,
+    Color: ColorUtils
 };
 
 // Export common patterns

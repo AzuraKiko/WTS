@@ -294,29 +294,6 @@ export class PriceBoardPage {
             indexChangePercent: await values.nth(2).innerText(),
         };
     }
-
-    async getGlobalData(): Promise<any> {
-        if (!(await this.globalCard.isVisible())) {
-            await this.rightSlider.click();
-            await expect(this.globalCard).toBeVisible({ timeout: 15000 });
-        }
-
-        return {
-            dowJones: await this.getGlobalDataByLabel('Dow Jones'),
-            sp500: await this.getGlobalDataByLabel('S&P 500'),
-            nasdaq: await this.getGlobalDataByLabel('Nasdaq'),
-            HangSeng: await this.getGlobalDataByLabel('Hang Seng'),
-            Nikkei: await this.getGlobalDataByLabel('Nikkei'),
-            FTSE: await this.getGlobalDataByLabel('FTSE'),
-            CAC40: await this.getGlobalDataByLabel('CAC40'),
-            DAX: await this.getGlobalDataByLabel('DAX'),
-            IBEX35: await this.getGlobalDataByLabel('IBEX35'),
-            PSI20: await this.getGlobalDataByLabel('PSI20'),
-            AEX: await this.getGlobalDataByLabel('AEX'),
-            OMX: await this.getGlobalDataByLabel('OMX'),
-        };
-    }
-
     /**
      * Chuyển tab và chờ dữ liệu mới load
      */

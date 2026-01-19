@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
-import { MarketApi, MarketGatewayApi } from '../../page/api/MarketApi';
+import { MarketApi, MarketGatewayApi } from '../../page/api/marketApi';
 import { NumberValidator } from '../../helpers/validationUtils';
 import { TimeUtils } from '../../helpers/uiUtils';
 import { ColorUtils } from '../../helpers/validationUtils';

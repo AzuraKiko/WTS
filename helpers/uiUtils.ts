@@ -902,6 +902,27 @@ export class PerformanceUtils {
     }
 }
 
+export class TimeUtils {
+    /**
+     * Rule:
+     * - Thứ 2–Thứ 6: chỉ check từ 09:00 đến 08:30 ngày hôm sau (bỏ qua 08:31–08:59)
+     * - Thứ 7/CN: check cả ngày
+     *
+        * @param now - optional date for deterministic tests; defaults to current time
+     */
+    static async checkDataWithTimeRule(now: Date = new Date(), fromHour: number, fromMinute: number, toHour: number, toMinute: number = 0): Promise<boolean> {
+        const currentDay = now.getDay(); // 0=CN, 6=T7
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+
+        const isWeekend = currentDay === 0 || currentDay === 6;
+        if (isWeekend) return true;
+
+        const isBefore = currentHour < fromHour || (currentHour === fromHour && currentMinute <= fromMinute);
+        return currentHour >= toHour || isBefore;
+    }
+}
+
 // Export all utilities as a single object for convenience
 export const UIUtils = {
     Scroll: ScrollUtils,
@@ -909,7 +930,8 @@ export const UIUtils = {
     Form: FormUtils,
     Table: TableUtils,
     Modal: ModalUtils,
-    Performance: PerformanceUtils
+    Performance: PerformanceUtils,
+    Time: TimeUtils
 };
 
 // Export common selectors
