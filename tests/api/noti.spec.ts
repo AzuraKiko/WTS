@@ -33,19 +33,19 @@ const START_INDEX = '1';
    TEST DATA
 ====================================================== */
 const notiData = [
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.partnershipInfo" },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.portfolio.screenPortfolioLayout", "passProps": { "tabIndex": 0 } },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Xem chi tiết", "actionLabelEn": "", "pageName": "DerivativeProductOverview" },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.partnershipInfo" },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.portfolio.screenPortfolioLayout", "passProps": { "tabIndex": 0 } },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Xem chi tiết", "actionLabelEn": "", "pageName": "DerivativeProductOverview" },
     { "actionType": "CHANGE_PAGE", "actionLabel": "Xem chi tiết", "actionLabelEn": "", "pageName": "pinetree.pine.ScreenMarginPackage" },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Xem chi tiết", "actionLabelEn": "", "pageName": "pineb" },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.MainBasisNavigator" },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Xem chi tiết", "actionLabelEn": "", "pageName": "pineb" },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.MainBasisNavigator" },
     { "actionType": "OPEN_LINK", "actionLabel": "Xem", "actionLabelEn": "", "url": "https://register.alphatrading.pinetree.vn/open-app" },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Đi đến", "actionLabelEn": "", "pageName": "asset.management.NewAsset" },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Đi đến", "actionLabelEn": "", "pageName": "asset.management.MainBasisNavigator", "passProps": { "tabIndex": 2 } },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.v2.rights" },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Đi đến", "actionLabelEn": "", "pageName": "asset.management.NewAsset" },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Đi đến", "actionLabelEn": "", "pageName": "asset.management.MainBasisNavigator", "passProps": { "tabIndex": 2 } },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "asset.management.v2.rights" },
     { "actionType": "CHANGE_PAGE", "actionLabel": "Đi đến", "actionLabelEn": "", "pageName": "pinetree.pine.ScreenMarginPackage", "passProps": { "tabIndex": 3 } },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Đi đến", "actionLabelEn": "", "pageName": "PinetreeInsight" },
-    // { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "pinetree.pist.ScreenAiNews" }
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Đi đến", "actionLabelEn": "", "pageName": "PinetreeInsight" },
+    { "actionType": "CHANGE_PAGE", "actionLabel": "Xem", "actionLabelEn": "", "pageName": "pinetree.pist.ScreenAiNews" }
 ];
 
 const popupData = [
