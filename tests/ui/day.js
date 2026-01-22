@@ -16,8 +16,8 @@
 // console.log(result);
 const moment = require('moment');
 
-const toDate = moment().subtract(1, 'day'); // giữ dạng moment
-const frDate = toDate.clone().subtract(1, 'month');
+const toDate = moment().subtract(3, 'day'); // giữ dạng moment
+const frDate = toDate.clone().subtract(4, 'month');
 
 console.log({
     frDate: frDate.format('YYYYMMDD'),
