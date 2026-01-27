@@ -294,6 +294,27 @@ export class PriceBoardPage {
             indexChangePercent: await values.nth(2).innerText(),
         };
     }
+
+    /**
+     * Lấy data card Commodity
+     */
+    async getCommodityDataByLabel(label: string): Promise<GlobalData> {
+        const item = this.commodityCard
+            .locator('.card-index-info-item')
+            .filter({ hasText: label })
+            .first();
+        if (!(await item.isVisible())) {
+            await WaitUtils.ensureItemVisible(item, this.commodityRightSlider, this.page, 10);
+        }
+
+        const values = item.locator('.card-index-info-item__value span');
+
+        return {
+            indexValue: await values.nth(0).innerText(),
+            indexChange: await values.nth(1).innerText(),
+            indexChangePercent: await values.nth(2).innerText(),
+        };
+    }
     /**
      * Chuyển tab và chờ dữ liệu mới load
      */

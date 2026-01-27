@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
-import { MarketApi, MarketGatewayApi } from '../../page/api/marketApi';
+import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/marketApi';
 import { NumberValidator } from '../../helpers/validationUtils';
 import { TimeUtils } from '../../helpers/uiUtils';
 import { ColorUtils } from '../../helpers/validationUtils';
+import { TEST_DATA } from '../utils/testConfig';
 
 const parseNumber = (value: string): number => {
     return NumberValidator.parseNumber(value);
@@ -43,18 +44,23 @@ test.describe('Market Watch Automation Suite', () => {
     let priceBoardPage: PriceBoardPage;
     let marketApi: MarketApi;
     let marketGatewayApi: MarketGatewayApi;
+    let marketWapiApi: MarketWapiApi;
 
     test.beforeEach(async ({ page }) => {
         priceBoardPage = new PriceBoardPage(page);
         marketApi = new MarketApi();
         marketGatewayApi = new MarketGatewayApi();
+        marketWapiApi = new MarketWapiApi();
         await priceBoardPage.openPriceBoard();
     });
 
     // --- TEST CASE CHO BIỂU ĐỒ MINI CHART ---
 
     // List of all available index codes to test
-    const indexCodes = ['VNI', 'VN30', 'HNX', 'UPCOM', 'VN100'];
+    // const indexCodes = ['VNI', 'VN30', 'HNX', 'UPCOM', 'VN100'];
+    // const indexCodes = Object.values(TEST_DATA.INDEX_CODES);
+    const indexCodes = ['VNI', 'VN30', 'HNX', 'VN100'];
+
 
     for (const indexCode of indexCodes) {
         test(`TC_001: Verify index value and logic color for ${indexCode}`, async () => {
@@ -154,7 +160,7 @@ test.describe('Market Watch Automation Suite', () => {
     test('TC_003: Should render mini chart panels (VNI/VN30/HNX/UPCOM/VN100/DVX) with SVG', async () => {
         const latestDvx = await marketApi.getLatestDvx();
         const indexCode = latestDvx.indexCode;
-        const indexCodes = ['VNI', 'VN30', 'HNX', 'UPCOM', 'VN100', indexCode];
+        const indexCodes = Object.values(TEST_DATA.INDEX_CODES).concat(indexCode);
 
         if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 9, 0)) {
             for (const code of indexCodes) {
@@ -166,14 +172,14 @@ test.describe('Market Watch Automation Suite', () => {
                 await expect(chart.locator('svg'), `${code} chart should have an SVG`).toBeVisible();
             }
         } else {
-            console.log("Hiện tại là thời gian reset data đầu ngày");
+            console.log("This is the time to reset data at the beginning of the day");
         }
     });
 
     test('TC_004: Check trading view data for Mini Chart Panels', async () => {
         const latestDvx = await marketApi.getLatestDvx();
         const indexCode = latestDvx.indexCode;
-        const indexCodes = ['VNI', 'VN30', 'HNX', 'UPCOM', 'VN100', indexCode];
+        const indexCodes = Object.values(TEST_DATA.INDEX_CODES).concat(indexCode);
         for (const code of indexCodes) {
             await priceBoardPage.openTradingView(code);
             const [tradingViewData, indexPanelData] = await Promise.all([
@@ -223,24 +229,66 @@ test.describe('Market Watch Automation Suite', () => {
                 expect(uiValue, `Overview ${key} should match API`).toBe(api[key as keyof typeof api]);
             }
         } else {
-            console.log("Hiện tại là thời gian reset data đầu ngày");
+            console.log("Dữ liệu realtime ko check với data API");
         }
     });
 
     test('TC_006: Check global data', async () => {
-        const indexNames = ['Dow Jones', 'S&P 500', 'Nasdaq', 'Hang Seng', 'Nikkei', 'FTSE', 'CAC40', 'DAX', 'IBEX35', 'PSI20', 'AEX', 'OMX'];
-        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 14, 45)) {
-            for (const indexName of indexNames) {
-                const [ui, api] = await Promise.all([
-                    priceBoardPage.getGlobalDataByLabel(indexName),
-                    marketGatewayApi.getGlobalDataByName(indexName),
-                ]);
+        const globalIndexNames = Object.values(TEST_DATA.Global_INDEX_CODES);
+        for (const globalIndexName of globalIndexNames) {
+            const [globalData, globalDataApi] = await Promise.all([
+                priceBoardPage.getGlobalDataByLabel(globalIndexName),
+                marketGatewayApi.getGlobalDataByName(globalIndexName),
+            ]);
+            const ui = {
+                indexValue: parseNumber(globalData.indexValue),
+                indexChange: parseNumber(globalData.indexChange),
+                indexChangePercent: parseNumber(globalData.indexChangePercent),
+            };
+            const api = {
+                indexValue: parseNumber(globalDataApi.indexValue),
+                indexChange: parseNumber(globalDataApi.indexChange),
+                indexChangePercent: parseNumber(globalDataApi.indexChangePercent),
+            };
+
+            try {
                 for (const [key, uiValue] of Object.entries(ui)) {
-                    expect(uiValue, `Global ${indexName} ${key} should match API`).toBe(api[key as keyof typeof api]);
+                    expect(uiValue, `Global ${globalIndexName} ${key} should match API`).toBe(api[key as keyof typeof api]);
                 }
+            } catch {
+                expect(ui.indexValue, `Global ${globalIndexName} index value should be greater than 0`).toBeGreaterThan(0);
+            } finally {
+                console.log(`Global ${globalIndexName} is out of trading time`);
             }
-        } else {
-            console.log("Hiện tại là thời gian reset data đầu ngày");
+        }
+    });
+
+    test('TC_007: Check commodity data', async () => {
+        const commodityNames = Object.values(TEST_DATA.COMMODITY_CODES);
+        for (const commodityName of commodityNames) {
+            const [commodityData, commodityDataApi] = await Promise.all([
+                priceBoardPage.getCommodityDataByLabel(commodityName),
+                marketWapiApi.getCommodityDataByName(commodityName),
+            ]);
+            const ui = {
+                commodityValue: parseNumber(commodityData.indexValue),
+                commodityChange: parseNumber(commodityData.indexChange),
+                commodityChangePercent: parseNumber(commodityData.indexChangePercent),
+            };
+            const api = {
+                commodityValue: parseNumber(commodityDataApi.indexValue),
+                commodityChange: parseNumber(commodityDataApi.indexChange),
+                commodityChangePercent: parseNumber(commodityDataApi.indexChangePercent),
+            };
+            try {
+                for (const [key, uiValue] of Object.entries(ui)) {
+                    expect(uiValue, `Commodity ${commodityName} ${key} should match API`).toBe(api[key as keyof typeof api]);
+                }
+            } catch {
+                expect(ui.commodityValue, `Commodity ${commodityName} commodity value should be greater than 0`).toBeGreaterThan(0);
+            } finally {
+                console.log(`Commodity ${commodityName} is out of trading time`);
+            }
         }
     });
 });

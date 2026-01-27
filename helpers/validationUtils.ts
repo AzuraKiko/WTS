@@ -205,7 +205,7 @@ export class NumberValidator {
      * Parse number from string with no comma format
      */
     static parseNumber(value: string): number {
-        const normalized = value.trim()
+        const normalized = String(value ?? '').trim()
             .replace(/[()%]/g, '') // Remove parentheses and percentage sign
             .replace(/,/g, '') // Remove commas
             .replace(/\s+/g, ''); // Remove spaces

@@ -71,6 +71,7 @@ export const saveENVResults = (config: ENVConfig, results: any, testType?: strin
  */
 export const TEST_CONFIG = {
     WEB_LOGIN_URL: process.env[`${ENV}_WEB_LOGIN_URL`] as string,
+    WAPI_URL: process.env[`${ENV}_WAPI_URL`] as string,
     TEST_USER: process.env[`${ENV}_TEST_USER`] as string,
     TEST_PASS: process.env[`${ENV}_TEST_PASS`] as string,
     TEST_PASS_ENCRYPT: process.env[`${ENV}_TEST_PASS_ENCRYPT`] as string,
@@ -128,6 +129,36 @@ export const TEST_DATA = {
         BUY: "1",
         SELL: "2",
         NORMAL: "01"
+    },
+
+    INDEX_CODES: {
+        VNI: "VNI",
+        VN30: "VN30",
+        HNX: "HNX",
+        UPCOM: "UPCOM",
+        VN100: "VN100",
+    },
+    Global_INDEX_CODES: {
+        DOW_JONES: "Dow Jones",
+        S_P_500: "S&P 500",
+        NASDAQ: "Nasdaq",
+        HANG_SENG: "Hang Seng",
+        DAX: "DAX",
+        FTSE_100: "FTSE 100",
+        NIKKEI_225: "Nikkei 225",
+        ALL_ORDINARIES: "All Ordinaries",
+        AAC_40: "AAC 40",
+        SHANGHAI_COM: "Shanghai Com",
+    },
+
+    COMMODITY_CODES: {
+        VANG: "Vàng",
+        DAU_THO: "Dầu thô",
+        GAS: "Gas",
+        CA_PHIEU: "Cà phieu",
+        DUONG: "Đường",
+        DONG: "Đồng",
+        NGO: "Ngô",
     },
 } as const;
 
