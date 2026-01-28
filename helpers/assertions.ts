@@ -2,6 +2,7 @@
 // Common assertion functions for web automation testing
 
 import { Page, Locator, expect, APIResponse } from '@playwright/test';
+import { WaitUtils } from './uiUtils';
 
 // ========== PAGE ASSERTIONS ==========
 
@@ -358,6 +359,35 @@ export async function expectTextEventuallyChanges(
     const currentText = await element.textContent();
     expect(currentText).not.toBe(initialText);
   }, timeout);
+}
+
+export async function retryCompareData<T extends Record<string, number>>(
+  fetchFn: () => Promise<{ ui: T; api: T }>,
+  options: { attempts?: number; delayMs?: number } = {}
+): Promise<{ matched: boolean; ui: T; api: T }> {
+  const { attempts = 3, delayMs = 1000 } = options;
+  let lastUi: T | null = null;
+  let lastApi: T | null = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const { ui, api } = await fetchFn();
+    lastUi = ui;
+    lastApi = api;
+
+    const isMatch = Object.entries(ui).every(([key, uiValue]) => {
+      return uiValue === api[key as keyof T];
+    });
+
+    if (isMatch) {
+      return { matched: true, ui, api };
+    }
+
+    if (attempt < attempts) {
+      await WaitUtils.delay(delayMs);
+    }
+  }
+
+  return { matched: false, ui: lastUi!, api: lastApi! };
 }
 
 // ========== UTILITY FUNCTIONS ==========

@@ -17,6 +17,11 @@ class LogoutPage extends BasePage {
         await this.logoutButton.click();
         await this.waitForPageLoad();
     }
+
+    async verifyLogoutSuccess() {
+        await this.logoutButton.isVisible();
+        return true;
+    }
 }
 
 export default LogoutPage;

@@ -10,6 +10,8 @@ const API_ENDPOINTS = {
 
     GLOBAL_MARKET: '/market/public/market/global',
     COMMODITY_MARKET: '/Market/GetCommodity?lang=1',
+    GET_LIST_STOCK: '/getliststockById',
+    GET_CW: '/listCW.pt',
 
 };
 
@@ -129,6 +131,18 @@ export class MarketApi extends apiHelper {
         const response = await this.apiHelper.getFullResponse(endpoint);
         return response.data[0];
     }
+
+    async getListStockById(stockId: string, board: string, noetf: string): Promise<any> {
+        const endpoint = `${API_ENDPOINTS.GET_LIST_STOCK}/${stockId}?board=${board}&noetf=${noetf}`;
+        const response = await this.apiHelper.getFullResponse(endpoint);
+        return response.data;
+    }
+
+    async getDataBySymbol(symbol: string, stockId: string, board: string, noetf: string): Promise<any> {
+        const response = await this.getListStockById(stockId, board, noetf);
+        const data = response.data.find((stock: any) => stock.sym === symbol);
+        return data;
+    }
 }
 
 export class MarketGatewayApi extends apiHelper {
@@ -151,6 +165,10 @@ export class MarketWapiApi extends apiHelper {
     async getCommodityDataByName(commodityName: string): Promise<any> {
         const response = await this.apiHelper.get(API_ENDPOINTS.COMMODITY_MARKET);
         const data = response.data.find((commodity: any) => commodity?.SymbolName === commodityName);
-        return data;
+        return {
+            indexValue: data.Last,
+            indexChange: data.Change,
+            indexChangePercent: data.Percent,
+        };
     }
 }

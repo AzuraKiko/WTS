@@ -1,6 +1,6 @@
 import { Page, Locator, expect } from "@playwright/test";
 import { TEST_CONFIG } from "../../tests/utils/testConfig";
-import { WaitUtils } from "../../helpers/uiUtils";
+import { WaitUtils, FormUtils } from "../../helpers/uiUtils";
 
 // Interface cho cấu trúc của một index panel
 interface IndexPanelLocators {
@@ -64,6 +64,11 @@ export class PriceBoardPage {
     readonly etfTab: Locator;
     readonly majorTab: Locator;
 
+    // Locators dropdown Tabs Bảng Giá
+    readonly priceBoardTabDropdown: Locator;
+    readonly priceBoardTabMenu: Locator;
+    readonly priceBoardTabOptions: Locator;
+
     // Locator chung cho toàn bộ bảng dữ liệu
     readonly stockTable: Locator;
 
@@ -97,6 +102,11 @@ export class PriceBoardPage {
         // Locators cho Tabs
         this.hnxTab = page.locator('button:has-text("HNX")');
         this.upcomTab = page.locator('button:has-text("UPCOM")');
+
+        // Locators dropdown Tabs Bảng Giá
+        this.priceBoardTabDropdown = page.locator('a.dropdown-toggle.nav-link');
+        this.priceBoardTabMenu = page.locator('[aria-labelledby="basic-nav-dropdown"].dropdown-menu');
+        this.priceBoardTabOptions = this.priceBoardTabMenu.locator('a.nav-link');
 
         // Locator cho Bảng Giá chính
         this.stockTable = page.locator(
@@ -315,23 +325,41 @@ export class PriceBoardPage {
             indexChangePercent: await values.nth(2).innerText(),
         };
     }
+
     /**
-     * Chuyển tab và chờ dữ liệu mới load
+     * Lấy locator cho tab Bảng Giá trong dropdown
      */
-    async switchTabAndVerifyLoad(tabLocator: Locator) {
-        // Lấy mã chứng khoán đầu tiên hiện tại để làm điểm neo
-        const firstStockCodeBefore = await this.stockTable
-            .locator("tbody tr:first-child td:first-child")
-            .innerText();
-
-        await tabLocator.click();
-
-        // Chờ dữ liệu mới xuất hiện
-        await expect(
-            this.stockTable.locator("tbody tr:first-child td:first-child")
-        ).not.toHaveText(firstStockCodeBefore, { timeout: 10000 });
-        console.log(`Đã chuyển sang tab: ${await tabLocator.innerText()}`);
+    getPriceBoardTabLocator(tabName: string): Locator {
+        return this.priceBoardTabDropdown.filter({
+            hasText: tabName
+        });
     }
+
+
+    async expectPriceBoardTabActive(tabName: string): Promise<void> {
+        const tab = this.getPriceBoardTabLocator(tabName);
+        await expect(tab).toHaveClass(/active/);
+    }
+
+    async expectPriceBoardTabNotActive(tabName: string): Promise<void> {
+        const tab = this.getPriceBoardTabLocator(tabName);
+        await expect(tab).not.toHaveClass(/active/);
+    }
+
+    /**
+     * Chọn tab Bảng Giá từ dropdown và chờ dữ liệu load
+     */
+    async selectPriceBoardTab(dropdownName: string, tabName: string) {
+        const dropdown = this.getPriceBoardTabLocator(dropdownName);
+        await FormUtils.selectOption(
+            this.page,
+            dropdown,
+            this.priceBoardTabOptions,
+            tabName
+        );
+        await this.expectPriceBoardTabActive(tabName);
+    }
+
 
     /**
      * Lấy giá trị của một ô dữ liệu cụ thể trong bảng

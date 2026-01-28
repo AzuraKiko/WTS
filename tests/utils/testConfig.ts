@@ -80,34 +80,6 @@ export const TEST_CONFIG = {
 } as const;
 
 /**
- * Common Error Messages
- * Centralized error message constants for consistent testing
- */
-export const ERROR_MESSAGES = {
-    // Login Error Messages
-    EMPTY_FIELD: 'Trường không được để trống',
-    INVALID_CUSTOMER: 'Error: Không có thông tin khách hàng',
-    WRONG_PASSWORD_1: 'Error: Quý Khách đã nhập sai thông tin đăng nhập 1 LẦN. Quý Khách lưu ý, tài khoản sẽ bị tạm khóa nếu Quý Khách nhập sai liên tiếp 05 LẦN.',
-    WRONG_PASSWORD_2: 'Error: Quý Khách đã nhập sai thông tin đăng nhập 2 LẦN. Quý Khách lưu ý, tài khoản sẽ bị tạm khóa nếu Quý Khách nhập sai liên tiếp 05 LẦN.',
-    WRONG_PASSWORD_3: 'Error: Quý Khách đã nhập sai thông tin đăng nhập 3 LẦN. Quý Khách lưu ý, tài khoản sẽ bị tạm khóa nếu Quý Khách nhập sai liên tiếp 05 LẦN.',
-    WRONG_PASSWORD_4: 'Error: Quý Khách đã nhập sai thông tin đăng nhập 4 LẦN. Quý Khách lưu ý, tài khoản sẽ bị tạm khóa nếu Quý Khách nhập sai liên tiếp 05 LẦN.',
-    ACCOUNT_LOCKED: 'Error: Tài khoản của Quý Khách bị tạm khóa do nhập sai thông tin đăng nhập liên tiếp 05 lần. Quý Khách vui lòng sử dụng tính năng Quên mật khẩu ở màn hình đăng nhập hoặc liên hệ Phòng Dịch vụ Khách hàng của Pinetree (024 6282 3535) để được hỗ trợ.',
-
-    // API Error Messages
-    NO_CUSTOMER_INFO: "Không có thông tin khách hàng",
-    WRONG_LOGIN_INFO: "Quý Khách đã nhập sai thông tin đăng nhập 1 LẦN. Quý Khách lưu ý, tài khoản sẽ bị tạm khóa nếu Quý Khách nhập sai liên tiếp 05 LẦN.",
-    NOT_LOGGED_IN: "Servlet.exception.SessionException: Not logged in!",
-    SESSION_INCORRECT: (username: string) => `Servlet.exception.SessionException: Session ${username}is not correct.`,
-    INVALID_OTP: "Invalid OTP",
-    TOKEN_NOT_MATCH: "Not match Certification value as 2FA.",
-
-    // Order Error Messages
-    ORDER_SYMBOL_NOT_FOUND: "Please check SYMBOL.",
-    ORDER_QUANTITY_EXCEEDED: "order available sell quantity has been exceeded.",
-    ORDER_PRICE_LIMIT: "Order price is greater than upper limit.",
-} as const;
-
-/**
  * Test Data Constants
  * Common test data used across multiple test files
  */
@@ -138,6 +110,7 @@ export const TEST_DATA = {
         UPCOM: "UPCOM",
         VN100: "VN100",
     },
+
     Global_INDEX_CODES: {
         DOW_JONES: "Dow Jones",
         S_P_500: "S&P 500",
@@ -159,6 +132,61 @@ export const TEST_DATA = {
         DUONG: "Đường",
         DONG: "Đồng",
         NGO: "Ngô",
+    },
+
+    TAB_BOARD_NAMES: {
+        DanhMucCuaToi: ["Mặc định"],
+        HSX: [
+            "HSX",
+            "VN30",
+            "VN100",
+            "Thoả thuận",
+            "VNCOND",
+            "VNFIN",
+            "VNIND",
+            "VNREAL",
+            "VNX50",
+            "VNCONS",
+            "VNFINLEAD",
+            "VNIT",
+            "VNSI",
+            "VNDIAMOND",
+            "VNFINSELECT",
+            "VNMAT",
+            "VNXALL",
+            "VNALL",
+            "VNENE",
+            "VNHEAL",
+            "VNMID",
+            "VNUTI",
+        ],
+        HNX: ["HNX", "HNX30", "Thoả thuận"],
+        UPCOM: ["UPCOM", "Thoả thuận"],
+        CW: "Chứng quyền",
+        OddLot: ["Lô lẻ (HSX)", "Lô lẻ (HNX)", "Lô lẻ (UPCOM)"],
+        ETF: "ETF",
+        Major: [
+            "CP ngành",
+            "Bán buôn",
+            "Bán lẻ",
+            "Chăm sóc sức khỏe và hoạt động xã hội",
+            "Công nghệ và thông tin",
+            "Dịch vụ chuyên môn, khoa học và công nghệ",
+            "Dịch vụ giáo dục",
+            "Dịch vụ hỗ trợ (hành chính, du lịch)",
+            "Dịch vụ khác (ngoại trừ hành chính công)",
+            "Dịch vụ lưu trú và ăn uống",
+            "Hành chính công",
+            "Khai khoáng",
+            "Nghệ thuật, vui chơi và giải trí",
+            "Sản xuất",
+            "Sản xuất nông nghiệp",
+            "Tài chính và bảo hiểm",
+            "Thuê và cho thuê",
+            "Tiện ích",
+            "Vận tải và kho bãi",
+            "Xây dựng và Bất động sản",
+        ],
     },
 } as const;
 
