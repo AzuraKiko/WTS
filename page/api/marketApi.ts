@@ -12,6 +12,7 @@ const API_ENDPOINTS = {
     COMMODITY_MARKET: '/Market/GetCommodity?lang=1',
     GET_LIST_STOCK: '/getliststockById',
     GET_CW: '/listCW.pt',
+    GET_ETF: '/etf',
 
 };
 
@@ -132,16 +133,41 @@ export class MarketApi extends apiHelper {
         return response.data[0];
     }
 
-    async getListStockById(stockId: string, board: string, noetf: string): Promise<any> {
-        const endpoint = `${API_ENDPOINTS.GET_LIST_STOCK}/${stockId}?board=${board}&noetf=${noetf}`;
+    async getListStockById(boardId: string, board: string, noetf?: string): Promise<any> {
+        const endpoint = `${API_ENDPOINTS.GET_LIST_STOCK}/${boardId}?board=${board}${noetf ? `&noetf=${noetf}` : ''}`;
         const response = await this.apiHelper.getFullResponse(endpoint);
         return response.data;
     }
 
-    async getDataBySymbol(symbol: string, stockId: string, board: string, noetf: string): Promise<any> {
-        const response = await this.getListStockById(stockId, board, noetf);
+    async getDataBySymbol(symbol: string, boardId: string, board: string, noetf: string): Promise<any> {
+        const response = await this.getListStockById(boardId, board, noetf);
         const data = response.data.find((stock: any) => stock.sym === symbol);
         return data;
+    }
+
+    async getFirstStockCode(boardId: string, board: string, noetf?: string): Promise<any> {
+        const response = await this.getListStockById(boardId, board, noetf);
+        return response[0]?.sym;
+    }
+
+    async getCWData(): Promise<any> {
+        const response = await this.apiHelper.getFullResponse(API_ENDPOINTS.GET_CW);
+        return response.data;
+    }
+
+    async getFirstCWCode(): Promise<any> {
+        const response = await this.getCWData();
+        return response[0]?.code;
+    }
+
+    async getETFData(): Promise<any> {
+        const response = await this.apiHelper.getFullResponse(API_ENDPOINTS.GET_ETF);
+        return response.data;
+    }
+
+    async getFirstETFCode(): Promise<any> {
+        const response = await this.getETFData();
+        return response[0]?.sym;
     }
 }
 

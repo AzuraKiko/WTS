@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
-import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/MarketApi';
+import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/marketApi';
 import { TimeUtils } from '../../helpers/uiUtils';
 import { retryCompareData } from '../../helpers/assertions';
 import { ColorUtils, NumberValidator } from '../../helpers/validationUtils';
@@ -319,25 +319,50 @@ test.describe('Market Watch Automation Suite', () => {
     });
 
     // --- TEST CASE CHỨC NĂNG BẢNG GIÁ  ---
-    test('TC_008: Should switch to other tab and load data', async () => {
-        const boardNames = [
-            "HSX (HSX)",
-            "HNX (HNX)"
+    test('TC_008: Check data tab HSX, HNX, UPCOM, Lô lẻ (HSX), Lô lẻ (HNX), Lô lẻ (UPCOM)', async () => {
+        type TabCase = {
+            dropdownName: string;
+            tabName: string;
+            boardId: string;
+            board: string;
+            noetf?: string;
+        };
+
+        const tabCases: TabCase[] = [
+            { dropdownName: "HSX", tabName: "HSX", boardId: "10", board: "G1" },
+            { dropdownName: "HNX", tabName: "HNX", boardId: "02", board: "G1" },
+            { dropdownName: "UPCOM", tabName: "UPCOM", boardId: "03", board: "G1" },
+            { dropdownName: "Lô lẻ", tabName: "Lô lẻ (HSX)", boardId: "10", board: "G4", noetf: "Y" },
+            { dropdownName: "Lô lẻ", tabName: "Lô lẻ (HNX)", boardId: "02", board: "G4", noetf: "Y" },
+            { dropdownName: "Lô lẻ", tabName: "Lô lẻ (UPCOM)", boardId: "03", board: "G4", noetf: "Y" },
         ];
 
+        for (const tabCase of tabCases) {
+            const [firstStockCodeUI, firstStockCodeApi] = await Promise.all([
+                priceBoardPage.getFirstStockCodeUI(tabCase.dropdownName, tabCase.tabName),
+                marketApi.getFirstStockCode(tabCase.boardId, tabCase.board, tabCase?.noetf),
+            ]);
 
-        for (const tabName of tabNames) {
-            await priceBoardPage.selectPriceBoardTab(tabName);
-            const firstStockCode = await priceBoardPage.stockTable
-                .locator('tbody tr:first-child td:first-child')
-                .innerText();
-            console.log('firstStockCode', tabName, firstStockCode);
-            expect(firstStockCode?.trim(), `Tab "${tabName}" should load data`).toBeTruthy();
+            expect(firstStockCodeUI, `First stock code ${tabCase.dropdownName} ${tabCase.tabName} should match API`).toBe(firstStockCodeApi);
         }
     });
 
-    test('TC_009: Should confirm default sort by Stock Code (Mã CK) in ASC order', async () => {
-        // 1. Chờ bảng dữ liệu load
+    test('TC_009: Check data tab CW, ETF', async () => {
+        const [firstCWCodeUI, firstCWCodeApi] = await Promise.all([
+            priceBoardPage.getFirstCWCodeUI(),
+            marketApi.getFirstCWCode(),
+        ]);
+
+        expect(firstCWCodeUI, `First CW code should match API`).toBe(firstCWCodeApi);
+
+        const [firstETFCodeUI, firstETFCodeApi] = await Promise.all([
+            priceBoardPage.getFirstETFCodeUI(),
+            marketApi.getFirstETFCode(),
+        ]);
+        expect(firstETFCodeUI, `First ETF code should match API`).toBe(firstETFCodeApi);
+    });
+
+    test('TC_010: Check default sort by Stock Code (Mã CK) in ASC order', async () => {
         await expect(priceBoardPage.stockTable).toBeVisible();
 
         // 2. Lấy danh sách các mã chứng khoán đầu tiên (Ví dụ: 5 mã đầu tiên)
@@ -349,8 +374,7 @@ test.describe('Market Watch Automation Suite', () => {
         // Chỉ lấy 5 mã đầu tiên để kiểm tra
         const topN = 5;
         const codesToCheck = firstFiveStockCodes.slice(0, topN).map(code => code.trim());
-
-        // 3. Assertion: Kiểm tra xem các mã có được sắp xếp tăng dần theo bảng chữ cái không
+        console.log("check codes to check", codesToCheck);
 
         // Tạo một bản sao và sắp xếp bằng hàm JS
         const sortedCodes = [...codesToCheck].sort();
@@ -359,5 +383,34 @@ test.describe('Market Watch Automation Suite', () => {
         expect(codesToCheck, `5 mã CK đầu tiên phải được sắp xếp tăng dần mặc định.`).toEqual(sortedCodes);
 
         console.log(`PASS: Sắp xếp mặc định Mã CK tăng dần được xác nhận: ${codesToCheck.join(', ')}`);
+    });
+
+
+    test('TC_011: Check sort stocks by Reference Price (T.C) in DESC order', async () => {
+        // 1. Click vào cột T.C lần 1 để sắp xếp
+        await priceBoardPage.refColumnHeader.click();
+        await priceBoardPage.page.waitForTimeout(1000);
+
+        // Lấy giá trị cột T.C của hàng thứ nhất (index 0)
+        const price1Text = await priceBoardPage.stockTable.locator('tbody tr').nth(0).locator('td').nth(1).innerText();
+        // Lấy giá trị cột T.C của hàng thứ hai (index 1)
+        const price2Text = await priceBoardPage.stockTable.locator('tbody tr').nth(1).locator('td').nth(1).innerText();
+
+        const price1 = parseFloat(price1Text.replace(/,/g, ''));
+        const price2 = parseFloat(price2Text.replace(/,/g, ''));
+        console.log("check price1", price1);
+        console.log("check price2", price2);
+
+        expect(price1).toBeGreaterThanOrEqual(price2);
+    });
+
+    test('TC_012: Check data derivatives', async () => {
+        await priceBoardPage.openMenu("Phái sinh");
+        const latestDvx = await marketApi.getLatestDvx();
+        const firstDerivativeCodeApi = latestDvx.indexCode;
+        const firstDerivativeCodeUI = await priceBoardPage.getFirstDerivativeCode();
+        expect(firstDerivativeCodeUI, `First derivative code should match API`).toBe(firstDerivativeCodeApi);
+        console.log("check first derivative code ui", firstDerivativeCodeUI);
+        console.log("check first derivative code api", firstDerivativeCodeApi);
     });
 });

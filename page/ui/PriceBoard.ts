@@ -67,7 +67,6 @@ export class PriceBoardPage {
     // Locators dropdown Tabs Bảng Giá
     readonly priceBoardTabDropdown: Locator;
     readonly priceBoardTabMenu: Locator;
-    readonly priceBoardTabOptions: Locator;
 
     // Locator chung cho toàn bộ bảng dữ liệu
     readonly stockTable: Locator;
@@ -105,12 +104,12 @@ export class PriceBoardPage {
 
         // Locators dropdown Tabs Bảng Giá
         this.priceBoardTabDropdown = page.locator('a.dropdown-toggle.nav-link');
-        this.priceBoardTabMenu = page.locator('[aria-labelledby="basic-nav-dropdown"].dropdown-menu');
-        this.priceBoardTabOptions = this.priceBoardTabMenu.locator('a.nav-link');
+        this.priceBoardTabMenu = page.locator('.dropdown-menu');
+
 
         // Locator cho Bảng Giá chính
         this.stockTable = page.locator(
-            '//div[contains(@class, "trading-board-table")]'
+            '//table[contains(@class, "price-table")]'
         );
         this.refColumnHeader = page.locator('th:has-text("T.C")');
     }
@@ -146,6 +145,24 @@ export class PriceBoardPage {
             chartContainer: panel.locator(".market-panel-chart"),
             openTradingView: panel.locator(".icon.iZoomFull"),
         };
+    }
+
+    async getMenuLinkByName(menuName: string): Promise<Locator> {
+        return this.page
+            .locator('.app-header__nav .nav-link')
+            .filter({ hasText: menuName });
+    }
+
+    async expectMenuActive(menuName: string): Promise<void> {
+        const menuLink = await this.getMenuLinkByName(menuName);
+        await expect(menuLink).toHaveClass(/active/);
+    }
+
+    async openMenu(menuName: string): Promise<void> {
+        const menuLink = await this.getMenuLinkByName(menuName);
+        await menuLink.click();
+        await this.expectMenuActive(menuName);
+        await this.page.waitForTimeout(3000);
     }
 
     /**
@@ -326,15 +343,21 @@ export class PriceBoardPage {
         };
     }
 
-    /**
-     * Lấy locator cho tab Bảng Giá trong dropdown
-     */
-    getPriceBoardTabLocator(tabName: string): Locator {
+    // Hàm lấy cái nút Dropdown theo tên (ví dụ: "HNX")
+    getPriceBoardTabLocator(dropdownName: string): Locator {
         return this.priceBoardTabDropdown.filter({
-            hasText: tabName
+            hasText: dropdownName
         });
     }
 
+    // Hàm lấy Option cụ thể bên trong Dropdown đó
+    getPriceBoardTabOptionLocator(dropdownName: string, tabName: string): Locator {
+        // 1. Tìm dropdown toggle (Ví dụ: "Lô lẻ")
+        const dropdown = this.page.locator('a.dropdown-toggle.nav-link').filter({ hasText: dropdownName });
+
+        return dropdown.locator('..')
+            .locator(`.dropdown-menu a[title="${tabName}"]`);
+    }
 
     async expectPriceBoardTabActive(tabName: string): Promise<void> {
         const tab = this.getPriceBoardTabLocator(tabName);
@@ -351,15 +374,52 @@ export class PriceBoardPage {
      */
     async selectPriceBoardTab(dropdownName: string, tabName: string) {
         const dropdown = this.getPriceBoardTabLocator(dropdownName);
+        const activeMenu = dropdown.locator('..').locator('.dropdown-menu');
+        const tab = this.getPriceBoardTabOptionLocator(dropdownName, tabName);
+
         await FormUtils.selectOption(
             this.page,
             dropdown,
-            this.priceBoardTabOptions,
+            tab,
             tabName
         );
+
         await this.expectPriceBoardTabActive(tabName);
+
+        // Xử lý di chuột để đóng
+        if (await activeMenu.isVisible().catch(() => false)) {
+            await FormUtils.moveMouse(this.page, 0, 500);
+            await this.page.mouse.click(0, 500);
+        }
+
+        await activeMenu.waitFor({ state: 'hidden', timeout: 5000 });
     }
 
+    async getFirstStockCodeUI(dropdownName: string, tabName: string): Promise<string> {
+        await this.selectPriceBoardTab(dropdownName, tabName);
+        const firstStockCodeCell = this.stockTable.locator(
+            'tbody tr:first-child td:first-child'
+        );
+        return await firstStockCodeCell.innerText();
+    }
+
+    async getFirstCWCodeUI(): Promise<string> {
+        const CWTab = this.getPriceBoardTabLocator("Chứng quyền");
+        await CWTab.click();
+        const firstCWCodeCell = this.stockTable.locator(
+            'tbody tr:first-child td:first-child'
+        );
+        return await firstCWCodeCell.innerText();
+    }
+
+    async getFirstETFCodeUI(): Promise<string> {
+        const ETFTab = this.page.locator('.nav-link:has-text("ETF")');
+        await ETFTab.click();
+        const firstETFCodeCell = this.stockTable.locator(
+            'tbody tr:first-child td:first-child'
+        );
+        return await firstETFCodeCell.innerText();
+    }
 
     /**
      * Lấy giá trị của một ô dữ liệu cụ thể trong bảng
@@ -380,5 +440,12 @@ export class PriceBoardPage {
         await expect(cellLocator).toBeVisible();
 
         return (await cellLocator.innerText()).trim();
+    }
+
+    async getFirstDerivativeCode(): Promise<string> {
+        const firstDerivativeCodeCell = this.stockTable.locator(
+            'tbody tr:first-child td:first-child'
+        ).first();
+        return await firstDerivativeCodeCell.innerText();
     }
 }

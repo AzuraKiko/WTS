@@ -681,6 +681,11 @@ export class FormUtils {
         const isChecked = await toggleElement.isChecked();
         return isChecked === (expectedState === 'ON');
     }
+
+    static async moveMouse(page: Page, x: number, y: number, step: number = 1): Promise<void> {
+        await page.mouse.move(x, y, { steps: step });
+        await page.waitForTimeout(1000);
+    }
 }
 
 /**
@@ -864,6 +869,7 @@ export class ModalUtils {
         await cancelButton.click();
         await modal.waitFor({ state: 'hidden', timeout: 10000 });
     }
+
 }
 
 /**
