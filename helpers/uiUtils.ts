@@ -571,8 +571,7 @@ export class FormUtils {
                 await expectElementTextContains(descriptionLocator, expectedDescription);
             }
         } catch (error) {
-            console.log(`Message verification failed: ${error}`);
-            throw new Error(`Message verification failed: ${error}`);
+            throw new Error(`Message verification failed: ${error.message}`);
         }
     }
 
@@ -597,13 +596,16 @@ export class FormUtils {
      */
     static async getCurrentMessage(titleLocator: Locator, descriptionLocator: Locator, timeout: number = FormUtils.MESSAGE_TIMEOUT): Promise<MessageVerification> {
         try {
-            await titleLocator.waitFor({
+            const titleTarget = titleLocator.last();
+            const descriptionTarget = descriptionLocator.last();
+
+            await titleTarget.waitFor({
                 state: 'visible',
                 timeout: timeout
             });
 
-            const title = await titleLocator.textContent() || '';
-            const description = await descriptionLocator.textContent() || '';
+            const title = await titleTarget.textContent() || '';
+            const description = await descriptionTarget.textContent() || '';
 
             return {
                 title: title.trim(),
@@ -770,15 +772,17 @@ export class TableUtils {
         return null;
     }
 
-    static async verifyNoDataMessage(locator: Locator): Promise<boolean> {
-        const messageText = (await locator.textContent())?.trim() || '';
+    static async verifyNoDataMessage(locator: Locator, timeout: number = 5000): Promise<boolean> {
+        try {
+            await locator.waitFor({ state: 'visible', timeout });
 
-        const noDataMessages = [
-            'Không có dữ liệu!',
-            'No data found!',
-        ];
+            const messageText = (await locator.textContent())?.trim() || '';
+            const noDataMessages = ['Không có dữ liệu!', 'No data found!'];
 
-        return noDataMessages.some(msg => messageText.includes(msg));
+            return noDataMessages.some(msg => messageText.includes(msg));
+        } catch (error) {
+            return false;
+        }
     }
 
 
@@ -916,7 +920,7 @@ export class TimeUtils {
      *
         * @param now - optional date for deterministic tests; defaults to current time
      */
-    static async checkDataWithTimeRule(now: Date = new Date(), fromHour: number, fromMinute: number, toHour: number, toMinute: number = 0): Promise<boolean> {
+    static async checkDataWithExcludeTimeRange(now: Date = new Date(), fromHour: number, fromMinute: number, toHour: number, toMinute: number = 0): Promise<boolean> {
         const currentDay = now.getDay(); // 0=CN, 6=T7
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
@@ -926,6 +930,29 @@ export class TimeUtils {
 
         const isBefore = currentHour < fromHour || (currentHour === fromHour && currentMinute <= fromMinute);
         return currentHour >= toHour || isBefore;
+    }
+
+
+    static async checkDataWithTimeRange(
+        now: Date = new Date(),
+        fromHour: number,
+        fromMinute: number,
+        toHour: number,
+        toMinute: number = 0
+    ): Promise<boolean> {
+        const currentDay = now.getDay(); // 0: CN, 6: T7
+
+        const isWeekend = currentDay === 0 || currentDay === 6;
+        if (isWeekend) return false;
+
+        // 2. Quy đổi thời gian hiện tại ra tổng số phút trong ngày
+        const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+
+        // 3. Quy đổi mốc bắt đầu và kết thúc ra tổng số phút
+        const startTotalMinutes = fromHour * 60 + fromMinute;
+        const endTotalMinutes = toHour * 60 + toMinute;
+
+        return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
     }
 }
 

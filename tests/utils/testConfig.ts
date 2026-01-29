@@ -116,7 +116,8 @@ export const TEST_DATA = {
         INVALID_PASSWORD: 'abc',
     },
 
-    STOCK_CODES: ['ACB', 'AAA', 'VET', 'CEO', 'HPG', 'MBB', 'AAM', 'CACB2502'],
+    STOCK_CODES: ['ACB', 'AAA', 'VET', 'CEO', 'HPG', 'MBB', 'AAM', 'CACB2510'],
+
 
     ORDER_SYMBOLS: {
         VALID: "CEO",

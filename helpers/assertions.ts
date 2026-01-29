@@ -95,6 +95,7 @@ export async function expectElementTextContains(
     const found = texts.some(t => t.includes(expectedText));
     expect(found).toBeTruthy();
   }
+  console.log(`expectElementTextContains: ${texts}, expectedText: ${expectedText}`);
 }
 
 

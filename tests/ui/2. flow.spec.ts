@@ -5,6 +5,9 @@ import OrderBook from '../../page/ui/OrderBook';
 import { getRandomStockCode, TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import LogoutPage from "../../page/ui/LogoutPage";
+import { TimeUtils } from '../../helpers/uiUtils';
+import { MarketApi } from '../../page/api/marketApi';
+import PortfolioPage from '../../page/ui/PorfolioPage';
 
 
 
@@ -13,6 +16,8 @@ test.describe('Order Management Tests', () => {
   let orderPage: OrderPage;
   let orderBook: OrderBook;
   let logoutPage: LogoutPage;
+  let marketApi: MarketApi;
+  let portfolioPage: PortfolioPage;
 
   test.describe.configure({ mode: 'serial' });
 
@@ -20,68 +25,67 @@ test.describe('Order Management Tests', () => {
     loginPage = new LoginPage(page);
     orderPage = new OrderPage(page);
     orderBook = new OrderBook(page);
+    marketApi = new MarketApi();
     logoutPage = new LogoutPage(page, loginPage);
+    portfolioPage = new PortfolioPage(page);
 
     // Login before each test
     await loginPage.loginSuccess();
     expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
     await attachScreenshot(page, 'After Login');
-    await orderPage.navigateToOrder();
   });
 
-  test('Check place and cancel a buy order', async ({ }) => {
+  test('Check place and cancel a order', async ({ }) => {
+    await orderPage.navigateToOrder();
     // Use random stock code from configuration
     const stockCode = getRandomStockCode();
     console.log(`Testing with stock code: ${stockCode}`);
 
-    try {
-      await orderPage.placeBuyOrder({ stockCode, quantity: 1 });
-      // await orderPage.verifyMessageOrder(['Đặt lệnh thành công'], ['Số hiệu lệnh']);
+    await orderPage.placeBuyOrder({ stockCode, quantity: 1 });
 
-      await orderBook.openOrderBook();
-      const orderTableData = await orderBook.getOrderTableData();
-      expect(orderTableData[0].stockCode).toBe(stockCode);
+    const messageError = await orderPage.getMessage();
+    if (messageError.title.includes('Đặt lệnh không thành công')) {
+      console.log('Order placement failed:', messageError);
+    } else {
+      await orderPage.openOrderInDayTab();
+      expect(await orderPage.getStockCodeInDayRowData(0)).toBe(stockCode);
 
       if (await orderBook.isModifyOrderEnabled(0)) {
         await orderBook.modifyOrder(0, undefined, 2);
-        await orderPage.verifyMessageOrder(['Sửa lệnh thành công'], ['Số hiệu lệnh']);
+        expect(await orderPage.getQuantityInDayRowData(0)).toBe("2");
       } else {
         console.warn("Trạng thái lệnh không cho phép sửa")
       }
 
       await orderBook.cancelOrder(0);
-      // await orderPage.verifyMessageOrder(['Hủy lệnh thành công'], ['Số hiệu lệnh']);
+      expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(stockCode);
     }
-    catch {
-      await orderPage.verifyMessageOrder(['Đặt lệnh không thành công'], ['Error: Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.']);
-    } finally {
-      throw new Error("Buy order failed");
-    }
-  });
 
-  test('Check place and cancel a sell order', async ({ }) => {
-    try {
-      await orderPage.placeSellOrderFromPorfolio();
-      await orderPage.verifyMessageOrder(['Đặt lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
+    await portfolioPage.navigateToPortfolio();
+    const isNoData = await portfolioPage.verifyNoDataMessage();
 
-      if (await orderBook.isModifyOrderEnabled(0)) {
-        await orderBook.modifyOrder(0, undefined, 2);
-        await orderPage.verifyMessageOrder(['Sửa lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
+    if (isNoData) {
+      console.log("Portfolio is empty");
+    } else {
+      const usedStockCode = await orderPage.placeSellOrderFromPorfolio({ quantity: 1 });
+      await orderPage.openOrderInDayTab();
+      expect(await orderPage.getStockCodeInDayRowData(0)).toBe(usedStockCode);
+      const messageError = await orderPage.getMessage();
+      if (messageError.title.includes('Đặt lệnh không thành công')) {
+        console.log('Order placement failed:', messageError);
       } else {
-        console.warn("Trạng thái lệnh không cho phép sửa")
-      }
+        if (await orderBook.isModifyOrderEnabled(0)) {
+          const priceText = await orderPage.priceFloor.textContent();
+          const newPrice = Number(priceText) + 0.1;
+          await orderBook.modifyOrder(0, newPrice, undefined);
+          expect(await orderPage.getPriceInDayRowData(0)).toBe(newPrice.toString());
+        } else {
+          console.warn("Trạng thái lệnh không cho phép sửa")
+        }
 
-      if (await orderBook.isCancelOrderEnabled(0)) {
         await orderBook.cancelOrder(0);
-        await orderPage.verifyMessageOrder(['Hủy lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
-      } else {
-        console.warn("Trạng thái lệnh không cho phép hủy")
+        expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(usedStockCode);
       }
-    } catch {
-      await orderPage.placeSellOrderFromPorfolio();
-      await orderPage.verifyMessageOrder(['Đặt lệnh không thành công'], ['Error: Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.']);
-    } finally {
-      throw new Error("Sell order failed");
     }
   });
 

@@ -87,7 +87,7 @@ test.describe('Market Watch Automation Suite', () => {
             };
 
 
-            if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 15, 0)) {
+            if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
                 for (const [key, uiValue] of Object.entries(ui)) {
                     expect(uiValue, `${indexCode} ${key} should match API`).toBe(api[key as keyof typeof api]);
                 }
@@ -135,7 +135,7 @@ test.describe('Market Watch Automation Suite', () => {
             volValue: formatVolumeValue(indexDataApi.volValue),
             valueValue: formatValueValue(indexDataApi.valueValue / 10),
         };
-        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 15, 0)) {
+        if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
             for (const [key, uiValue] of Object.entries(ui)) {
                 expect(uiValue, `DVX ${key} should match API`).toBe(api[key as keyof typeof api]);
             }
@@ -161,7 +161,7 @@ test.describe('Market Watch Automation Suite', () => {
         const indexCode = latestDvx.indexCode;
         const indexCodes = Object.values(TEST_DATA.INDEX_CODES).concat(indexCode);
 
-        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 9, 0)) {
+        if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 9, 0)) {
             for (const code of indexCodes) {
                 const panel = priceBoardPage.page.locator('.market-panel', { hasText: code });
                 const chart = panel.locator('.market-panel-chart');
@@ -188,7 +188,7 @@ test.describe('Market Watch Automation Suite', () => {
             const uiIndexValue = parseNumber(indexPanelData.indexValue);
             const tradingViewIndexValue = parseNumber(tradingViewData.valueClose);
 
-            if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 15, 0)) {
+            if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
                 expect(
                     uiIndexValue,
                     `${code} index value should match TradingView`
@@ -222,7 +222,7 @@ test.describe('Market Watch Automation Suite', () => {
             totalValue: formatValueValue(overviewDataApi.totalValue),
             roomNN: Math.round(formatVolumeValue(overviewDataApi.roomNN)),
         };
-        if (await TimeUtils.checkDataWithTimeRule(new Date(), 8, 30, 14, 45)) {
+        if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 14, 45)) {
 
             for (const [key, uiValue] of Object.entries(ui)) {
                 expect(uiValue, `Overview ${key} should match API`).toBe(api[key as keyof typeof api]);
@@ -296,8 +296,6 @@ test.describe('Market Watch Automation Suite', () => {
                         },
                     };
                 });
-                console.log("check commodity data", ui);
-                console.log("check commodity data api", api);
 
                 if (matched) {
                     for (const [key, uiValue] of Object.entries(ui)) {

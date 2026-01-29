@@ -403,10 +403,6 @@ class OrderBook extends BasePage {
     }
 
     // =================== ORDER ACTION METHODS ===================
-    async isCancelOrderEnabled(rowIndex: number = 0): Promise<boolean> {
-        const isEnabled = await this.cancelOrderButton(rowIndex).isEnabled();
-        return isEnabled ? true : false;
-    }
 
     async cancelOrder(rowIndex: number = 0): Promise<void> {
         await this.cancelOrderButton(rowIndex).click();
@@ -596,9 +592,16 @@ class OrderBook extends BasePage {
     }
 
     // =================== MODIFY ORDER METHODS ===================
+
     async isModifyOrderEnabled(rowIndex: number = 0): Promise<boolean> {
-        const isEnabled = await this.modifyOrderButton(rowIndex).isEnabled();
-        return isEnabled ? true : false;
+        const button = this.modifyOrderButton(rowIndex);
+
+        const isHtmlEnabled = await button.isEnabled();
+
+        const classAttribute = await button.getAttribute('class') || '';
+        const isClassDisabled = classAttribute.includes('disabled');
+
+        return isHtmlEnabled && !isClassDisabled;
     }
 
     async openModifyOrderModal(rowIndex: number = 0): Promise<void> {

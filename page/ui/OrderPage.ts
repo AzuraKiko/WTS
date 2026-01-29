@@ -22,6 +22,7 @@ interface OrderPageElements {
         oddTab: Locator;
     };
     form: {
+        stock: Locator;
         buyTab: Locator;
         sellTab: Locator;
         stockCodeInput: Locator;
@@ -141,6 +142,7 @@ class OrderPage extends BasePage {
                 oddTab: page.locator('.card-panel .order .card-panel-header__left span:nth-child(3)'),
             },
             form: {
+                stock: page.locator('.symbol-information > .text-title'),
                 buyTab: page.locator('.order-button.order-buy'),
                 sellTab: page.locator('.order-button.order-sell'),
                 stockCodeInput: page.getByPlaceholder('Mã CK', { exact: true }),
@@ -230,6 +232,7 @@ class OrderPage extends BasePage {
         this.oddTab = this.elements.navigation.oddTab;
 
         // Order Form
+        this.stock = this.elements.form.stock;
         this.buyTab = this.elements.form.buyTab;
         this.sellTab = this.elements.form.sellTab;
         this.stockCodeInput = this.elements.form.stockCodeInput;
@@ -303,6 +306,7 @@ class OrderPage extends BasePage {
     conditionalTab!: Locator;
     oddTab!: Locator;
 
+    stock!: Locator;
     buyTab!: Locator;
     sellTab!: Locator;
     stockCodeInput!: Locator;
@@ -644,10 +648,11 @@ class OrderPage extends BasePage {
             quantity = OrderPage.DEFAULT_QUANTITY
         } = orderData || {};
         await this.sellTab.click();
+
         await this.portfolioPage.navigateToPortfolio();
         await this.portfolioPage.clickPorfolioRowByQuantity(quantity);
 
-        const usedStockCode = await this.priceInput.textContent();
+        const usedStockCode = await this.stock.textContent();
         await this.selectPriceOption('ceil');
         await this.fillQuantity(quantity);
         await this.submitOrder();
@@ -855,6 +860,10 @@ class OrderPage extends BasePage {
         await FormUtils.verifyArrayMessage(expectedTitle, this.titleMessage, expectedDescription, this.descriptionMessage);
     }
 
+    async getMessage(): Promise<any> {
+        return await FormUtils.getCurrentMessage(this.titleMessage, this.descriptionMessage);
+    }
+
     async closeToastMessageOrder(): Promise<void> {
         await this.closeToastMessage.click();
     }
@@ -942,7 +951,7 @@ class OrderPage extends BasePage {
 
     async getOrderInDayRowData(rowIndex: number): Promise<any> {
         await this.orderIndayTab.waitFor({ state: 'visible' });
-        const rows = await this.orderBook.tableRows.nth(rowIndex);
+        const rows = await this.page.locator('.asset-panel .table.table-fix tbody tr').nth(rowIndex);
         await rows.waitFor({ state: 'visible' });
 
         const stockCode = await rows.locator('td:nth-child(1)').textContent();
@@ -969,6 +978,29 @@ class OrderPage extends BasePage {
             remainingQuantity,
             status
         };
+    }
+
+    async getStockCodeInDayRowData(rowIndex: number): Promise<any> {
+        await this.orderIndayTab.waitFor({ state: 'visible' });
+        const rows = await this.page.locator('.asset-panel .table.table-fix tbody tr').nth(rowIndex);
+        if (await rows.isVisible()) {
+            return await rows.locator('td:nth-child(1)').textContent();
+        }
+        return '';
+    }
+
+    async getPriceInDayRowData(rowIndex: number): Promise<any> {
+        await this.orderIndayTab.waitFor({ state: 'visible' });
+        const rows = await this.page.locator('.asset-panel .table.table-fix tbody tr').nth(rowIndex);
+        await rows.waitFor({ state: 'visible' });
+        return await rows.locator('td:nth-child(3)').textContent();
+    }
+
+    async getQuantityInDayRowData(rowIndex: number): Promise<any> {
+        await this.orderIndayTab.waitFor({ state: 'visible' });
+        const rows = await this.page.locator('.asset-panel .table.table-fix tbody tr').nth(rowIndex);
+        await rows.waitFor({ state: 'visible' });
+        return await rows.locator('td:nth-child(4)').textContent();
     }
 
     async getAllOrderInDayData(useScrolling: boolean = true): Promise<any[]> {
