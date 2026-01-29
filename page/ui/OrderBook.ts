@@ -403,6 +403,10 @@ class OrderBook extends BasePage {
     }
 
     // =================== ORDER ACTION METHODS ===================
+    async isCancelOrderEnabled(rowIndex: number = 0): Promise<boolean> {
+        const isEnabled = await this.cancelOrderButton(rowIndex).isEnabled();
+        return isEnabled ? true : false;
+    }
 
     async cancelOrder(rowIndex: number = 0): Promise<void> {
         await this.cancelOrderButton(rowIndex).click();
@@ -592,6 +596,10 @@ class OrderBook extends BasePage {
     }
 
     // =================== MODIFY ORDER METHODS ===================
+    async isModifyOrderEnabled(rowIndex: number = 0): Promise<boolean> {
+        const isEnabled = await this.modifyOrderButton(rowIndex).isEnabled();
+        return isEnabled ? true : false;
+    }
 
     async openModifyOrderModal(rowIndex: number = 0): Promise<void> {
         await this.modifyOrderButton(rowIndex).click();
@@ -808,26 +816,6 @@ class OrderBook extends BasePage {
         }
 
         return priceMatch && quantityMatch;
-    }
-
-    // =================== STATUS AND INFORMATION METHODS ===================
-
-    async hasActionButtons(rowIndex: number): Promise<ActionButtonsAvailability> {
-        try {
-            const hasCancel = await this.cancelOrderButton(rowIndex).isVisible({ timeout: OrderBook.SHORT_TIMEOUT });
-            const hasModify = await this.modifyOrderButton(rowIndex).isVisible({ timeout: OrderBook.SHORT_TIMEOUT });
-            return { hasCancel, hasModify };
-        } catch {
-            return { hasCancel: false, hasModify: false };
-        }
-    }
-
-    async isOrderBookVisible(): Promise<boolean> {
-        try {
-            return await this.orderIndayTab.isVisible({ timeout: OrderBook.SHORT_TIMEOUT });
-        } catch {
-            return false;
-        }
     }
 
 }

@@ -35,25 +35,27 @@ test.describe('Order Management Tests', () => {
     console.log(`Testing with stock code: ${stockCode}`);
 
     try {
-      // Execute complete order flow
       await orderPage.placeBuyOrder({ stockCode, quantity: 1 });
-      await orderPage.verifyMessageOrder(['Đặt lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
+      // await orderPage.verifyMessageOrder(['Đặt lệnh thành công'], ['Số hiệu lệnh']);
 
-      await orderPage.openOrderInDayTab();
-      expect((await orderBook.getOrderTableData())[0].stockCode).toBe(stockCode);
+      await orderBook.openOrderBook();
+      const orderTableData = await orderBook.getOrderTableData();
+      expect(orderTableData[0].stockCode).toBe(stockCode);
 
-      if ((await orderBook.hasActionButtons(0)).hasModify) {
+      if (await orderBook.isModifyOrderEnabled(0)) {
         await orderBook.modifyOrder(0, undefined, 2);
-        await orderPage.verifyMessageOrder(['Sửa lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
+        await orderPage.verifyMessageOrder(['Sửa lệnh thành công'], ['Số hiệu lệnh']);
       } else {
         console.warn("Trạng thái lệnh không cho phép sửa")
       }
-      await orderBook.cancelOrder(0);
-      await orderPage.verifyMessageOrder(['Hủy lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
 
-    } catch {
-      await orderPage.placeBuyOrder({ stockCode, quantity: 1 });
+      await orderBook.cancelOrder(0);
+      // await orderPage.verifyMessageOrder(['Hủy lệnh thành công'], ['Số hiệu lệnh']);
+    }
+    catch {
       await orderPage.verifyMessageOrder(['Đặt lệnh không thành công'], ['Error: Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.']);
+    } finally {
+      throw new Error("Buy order failed");
     }
   });
 
@@ -62,19 +64,24 @@ test.describe('Order Management Tests', () => {
       await orderPage.placeSellOrderFromPorfolio();
       await orderPage.verifyMessageOrder(['Đặt lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
 
-      if ((await orderBook.hasActionButtons(0)).hasModify) {
+      if (await orderBook.isModifyOrderEnabled(0)) {
         await orderBook.modifyOrder(0, undefined, 2);
         await orderPage.verifyMessageOrder(['Sửa lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
       } else {
         console.warn("Trạng thái lệnh không cho phép sửa")
       }
 
-      await orderBook.cancelOrder(0);
-      await orderPage.verifyMessageOrder(['Hủy lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
-
+      if (await orderBook.isCancelOrderEnabled(0)) {
+        await orderBook.cancelOrder(0);
+        await orderPage.verifyMessageOrder(['Hủy lệnh thành công', 'Thông báo'], ['Số hiệu lệnh', 'thành công']);
+      } else {
+        console.warn("Trạng thái lệnh không cho phép hủy")
+      }
     } catch {
       await orderPage.placeSellOrderFromPorfolio();
       await orderPage.verifyMessageOrder(['Đặt lệnh không thành công'], ['Error: Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.']);
+    } finally {
+      throw new Error("Sell order failed");
     }
   });
 

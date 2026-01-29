@@ -45,7 +45,7 @@ class LoginPage extends BasePage {
     }
 
     async clickCloseBanner() {
-        await WaitUtils.delay(5000);
+        await WaitUtils.delay(3000);
         if (await this.closeBanner.isVisible()) {
             await this.closeBanner.click();
         }
