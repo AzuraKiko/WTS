@@ -5,8 +5,7 @@ import OrderBook from '../../page/ui/OrderBook';
 import { getRandomStockCode, TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import LogoutPage from "../../page/ui/LogoutPage";
-import { TimeUtils } from '../../helpers/uiUtils';
-import { MarketApi } from '../../page/api/marketApi';
+import { MarketApi } from '../../page/api/MarketApi';
 import PortfolioPage from '../../page/ui/PorfolioPage';
 
 
@@ -35,12 +34,13 @@ test.describe('Order Management Tests', () => {
     await attachScreenshot(page, 'After Login');
   });
 
-  test('Check place and cancel a order', async ({ }) => {
+  test('Check place and cancel a order', async ({ page }) => {
     await orderPage.navigateToOrder();
     // Use random stock code from configuration
     const stockCode = getRandomStockCode();
     console.log(`Testing with stock code: ${stockCode}`);
 
+    // Place buy order
     await orderPage.placeBuyOrder({ stockCode, quantity: 1 });
 
     const messageError = await orderPage.getMessage();
@@ -61,6 +61,7 @@ test.describe('Order Management Tests', () => {
       expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(stockCode);
     }
 
+    // Sell order from portfolio
     await portfolioPage.navigateToPortfolio();
     const isNoData = await portfolioPage.verifyNoDataMessage();
 
@@ -87,9 +88,9 @@ test.describe('Order Management Tests', () => {
         expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(usedStockCode);
       }
     }
-  });
 
-  test('Check logout', async ({ page }) => {
+    // Close order and logout
+    await orderPage.closeOrder();
     await logoutPage.logout();
     expect(await logoutPage.verifyLogoutSuccess()).toBe(true);
     await attachScreenshot(page, 'After Logout');

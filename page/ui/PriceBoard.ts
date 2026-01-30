@@ -147,24 +147,6 @@ export class PriceBoardPage {
         };
     }
 
-    async getMenuLinkByName(menuName: string): Promise<Locator> {
-        return this.page
-            .locator('.app-header__nav .nav-link')
-            .filter({ hasText: menuName });
-    }
-
-    async expectMenuActive(menuName: string): Promise<void> {
-        const menuLink = await this.getMenuLinkByName(menuName);
-        await expect(menuLink).toHaveClass(/active/);
-    }
-
-    async openMenu(menuName: string): Promise<void> {
-        const menuLink = await this.getMenuLinkByName(menuName);
-        await menuLink.click();
-        await this.expectMenuActive(menuName);
-        await this.page.waitForTimeout(3000);
-    }
-
     /**
      * Mở trang Price Board
      */

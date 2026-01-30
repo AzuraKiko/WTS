@@ -35,7 +35,7 @@ class apiHelper {
         });
 
         // Thêm interceptor để log request và response
-        this.setupInterceptors();
+        // this.setupInterceptors();
     }
 
     /**

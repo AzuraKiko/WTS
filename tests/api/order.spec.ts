@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import LoginApi from "../../page/api/LoginApi";
 import OrderApi from "../../page/api/OrderApi";
 import { v4 as uuidv4 } from 'uuid';
+import { getSharedLoginSession, resetSharedLoginSession } from "./sharedSession";
 import {
     TEST_CONFIG,
     ERROR_MESSAGES,
@@ -13,33 +13,9 @@ import {
 // Constants
 const PRIVATE_KEY = "a06ab782-118c-4819-a3c5-7b958ba85f7e";
 
-// Shared session data
-let sharedLoginData: {
-    session: string;
-    token: string;
-    acntNo: string;
-    subAcntNo: string;
-} | null = null;
-
-// Helper functions
 const createFreshInstances = () => ({
-    loginApi: new LoginApi(TEST_CONFIG.WEB_LOGIN_URL),
     orderApi: new OrderApi(TEST_CONFIG.WEB_LOGIN_URL)
 });
-
-const getLoginSession = async () => {
-    if (!sharedLoginData) {
-        const { loginApi } = createFreshInstances();
-        const loginResponse = await loginApi.loginSuccess("Matrix");
-        sharedLoginData = {
-            session: loginResponse.session,
-            token: loginResponse.token,
-            acntNo: loginResponse.acntNo,
-            subAcntNo: loginResponse.subAcntNormal
-        };
-    }
-    return sharedLoginData;
-};
 
 // Common order parameters factory
 const createOrderParams = (overrides: Partial<any> = {}) => ({
@@ -56,14 +32,14 @@ const createOrderParams = (overrides: Partial<any> = {}) => ({
 // Helper function for placing orders with error handling
 const placeOrderWithErrorHandling = async (orderParams: any, overrides: Partial<any> = {}) => {
     const { orderApi } = createFreshInstances();
-    const loginData = await getLoginSession();
-    const { session, token, acntNo, subAcntNo } = loginData;
+    const loginData = await getSharedLoginSession();
+    const { session, token, acntNo, subAcntNormal } = loginData;
 
     return orderApi.placeNewOrder(
         TEST_CONFIG.TEST_USER,
         overrides.session || session,
         acntNo,
-        subAcntNo,
+        subAcntNormal,
         orderParams,
         uuidv4(),
         overrides.token || token
@@ -75,7 +51,7 @@ test.describe("OrderApi Tests", () => {
 
     test.beforeAll(async () => {
         try {
-            await getLoginSession();
+            await getSharedLoginSession();
             console.log("Shared login session established");
         } catch (error) {
             console.error("Failed to establish shared login session:", error);
@@ -83,7 +59,7 @@ test.describe("OrderApi Tests", () => {
     });
 
     test.afterAll(async () => {
-        sharedLoginData = null;
+        resetSharedLoginSession();
     });
 
     test.describe("getListAllStock method", () => {

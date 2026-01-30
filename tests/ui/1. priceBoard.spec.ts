@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
-import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/marketApi';
+import Menu from '../../page/ui/Menu';
+import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/MarketApi';
 import { TimeUtils } from '../../helpers/uiUtils';
 import { retryCompareData } from '../../helpers/assertions';
 import { ColorUtils, NumberValidator } from '../../helpers/validationUtils';
 import { TEST_DATA } from '../utils/testConfig';
+import { attachScreenshot } from '../../helpers/reporterHelper';
 
 const parseNumber = (value: string): number => {
     return NumberValidator.parseNumber(value);
@@ -45,13 +47,16 @@ test.describe('Market Watch Automation Suite', () => {
     let marketApi: MarketApi;
     let marketGatewayApi: MarketGatewayApi;
     let marketWapiApi: MarketWapiApi;
+    let menu: Menu;
 
     test.beforeEach(async ({ page }) => {
         priceBoardPage = new PriceBoardPage(page);
         marketApi = new MarketApi();
         marketGatewayApi = new MarketGatewayApi();
         marketWapiApi = new MarketWapiApi();
+        menu = new Menu(page);
         await priceBoardPage.openPriceBoard();
+        await attachScreenshot(page, 'After open Price Board');
     });
 
     // --- TEST CASE CHO BIỂU ĐỒ MINI CHART ---
@@ -403,7 +408,7 @@ test.describe('Market Watch Automation Suite', () => {
     });
 
     test('TC_012: Check data derivatives', async () => {
-        await priceBoardPage.openMenu("Phái sinh");
+        await menu.openMenuHeader("Phái sinh");
         const latestDvx = await marketApi.getLatestDvx();
         const firstDerivativeCodeApi = latestDvx.indexCode;
         const firstDerivativeCodeUI = await priceBoardPage.getFirstDerivativeCode();

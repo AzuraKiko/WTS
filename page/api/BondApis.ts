@@ -1,5 +1,4 @@
 import { BaseApi, BaseApiConfig, BaseRequestParams, ApiResponse } from "./BaseApi";
-import { v4 as uuidv4 } from "uuid";
 
 interface BondListPayload {
     data: {

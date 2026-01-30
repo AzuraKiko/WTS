@@ -696,7 +696,7 @@ export class FormUtils {
 export class TableUtils {
 
     static async getTableHeaders(tableHeaders: Locator): Promise<string[]> {
-        await tableHeaders.waitFor({ state: 'visible' });
+        await tableHeaders.first().waitFor({ state: 'visible' });
         const headers = await tableHeaders.allTextContents();
         return headers.map((header: string) => header.trim());
     }

@@ -856,7 +856,7 @@ class OrderPage extends BasePage {
     /**
      * Verify message with improved error handling and timeout
      */
-    async verifyMessageOrder(expectedTitle: string | string[], expectedDescription?: string | string[]): Promise<void> {
+    async verifyMessage(expectedTitle: string | string[], expectedDescription?: string | string[]): Promise<void> {
         await FormUtils.verifyArrayMessage(expectedTitle, this.titleMessage, expectedDescription, this.descriptionMessage);
     }
 
