@@ -571,7 +571,7 @@ export class FormUtils {
                 await expectElementTextContains(descriptionLocator, expectedDescription);
             }
         } catch (error) {
-            throw new Error(`Message verification failed: ${error.message}`);
+            throw new Error(`Message verification failed`);
         }
     }
 

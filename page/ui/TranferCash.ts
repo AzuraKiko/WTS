@@ -3,6 +3,7 @@ import BasePage from './BasePage';
 import { FormUtils, TableUtils } from '../../helpers/uiUtils';
 import Menu from './Menu';
 import MatrixPage from './MatrixPage';
+import { NumberValidator } from '../../helpers/validationUtils';
 
 interface TransferCashAccountInfo {
     balance: string;
@@ -12,8 +13,8 @@ interface TransferCashAccountInfo {
 export interface TransferCashHistoryRow {
     source: string;
     destination: string;
-    amount: string;
-    fee: string;
+    amount: number;
+    fee: number;
     content: string;
     createdDate: string;
     status: string;
@@ -22,6 +23,7 @@ export interface TransferCashHistoryRow {
 class TranferCashPage extends BasePage {
     readonly menu: Menu;
     readonly matrixPage: MatrixPage;
+    readonly numberValidator: NumberValidator;
     readonly container: Locator;
     readonly title: Locator;
     readonly sourceAccountSection: Locator;
@@ -43,6 +45,7 @@ class TranferCashPage extends BasePage {
         super(page);
         this.menu = new Menu(page);
         this.matrixPage = new MatrixPage(page);
+        this.numberValidator = new NumberValidator();
         this.container = page.locator('.personal-assets');
         this.title = this.container.locator('.text-title', { hasText: 'Chuyển tiền tiểu khoản' });
         this.sourceAccountSection = this.container.locator('.cash-transfer-account .account-detail').nth(0);
@@ -164,8 +167,8 @@ class TranferCashPage extends BasePage {
         return {
             source: source.trim(),
             destination: destination.trim(),
-            amount: amount.trim(),
-            fee: fee.trim(),
+            amount: NumberValidator.parseNumber(amount.trim()),
+            fee: NumberValidator.parseNumber(fee.trim()),
             content: content.trim(),
             createdDate: createdDate.trim(),
             status: status.trim(),

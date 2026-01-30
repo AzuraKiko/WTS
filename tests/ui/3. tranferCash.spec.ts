@@ -5,7 +5,7 @@ import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { NumberValidator } from '../../helpers/validationUtils';
 import { AssetApi, getCashTransferHist } from '../../page/api/AssetApi';
-import { getSharedLoginSession, resetSharedLoginSession } from "../api/sharedSession";
+import { getSharedLoginSession } from "../api/sharedSession";
 import { v4 as uuidv4 } from 'uuid';
 import OrderPage from '../../page/ui/OrderPage';
 import { WaitUtils } from '../../helpers/uiUtils';
@@ -72,7 +72,7 @@ test.describe('Transfer Cash Tests', () => {
                 fee: item.trdFee,
                 content: item.desc,
                 createdDate: item.trdDt,
-                status: item.status === "2" ? "Hoàn thành" : "Thất bại",
+                status: item.status === "2" ? "Hoàn thành" : item.status === "1" ? "Đang chờ" : item.status === "3" ? "Từ chối" : item.status === "4" ? "Có lỗi từ bank" : "",
             }));
         }
         cashTransferHistNormal = await fetchCashTransferHist(subAcntNormal);
@@ -153,9 +153,11 @@ test.describe('Transfer Cash Tests', () => {
             await transferCashPage.transferCash(amount);
 
             const messageError = await orderPage.getMessage();
-            if (messageError.title.includes('Chuyển tiền không thành công')) {
+            if (messageError.description.includes('Hệ thống đang chạy batch')) {
                 console.log('Transfer cash failed:', messageError);
             } else {
+                await WaitUtils.delay(2000);
+
                 await orderPage.verifyMessage(['Thông báo'], [`Quý khách vừa chuyển số tiền: ${amount} VNĐ từ tiểu khoản ${sourceSubAccountNo} sang tiểu khoản ${destinationSubAccountNo}`]);
 
                 await WaitUtils.delay(8000);
