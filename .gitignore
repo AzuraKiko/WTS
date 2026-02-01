@@ -6,4 +6,4 @@ playwright-report/
 test-results/
 package-lock.json
 package.json
-.env
+# .env
