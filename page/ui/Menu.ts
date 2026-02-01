@@ -80,6 +80,12 @@ class Menu extends BasePage {
         await subMenu.waitFor({ state: 'visible' });
         await subMenu.click();
     }
+
+    async clickSubMenu(menuName: string, subMenuName: string): Promise<void> {
+        const subMenu = this.getMenuBody(menuName)
+            .locator('.category.nav-item a', { hasText: subMenuName });
+        await subMenu.click();
+    }
 }
 
 export default Menu;

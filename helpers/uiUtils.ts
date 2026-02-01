@@ -1,4 +1,6 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, Response, Request } from '@playwright/test';
+import fs from 'fs/promises';
+import path from 'path';
 import { expectElementText, expectElementContainsText, expectElementTextContains } from './assertions';
 
 // Simple logger implementation
@@ -34,17 +36,11 @@ export interface TableScrollResult {
     endReached: boolean;
 }
 
-export interface HealthCheckOptions {
-    checkVisibility?: boolean;
-    checkInteractivity?: boolean;
-    checkDataIntegrity?: boolean;
-    timeout?: number;
-}
-
 export interface MessageVerification {
     title: string;
     description?: string;
 }
+
 
 /**
  * Scrolling utilities for tables and containers
@@ -232,6 +228,7 @@ export class WaitUtils {
         return false;
     }
 
+
     /**
      * Wait for specific count of elements
      */
@@ -281,6 +278,55 @@ export class WaitUtils {
         }
 
         throw new Error('Item not visible after sliding');
+    }
+
+    static async getLatestResponseByBody(
+        page: Page,
+        trigger: () => Promise<void>, // action gây gọi API (click)
+        keys: string[],
+        urlIncludes: string,
+        timeout = 5000,
+    ): Promise<Response | null> {
+
+        let latestResponse: Response | null = null;
+
+        const handler = async (response: Response) => {
+            try {
+                // 1️⃣ check URL
+                if (!response.url().includes(urlIncludes)) return;
+
+                // 2️⃣ check HTTP status
+                if (response.status() !== 200) return;
+
+                const request = response.request();
+
+                // 3️⃣ chỉ bắt request có body (POST / PUT)
+                const postData = request.postData();
+                if (!postData) return;
+
+                // 4️⃣ check payload keys
+                if (!keys.every(key => postData.includes(key))) return;
+
+                // 5️⃣ nếu qua hết filter → đây là response hợp lệ
+                latestResponse = response;
+            } catch {
+                console.log('No response captured by body', keys, urlIncludes);
+            }
+        };
+
+        page.on('response', handler);
+
+        try {
+            // 👉 trigger UI action
+            await trigger();
+
+            // 👉 chờ API settle để lấy response cuối
+            await page.waitForTimeout(timeout);
+        } finally {
+            page.off('response', handler);
+        }
+
+        return latestResponse;
     }
 
 }
@@ -694,6 +740,19 @@ export class FormUtils {
  * Table interaction utilities
  */
 export class TableUtils {
+    // Replace this with a more robust CSV handling function (cell có , " xuống dòng )
+    private static escapeCsvValue(value: string): string {
+        const normalized = value.replace(/\r?\n/g, ' ').trim();
+        if (/[",\n]/.test(normalized)) {
+            return `"${normalized.replace(/"/g, '""')}"`;
+        }
+        return normalized;
+    }
+
+    // Chuyển 1 dòng dữ liệu (mảng cell) thành 1 dòng CSV hợp lệ
+    private static buildCsvLine(values: string[]): string {
+        return values.map(value => TableUtils.escapeCsvValue(value)).join(',');
+    }
 
     static async getTableHeaders(tableHeaders: Locator): Promise<string[]> {
         await tableHeaders.first().waitFor({ state: 'visible' });
@@ -728,6 +787,45 @@ export class TableUtils {
         }
 
         return allData;
+    }
+
+    /**
+     * Read table data and save to CSV (first row is headers)
+     */
+    static async exportTableToCsv(
+        page: Page,
+        tableHeaders: Locator,
+        tableRows: Locator,
+        outputFile: string,
+        scrollContainer?: Locator,
+        useScrolling: boolean = true
+    ): Promise<void> {
+        if (useScrolling) {
+            if (scrollContainer) {
+                await ScrollUtils.loadAllData(page, scrollContainer);
+            }
+        }
+
+        await tableRows.first().waitFor({ state: 'visible' });
+        const headers = await TableUtils.getTableHeaders(tableHeaders);
+        const lines: string[] = [TableUtils.buildCsvLine(headers)];
+
+        const rowCount = await tableRows.count();
+        for (let i = 0; i < rowCount; i++) {
+            try {
+                const row = tableRows.nth(i);
+                await row.waitFor({ state: 'visible' });
+                const cells = await row.locator('td').allTextContents();
+                if (!cells.length) continue;
+                const values = cells.map(cell => cell.trim());
+                lines.push(TableUtils.buildCsvLine(values));
+            } catch (error) {
+                console.log(`Failed to read row ${i} for CSV: ${error}`);
+            }
+        }
+
+        await fs.mkdir(path.dirname(`playwright/data/${outputFile}`), { recursive: true });
+        await fs.writeFile(`playwright/data/${outputFile}`, lines.join('\n'), 'utf8');
     }
 
     /**

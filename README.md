@@ -5,21 +5,27 @@ Thư mục này chứa các kịch bản kiểm thử tự động cho webtradin
 ## 1. Cài đặt môi trường
 
 **Yêu cầu:**
+
 - Node.js >= 16.x
 - npm hoặc yarn
 
 **Cài đặt dependencies:**
+
 ```bash
 npm install
 ```
+
 hoặc
+
 ```bash
 yarn install
 ```
 
 **Cài đặt trình duyệt cho Playwright:**
+
 ```bash
 npx playwright install
+npx playwright install chrome firefox msedge
 ```
 
 ## 2. Cấu trúc thư mục
@@ -29,16 +35,19 @@ npx playwright install
 ## 3. Chạy test
 
 **Chạy toàn bộ test:**
+
 ```bash
 npx playwright test
 ```
 
 **Chạy một file test cụ thể:**
+
 ```bash
 npx playwright test tests/webtrading.spec.ts
 ```
 
 **Chạy test với giao diện trình duyệt (headed):**
+
 ```bash
 npx playwright test --headed
 ```
@@ -46,6 +55,7 @@ npx playwright test --headed
 ## 4. Ghi lại và sinh mã test tự động với Playwright Codegen
 
 Playwright hỗ trợ ghi lại thao tác trên trình duyệt và sinh mã test tự động bằng lệnh:
+
 ```bash
 npx playwright codegen https://trade.pinetree.vn
 ```
@@ -56,6 +66,7 @@ npx playwright codegen https://trade.pinetree.vn
 ## 5. Xem báo cáo kết quả
 
 Sau khi chạy xong, để xem báo cáo chi tiết:
+
 ```bash
 npx playwright show-report
 ```
@@ -67,4 +78,4 @@ npx playwright show-report
 
 ## 7. Tài liệu tham khảo
 
-- [Tài liệu Playwright](https://playwright.dev/docs/intro) 
+- [Tài liệu Playwright](https://playwright.dev/docs/intro)

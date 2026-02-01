@@ -42,12 +42,99 @@ const formatValueValue = (value: number): number => {
     }
 };
 
+type IndexUiData = {
+    indexValue: number;
+    indexChange: number;
+    changePercent: number;
+    volValue: number;
+    valueValue: number;
+};
+
+const buildIndexUiData = (indexPanelData: {
+    indexValue: string;
+    indexChange: string;
+    changePercent: string;
+    volValue: string;
+    valueValue: string;
+}): IndexUiData => ({
+    indexValue: parseNumber(indexPanelData.indexValue),
+    indexChange: parseNumber(indexPanelData.indexChange),
+    changePercent: parseNumber(indexPanelData.changePercent.replace('%', '')),
+    volValue: parseNumber(indexPanelData.volValue),
+    valueValue: parseNumber(indexPanelData.valueValue),
+});
+
+const buildIndexApiData = (
+    indexDataApi: {
+        indexValue: number;
+        indexChange: string;
+        changePercent: string;
+        volValue: number;
+        valueValue: number;
+    },
+    options?: { valueValueDivisor?: number }
+): IndexUiData => ({
+    indexValue: indexDataApi.indexValue,
+    indexChange: parseNumber(indexDataApi.indexChange),
+    changePercent: parseNumber(indexDataApi.changePercent.replace('%', '')),
+    volValue: formatVolumeValue(indexDataApi.volValue),
+    valueValue: formatValueValue(indexDataApi.valueValue / (options?.valueValueDivisor ?? 1)),
+});
+
+const assertIndexColorByChange = (indexColor: string, indexChange: number): void => {
+    if (indexChange < 0) {
+        ColorUtils.expectColorFamily(indexColor, 'RED');
+    } else if (indexChange > 0) {
+        ColorUtils.expectColorFamily(indexColor, 'GREEN');
+    } else {
+        ColorUtils.expectColorFamily(indexColor, 'YELLOW');
+    }
+};
+
+const assertMatchOrPositive = async (
+    checkLabel: string,
+    ui: IndexUiData,
+    api: IndexUiData,
+    positiveLabel: string
+): Promise<void> => {
+    if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
+        for (const [key, uiValue] of Object.entries(ui)) {
+            expect(uiValue, `${checkLabel} ${key} should match API`).toBe(api[key as keyof typeof api]);
+        }
+    } else {
+        expect(ui.indexValue, positiveLabel).toBeGreaterThan(0);
+    }
+};
+
+type NumericRecord = Record<string, number>;
+
+const assertMatchedOrPositive = (
+    matched: boolean,
+    ui: NumericRecord,
+    api: NumericRecord,
+    matchLabelPrefix: string,
+    positiveValue: number,
+    positiveLabel: string
+): void => {
+    if (matched) {
+        for (const [key, uiValue] of Object.entries(ui)) {
+            expect(uiValue, `${matchLabelPrefix} ${key} should match API`).toBe(api[key]);
+        }
+    } else {
+        expect(positiveValue, positiveLabel).toBeGreaterThan(0);
+    }
+};
+
+
+
+
 test.describe('Market Watch Automation Suite', () => {
     let priceBoardPage: PriceBoardPage;
     let marketApi: MarketApi;
     let marketGatewayApi: MarketGatewayApi;
     let marketWapiApi: MarketWapiApi;
     let menu: Menu;
+
 
     test.beforeEach(async ({ page }) => {
         priceBoardPage = new PriceBoardPage(page);
@@ -56,9 +143,7 @@ test.describe('Market Watch Automation Suite', () => {
         marketWapiApi = new MarketWapiApi();
         menu = new Menu(page);
         await priceBoardPage.openPriceBoard();
-        await attachScreenshot(page, 'After open Price Board');
     });
-
     // --- TEST CASE CHO BIỂU ĐỒ MINI CHART ---
 
     // List of all available index codes to test
@@ -74,31 +159,15 @@ test.describe('Market Watch Automation Suite', () => {
                 marketApi.getListIndexDetail(indexCode),
             ]);
 
-            const ui = {
-                indexValue: parseNumber(indexPanelData.indexValue),
-                indexChange: parseNumber(indexPanelData.indexChange),
-                changePercent: parseNumber(indexPanelData.changePercent.replace('%', '')),
-                volValue: parseNumber(indexPanelData.volValue),
-                valueValue: parseNumber(indexPanelData.valueValue),
-            };
+            const ui = buildIndexUiData(indexPanelData);
+            const api = buildIndexApiData(indexDataApi);
 
-
-            const api = {
-                indexValue: indexDataApi.indexValue,
-                indexChange: parseNumber(indexDataApi.indexChange),
-                changePercent: parseNumber((indexDataApi.changePercent.replace('%', ''))),
-                volValue: formatVolumeValue(indexDataApi.volValue),
-                valueValue: formatValueValue(indexDataApi.valueValue),
-            };
-
-
-            if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
-                for (const [key, uiValue] of Object.entries(ui)) {
-                    expect(uiValue, `${indexCode} ${key} should match API`).toBe(api[key as keyof typeof api]);
-                }
-            } else {
-                expect(ui.indexValue, `${indexCode} index value should be greater than 0`).toBeGreaterThan(0);
-            }
+            await assertMatchOrPositive(
+                indexCode,
+                ui,
+                api,
+                `${indexCode} index value should be greater than 0`
+            );
 
             // 2. Lấy màu (dùng computed style)
             const indexColor = await priceBoardPage.page
@@ -107,15 +176,7 @@ test.describe('Market Watch Automation Suite', () => {
                 .evaluate((element) => window.getComputedStyle(element).color);
 
             // 3. Assertion: Kiểm tra logic màu
-            if (ui.indexChange < 0) {
-                // Giá trị âm (giảm) -> phải là màu đỏ
-                ColorUtils.expectColorFamily(indexColor, 'RED');
-            } else if (ui.indexChange > 0) {
-                // Giá trị dương (tăng) -> phải là màu xanh
-                ColorUtils.expectColorFamily(indexColor, 'GREEN');
-            } else if (ui.indexChange === 0) {
-                ColorUtils.expectColorFamily(indexColor, 'YELLOW');
-            }
+            assertIndexColorByChange(indexColor, ui.indexChange);
         });
     }
 
@@ -126,39 +187,21 @@ test.describe('Market Watch Automation Suite', () => {
             priceBoardPage.getIndexPanelData(indexCode),
             marketApi.getLatestDvx(),
         ]);
-        const ui = {
-            indexValue: parseNumber(indexPanelData.indexValue),
-            indexChange: parseNumber(indexPanelData.indexChange),
-            changePercent: parseNumber(indexPanelData.changePercent.replace('%', '')),
-            volValue: parseNumber(indexPanelData.volValue),
-            valueValue: parseNumber(indexPanelData.valueValue),
-        };
-        const api = {
-            indexValue: indexDataApi.indexValue,
-            indexChange: parseNumber(indexDataApi.indexChange),
-            changePercent: parseNumber((indexDataApi.changePercent.replace('%', ''))),
-            volValue: formatVolumeValue(indexDataApi.volValue),
-            valueValue: formatValueValue(indexDataApi.valueValue / 10),
-        };
-        if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
-            for (const [key, uiValue] of Object.entries(ui)) {
-                expect(uiValue, `DVX ${key} should match API`).toBe(api[key as keyof typeof api]);
-            }
-        } else {
-            expect(ui.indexValue, `DVX index value should be greater than 0`).toBeGreaterThan(0);
-        }
+        const ui = buildIndexUiData(indexPanelData);
+        const api = buildIndexApiData(indexDataApi, { valueValueDivisor: 10 });
+
+        await assertMatchOrPositive(
+            'DVX',
+            ui,
+            api,
+            'DVX index value should be greater than 0'
+        );
 
         const indexColor = await priceBoardPage.page
             .locator('.market-panel', { hasText: `${indexCode}` })
             .locator('.market-panel-header__index')
             .evaluate((element) => window.getComputedStyle(element).color);
-        if (ui.indexChange < 0) {
-            ColorUtils.expectColorFamily(indexColor, 'RED');
-        } else if (ui.indexChange > 0) {
-            ColorUtils.expectColorFamily(indexColor, 'GREEN');
-        } else if (ui.indexChange === 0) {
-            ColorUtils.expectColorFamily(indexColor, 'YELLOW');
-        }
+        assertIndexColorByChange(indexColor, ui.indexChange);
     });
 
     test('TC_003: Should render mini chart panels (VNI/VN30/HNX/UPCOM/VN100/DVX) with SVG', async () => {
@@ -208,6 +251,7 @@ test.describe('Market Watch Automation Suite', () => {
             expect(parseNumber(valueOpen)).toBeGreaterThan(0);
             expect(parseNumber(valueHigh)).toBeGreaterThan(0);
             expect(parseNumber(valueLow)).toBeGreaterThan(0);
+            await attachScreenshot(priceBoardPage.page, 'After check trading view data for ' + code);
             await priceBoardPage.closeTradingView();
         }
     });
@@ -260,19 +304,14 @@ test.describe('Market Watch Automation Suite', () => {
                     };
                 });
 
-                if (matched) {
-                    for (const [key, uiValue] of Object.entries(ui)) {
-                        expect(
-                            uiValue,
-                            `Global ${globalIndexName} ${key} should match API`
-                        ).toBe(api[key as keyof typeof api]);
-                    }
-                } else {
-                    expect(
-                        ui.indexValue,
-                        `Global ${globalIndexName} index value should be greater than 0`
-                    ).toBeGreaterThan(0);
-                }
+                assertMatchedOrPositive(
+                    matched,
+                    ui,
+                    api,
+                    `Global ${globalIndexName}`,
+                    ui.indexValue,
+                    `Global ${globalIndexName} index value should be greater than 0`
+                );
             } catch {
                 console.log(`${globalIndexName} is out of trading time`);
             }
@@ -302,19 +341,14 @@ test.describe('Market Watch Automation Suite', () => {
                     };
                 });
 
-                if (matched) {
-                    for (const [key, uiValue] of Object.entries(ui)) {
-                        expect(
-                            uiValue,
-                            `Commodity ${commodityName} ${key} should match API`
-                        ).toBe(api[key as keyof typeof api]);
-                    }
-                } else {
-                    expect(
-                        ui.commodityValue,
-                        `Commodity ${commodityName} commodity value should be greater than 0`
-                    ).toBeGreaterThan(0);
-                }
+                assertMatchedOrPositive(
+                    matched,
+                    ui,
+                    api,
+                    `Commodity ${commodityName}`,
+                    ui.commodityValue,
+                    `Commodity ${commodityName} commodity value should be greater than 0`
+                );
             } catch {
                 console.log(`${commodityName} is out of trading time`);
             }
@@ -347,6 +381,8 @@ test.describe('Market Watch Automation Suite', () => {
             ]);
 
             expect(firstStockCodeUI, `First stock code ${tabCase.dropdownName} ${tabCase.tabName} should match API`).toBe(firstStockCodeApi);
+            await attachScreenshot(priceBoardPage.page, 'After check data tab ' + tabCase.tabName);
+            await priceBoardPage.page.waitForTimeout(1000);
         }
     });
 
@@ -357,12 +393,14 @@ test.describe('Market Watch Automation Suite', () => {
         ]);
 
         expect(firstCWCodeUI, `First CW code should match API`).toBe(firstCWCodeApi);
+        await attachScreenshot(priceBoardPage.page, 'After check data tab CW');
 
         const [firstETFCodeUI, firstETFCodeApi] = await Promise.all([
             priceBoardPage.getFirstETFCodeUI(),
             marketApi.getFirstETFCode(),
         ]);
         expect(firstETFCodeUI, `First ETF code should match API`).toBe(firstETFCodeApi);
+        await attachScreenshot(priceBoardPage.page, 'After check data tab ETF');
     });
 
     test('TC_010: Check default sort by Stock Code (Mã CK) in ASC order', async () => {
@@ -386,6 +424,7 @@ test.describe('Market Watch Automation Suite', () => {
         expect(codesToCheck, `5 mã CK đầu tiên phải được sắp xếp tăng dần mặc định.`).toEqual(sortedCodes);
 
         console.log(`PASS: Sắp xếp mặc định Mã CK tăng dần được xác nhận: ${codesToCheck.join(', ')}`);
+        await attachScreenshot(priceBoardPage.page, 'After check default sort by Stock Code (Mã CK) in ASC order');
     });
 
 
@@ -405,6 +444,7 @@ test.describe('Market Watch Automation Suite', () => {
         console.log("check price2", price2);
 
         expect(price1).toBeGreaterThanOrEqual(price2);
+        await attachScreenshot(priceBoardPage.page, 'After sort stocks by Reference Price (T.C) in DESC order');
     });
 
     test('TC_012: Check data derivatives', async () => {
@@ -413,7 +453,7 @@ test.describe('Market Watch Automation Suite', () => {
         const firstDerivativeCodeApi = latestDvx.indexCode;
         const firstDerivativeCodeUI = await priceBoardPage.getFirstDerivativeCode();
         expect(firstDerivativeCodeUI, `First derivative code should match API`).toBe(firstDerivativeCodeApi);
-        console.log("check first derivative code ui", firstDerivativeCodeUI);
-        console.log("check first derivative code api", firstDerivativeCodeApi);
+        await attachScreenshot(priceBoardPage.page, 'After check data derivatives');
+
     });
 });

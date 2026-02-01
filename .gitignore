@@ -4,5 +4,6 @@ allure-report/
 node_modules/
 playwright-report/
 test-results/
-# package-lock.json
-# package.json
+package-lock.json
+package.json
+.env
