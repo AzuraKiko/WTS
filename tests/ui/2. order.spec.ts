@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import OrderPage from '../../page/ui/OrderPage';
 import OrderBook from '../../page/ui/OrderBook';
@@ -17,10 +17,10 @@ test.describe('Order Management Tests', () => {
   let logoutPage: LogoutPage;
   let marketApi: MarketApi;
   let portfolioPage: PortfolioPage;
+  let page: Page;
 
-  test.describe.configure({ mode: 'serial' });
-
-  test.beforeEach(async ({ page }) => {
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
     loginPage = new LoginPage(page);
     orderPage = new OrderPage(page);
     orderBook = new OrderBook(page);
@@ -28,14 +28,21 @@ test.describe('Order Management Tests', () => {
     logoutPage = new LogoutPage(page, loginPage);
     portfolioPage = new PortfolioPage(page);
 
-    // Login before each test
     await loginPage.loginSuccess();
     expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
     await attachScreenshot(page, 'After Login');
+    await orderPage.navigateToOrder();
   });
 
-  test('Check place and cancel a order', async ({ page }) => {
-    await orderPage.navigateToOrder();
+  test.afterAll(async () => {
+    await orderPage.closeOrder();
+    await logoutPage.logout();
+    expect(await logoutPage.verifyLogoutSuccess()).toBe(true);
+    await attachScreenshot(page, 'After Logout');
+    await page.close();
+  });
+
+  test('TC_001: Check place and cancel a buy order', async () => {
     // Use random stock code from configuration
     const stockCode = getRandomStockCode();
     console.log(`Testing with stock code: ${stockCode}`);
@@ -60,7 +67,9 @@ test.describe('Order Management Tests', () => {
       await orderBook.cancelOrder(0);
       expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(stockCode);
     }
+  });
 
+  test('TC_002: Check place and cancel a sell order', async () => {
     // Sell order from portfolio
     await portfolioPage.navigateToPortfolio();
     const isNoData = await portfolioPage.verifyNoDataMessage();
@@ -88,11 +97,5 @@ test.describe('Order Management Tests', () => {
         expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(usedStockCode);
       }
     }
-
-    // Close order and logout
-    await orderPage.closeOrder();
-    await logoutPage.logout();
-    expect(await logoutPage.verifyLogoutSuccess()).toBe(true);
-    await attachScreenshot(page, 'After Logout');
   });
 });

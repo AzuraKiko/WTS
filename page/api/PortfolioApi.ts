@@ -3,7 +3,7 @@ import { BaseApi, BaseApiConfig, BaseRequestParams, ApiResponse } from "./BaseAp
 
 export default class PortfolioApi extends BaseApi {
     // Portfolio-specific constants
-    private static readonly DEFAULT_COMMAND = "getPositions";
+    private static readonly DEFAULT_COMMAND = "getPositionsAll";
 
     constructor(config: BaseApiConfig) {
         super(config);

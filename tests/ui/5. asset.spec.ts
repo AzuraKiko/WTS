@@ -1,34 +1,128 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import AssetPage, { parseAsset, countAssetLabelMatches } from '../../page/ui/Asset';
 import { NumberValidator } from '../../helpers/validationUtils';
 import { WaitUtils, TableUtils } from '../../helpers/uiUtils';
-import { parseCsvFile, mapCsvRows, compareApiRowWithCsvRow } from '../../helpers/csvUtils';
+import { compareApiRowWithUiRow } from '../../helpers/tableCompareUtils';
 
 import { ocrPipeline } from '../../page/ui/ocrPipeline';
 import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
+import { getSharedLoginSession } from "../api/sharedSession";
+import { AssetApi } from '../../page/api/AssetApi';
+import { v4 as uuidv4 } from 'uuid';
+import OrderPage from '../../page/ui/OrderPage';
+
+
+function getCurrentMonthLabel(): string {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // 01 → 12
+    const year = now.getFullYear();
+
+    return `Tháng ${month}, ${year}`;
+}
+
 
 test.describe('Asset Summary test', () => {
     let loginPage: LoginPage;
     let assetPage: AssetPage;
-    test.beforeEach(async ({ page }) => {
+    let orderPage: OrderPage;
+    let availableSubAccounts: string[] = [];
+    let wdrawAvailEntries: { subAcntNo: string; wdrawAvail: number }[] = [];
+    let assetApi = new AssetApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
+    let maxWithdrawableSubAccount: { subAcntNo: string; wdrawAvail: number };
+    let page: Page;
+
+    const overviewLabels = [
+        'Tổng tài sản',
+        'Tài sản ròng',
+        'Tiền được rút',
+        'Tiền có thể ứng',
+        'Tổng dư nợ margin'
+    ];
+    const detailHeaders = [
+        'Tiền mặt',
+        'Chứng khoán niêm yết',
+        'Phái sinh',
+        'Trái phiếu OTC',
+        'PineB',
+        'Nợ'
+    ];
+
+    const compareNumericData = (actual: Record<string, string>, expected: Record<string, string>) => {
+        Object.keys(expected).forEach((key) => {
+            expect(NumberValidator.parseNumber(actual[key])).toBe(NumberValidator.parseNumber(expected[key]));
+        });
+    };
+
+    const verifyOverviewLabels = async () => {
+        for (const label of overviewLabels) {
+            const metric = assetPage.overviewLocator
+                .locator('.overview-metric')
+                .filter({ hasText: label });
+            await expect(metric).toBeVisible();
+            await expect(metric.locator('.overview-metric__value')).toHaveText(/\S/);
+        }
+    };
+
+    const verifyDetailHeaders = async () => {
+        for (const header of detailHeaders) {
+            const detailHeader = assetPage.viewAsset
+                .locator('.personal-assets-header')
+                .filter({ hasText: header })
+                .first();
+            await expect(detailHeader).toBeVisible();
+            await expect(detailHeader.locator('.personal-assets-header__right')).toHaveText(/\S/);
+        }
+    };
+
+    test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
         loginPage = new LoginPage(page);
         assetPage = new AssetPage(page);
+        orderPage = new OrderPage(page);
+
+        const loginData = await getSharedLoginSession();
+        const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
+        availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
+            .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
+
+        const getwdrawAvailSubAccount = async (subAcntNo: string): Promise<number> => {
+            const response = await assetApi.getTotalAssetAll({
+                user: TEST_CONFIG.TEST_USER,
+                session,
+                acntNo,
+                subAcntNo,
+                rqId: uuidv4(),
+            });
+            return response?.data?.data?.wdrawAvail ?? 0;
+        };
+
+        wdrawAvailEntries = await Promise.all(
+            availableSubAccounts.map(async (subAcntNo) => ({
+                subAcntNo,
+                wdrawAvail: await getwdrawAvailSubAccount(subAcntNo),
+            }))
+        );
+        maxWithdrawableSubAccount = wdrawAvailEntries.reduce(
+            (max, current) => (current.wdrawAvail > max.wdrawAvail ? current : max),
+            wdrawAvailEntries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
+        );
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
+        await assetPage.menu.openMenuHeader('Tài sản');
     });
 
-    test('Test data asset overview match API', async ({ page }) => {
+    test.afterAll(async () => {
+        await page.close();
+    });
+
+
+    test('TC_001: Check asset summary data', async () => {
         await assetPage.navigateToAssetSummary();
 
         const listSubAccountTabs = await assetPage.getListSubAccountTabs();
-        const compareNumericData = (actual: Record<string, string>, expected: Record<string, string>) => {
-            Object.keys(expected).forEach((key) => {
-                expect(NumberValidator.parseNumber(actual[key])).toBe(NumberValidator.parseNumber(expected[key]));
-            });
-        };
 
         for (const subAccountTab of listSubAccountTabs) {
             let subAccount = "";
@@ -54,6 +148,11 @@ test.describe('Asset Summary test', () => {
                 '/CoreServlet.pt',
                 20000
             );
+
+            await expect(assetPage.overviewLocator).toBeVisible();
+
+            await verifyOverviewLabels();
+            await verifyDetailHeaders();
 
             if (!apiResponse) {
                 console.log('No getTotalAssetAll response captured for', subAccountTab);
@@ -89,113 +188,76 @@ test.describe('Asset Summary test', () => {
             await attachScreenshot(page, `Asset Summary ${subAccountTab}`);
         }
     });
-    test('Test display data asset overview', async ({ page }) => {
-        await assetPage.navigateToAssetSummary();
 
-        const listSubAccountTabs = await assetPage.getListSubAccountTabs();
-        for (const subAccountTab of listSubAccountTabs) {
-            await assetPage.clickSubAccountTab(subAccountTab);
-            await expect(assetPage.overviewLocator).toBeVisible();
 
-            const overviewLabels = [
-                'Tổng tài sản',
-                'Tài sản ròng',
-                'Tiền được rút',
-                'Tiền có thể ứng',
-                'Tổng dư nợ margin'
-            ];
-            for (const label of overviewLabels) {
-                const metric = assetPage.overviewLocator
-                    .locator('.overview-metric')
-                    .filter({ hasText: label });
-                await expect(metric).toBeVisible();
-                await expect(metric.locator('.overview-metric__value')).toHaveText(/\S/);
-            }
-
-            const detailHeaders = [
-                'Tiền mặt',
-                'Chứng khoán niêm yết',
-                'Phái sinh',
-                'Trái phiếu OTC',
-                'PineB',
-                'Nợ'
-            ];
-            for (const header of detailHeaders) {
-                const detailHeader = assetPage.viewAsset
-                    .locator('.personal-assets-header')
-                    .filter({ hasText: header })
-                    .first();
-                await expect(detailHeader).toBeVisible();
-                // Check data not empty
-                await expect(detailHeader.locator('.personal-assets-header__right')).toHaveText(/\S/);
-            }
-        }
-    });
-    test('Test danh mục đầu tư', async ({ page }) => {
+    test('TC_002: Check portfolio data', async () => {
         await assetPage.navigateToPortfolio();
 
-        const overviewLabels = [
-            'Tổng tài sản',
-            'Tài sản ròng',
-            'Tiền được rút',
-            'Tiền có thể ứng',
-            'Tổng dư nợ margin'
-        ];
-        for (const label of overviewLabels) {
-            const metric = assetPage.overviewLocator
-                .locator('.overview-metric')
-                .filter({ hasText: label });
-            await expect(metric).toBeVisible();
-            await expect(metric.locator('.overview-metric__value')).toHaveText(/\S/);
-        }
+        await verifyOverviewLabels();
 
         const tabActive = await assetPage.getTabActive();
-        const allSubAccountTab = (await assetPage.getListSubAccountTabs()).find((tab) => tab == "Tất cả tiểu khoản") || "";
+        const listSubAccountTabs = await assetPage.getListSubAccountTabs();
+        if (tabActive == "Tất cả tiểu khoản") {
+            const alternateTab = listSubAccountTabs.find((tab) => tab !== tabActive);
+            if (alternateTab) {
+                await assetPage.clickSubAccountTab(alternateTab);
+            }
+        }
         const apiResponse = await WaitUtils.getLatestResponseByBody(
             page,
             async () => {
-                if (tabActive !== "Tất cả tiểu khoản") {
-                    await assetPage.clickSubAccountTab("Tất cả tiểu khoản");
-                }
+                await assetPage.clickSubAccountTab("Tất cả tiểu khoản");
             },
-            ['getTotalAssetAll',
-                allSubAccountTab,
+            ['getPositionsAll',
+                '"subAcntNo":""',
             ],
             '/CoreServlet.pt',
             20000
         );
 
         if (!apiResponse) {
-            console.log('No getTotalAssetAll response captured for Tất cả tiểu khoản');
+            console.log('No getPositionsAll response captured for Tất cả tiểu khoản');
             return;
         }
 
-        const apiData = (await apiResponse.json());
-        const lists = apiData?.data?.data?.lists || [];
+        const apiData = await apiResponse.json();
+        const lists = apiData?.data || [];
         const portfolioData = lists.map((list: any) => {
             return {
-                stockCode: list.stockCode,
-                quantity: list.quantity,
-                transaction: list.transaction,
-                dividendQuantity: list.dividendQuantity,
-                pendingDelivery: list.pendingDelivery,
-                pendingTrade: list.pendingTrade,
+                stockCode: list.symbol,
+                quantity: list.balQty,
+                transaction: list.trdAvailQty,
+                dividendQuantity: list.devidendQty,
+                pendingDelivery: list.paidQty,
+                pendingTrade: list.waitTrdQty,
                 buyT2: list.buyT2,
                 buyT1: list.buyT1,
                 buyT0: list.buyT0,
                 avgPrice: list.avgPrice,
-                currentPrice: list.currentPrice,
+                currentPrice: Math.round(Number(list.lastPrice) * 100) / 100,
                 change: list.change,
-                changePercent: list.changePercent,
-                initialValue: list.initialValue,
-                marketValue: list.marketValue,
-                profitLoss: list.profitLoss,
-                profitLossPercent: list.profitLossPercent
+                changePercent: list.changePC,
+                initialValue: list.totBuyAmt,
+                marketValue: list.totCurAmt,
+                profitLoss: list.gainLoss,
+                profitLossPercent: list.gainLossPc
             }
         })
 
+        // Check total portfolio data
+        const toataPortfolio = lists.find((list: any) => list.symbol == "TOTAL")
+        const totalPortfolioAPI = {
+            initialValue: toataPortfolio.totBuyAmt,
+            marketValue: toataPortfolio.totCurAmt,
+            profitLoss: toataPortfolio.gainLoss,
+            profitLossPercent: (Math.round(Number(toataPortfolio.gainLossPc) * 100) / 100).toFixed(2),
+        };
+        const totalPortfolioUI = await assetPage.getPortfolioTotalData('Chứng khoán niêm yết');
+        Object.keys(totalPortfolioAPI).forEach((key) => {
+            expect(NumberValidator.parseNumber(totalPortfolioAPI[key])).toEqual(NumberValidator.parseNumber(totalPortfolioUI[key]));
+        });
 
-
+        // Check portfolio data
         const table = await assetPage.getTableByText('Chứng khoán niêm yết');
         const tableHeaders = table.tableHeaders;
         const tableRows = table.tableRows;
@@ -204,18 +266,9 @@ test.describe('Asset Summary test', () => {
             return;
         }
 
-        await TableUtils.exportTableToCsv(page, tableHeaders, tableRows, 'Listed securities Portfolio.csv', undefined, false);
-
-        const csvFilePath = 'playwright/data/Listed securities Portfolio.csv';
-        const csvTable = await parseCsvFile(csvFilePath);
-        const csvRows = mapCsvRows(csvTable.headers, csvTable.rows);
-        if (!csvRows.length) {
-            console.log('No CSV rows found for Listed securities Portfolio');
-            return;
-        }
-
-        if (!portfolioData.length) {
-            console.log('No API data found for Listed securities Portfolio');
+        const uiRows = await TableUtils.getTableRowObjects(page, tableHeaders, tableRows, undefined, false);
+        if (!uiRows.length) {
+            console.log('No UI rows found for Listed securities Portfolio');
             return;
         }
 
@@ -239,14 +292,117 @@ test.describe('Asset Summary test', () => {
             profitLossPercent: '% Lãi/lỗ'
         };
 
+        if (!portfolioData.length) {
+            console.log('No API data found for Listed securities Portfolio');
+            return;
+        }
+
+        // console.log('portfolioData', JSON.stringify(portfolioData, null, 2));
+        // console.log('uiRows', JSON.stringify(uiRows, null, 2));
+
         const numericKeys = Object.keys(columnMap).filter(key => key !== 'stockCode');
-        const mismatches = compareApiRowWithCsvRow(
+        const mismatches = compareApiRowWithUiRow(
             portfolioData[0],
-            csvRows[0],
+            uiRows[0],
             columnMap,
             numericKeys
         );
         expect(mismatches, mismatches.join('\n')).toEqual([]);
 
+
+        await attachScreenshot(page, `Portfolio ${tabActive}`);
     });
-})
+
+    test('TC_003: Check investment performance data', async () => {
+        await assetPage.navigateToInvestmentPerformance();
+
+        const listSubAccountTabs = await assetPage.getListSubAccountTabs();
+        for (const subAccountTab of listSubAccountTabs) {
+            await assetPage.clickSubAccountTab(subAccountTab);
+            const performanceSection = page.locator('.personal-assets.performance');
+            await expect(performanceSection).toBeVisible();
+
+            if (subAccountTab.includes('Folio')) {
+                await expect(page.getByText('Dữ liệu không hỗ trợ cho tiểu khoản Pinefolio')).toBeVisible();
+                await attachScreenshot(page, `Investment Performance ${subAccountTab}`);
+
+            } else {
+                await expect(performanceSection).toContainText('Dữ liệu khả dụng từ');
+                await expect(performanceSection).toContainText('Hiệu suất đầu tư (tính theo phương pháp TWR (%) và chỉ mang tính tham khảo, nhà đầu tư có thể cân nhắc lựa chọn tính toán riêng cho mình. PInetree không chịu trách nhiệm về những khác biệt giữa các phương pháp tính toán hiệu suất khác nhau. Dữ liệu dựa trên tính toán từ dữ liệu trong quá khứ và không mang tính khuyến nghị để đưa ra quyết định đầu tư');
+
+                const peformanceTab = await assetPage.getListPerformanceTabs();
+                for (const tab of peformanceTab) {
+                    await assetPage.clickPerformanceTab(tab);
+                    // Check calendar chart
+                    await assetPage.selectCalendarChart();
+                    const calendar = performanceSection.locator('.pnl-calendar');
+                    await expect(calendar).toBeVisible();
+
+                    const monthLabel = calendar.locator('.btn-sm:first-of-type ~ div');
+                    await expect(monthLabel).toBeVisible();
+                    const expectedMonth = getCurrentMonthLabel();
+                    await expect(monthLabel).toHaveText(expectedMonth);
+
+                    const dayCells = calendar.locator('.cal-day');
+                    await expect(dayCells.first()).toBeVisible();
+                    await expect(dayCells.first()).toHaveText(/\S/);
+
+                    // const pnlCells = calendar.locator('.cal-pnl').filter({ hasText: /\S/ });
+                    // const pnlCount = await pnlCells.count();
+                    // expect(pnlCount).toBeGreaterThan(0);
+                    await attachScreenshot(page, `Investment Performance Calendar Chart ${tab} of ${subAccountTab}`);
+
+                    // Check line chart
+                    await assetPage.selectLineChart();
+                    if (!(await page.getByText('Không có dữ liệu!').isVisible())) {
+                        const lineChart = performanceSection.locator('[data-highcharts-chart]');
+                        await expect(lineChart).toBeVisible();
+                        await attachScreenshot(page, `Investment Performance Line Chart ${tab} of ${subAccountTab}`);
+                    }
+
+                }
+
+            }
+        }
+
+    });
+
+    test('TC_004: Check withdrawal money function', async () => {
+        await assetPage.openWithdrawalMoneyModal();
+        let sourceAccount = await assetPage.getSelectValue();
+        if (sourceAccount !== maxWithdrawableSubAccount.subAcntNo) {
+            await assetPage.selectAccount(maxWithdrawableSubAccount.subAcntNo);
+            sourceAccount = maxWithdrawableSubAccount.subAcntNo;
+        }
+
+        const [wdrawAvailUI, wdrawAvailAPI] = await Promise.all([
+            assetPage.getValueByText('Số tiền có thể rút'),
+            maxWithdrawableSubAccount.wdrawAvail,
+        ]);
+        expect(NumberValidator.parseNumber(wdrawAvailUI)).toEqual(wdrawAvailAPI);
+
+        if (wdrawAvailAPI <= 0) {
+            console.log('Không có tiểu khoản có tiền để rút');
+            return;
+        }
+
+        // Check withdrawal money
+        const amount = 2000;
+
+        await assetPage.withdrawalMoney(amount);
+
+        const messageError = await orderPage.getMessage();
+
+        if (messageError.description.includes('Hệ thống đang chạy batch')) {
+            console.log('Withdrawal money failed:', messageError);
+        } else {
+            await orderPage.verifyMessage(['Thông báo'], ['Đã chuyển thành công']);
+        }
+
+        await assetPage.openWithdrawalMoneyModal();
+        const newWdrawAvailUI = await assetPage.getValueByText('Số tiền có thể rút');
+        expect(NumberValidator.parseNumber(newWdrawAvailUI)).toEqual(NumberValidator.parseNumber(wdrawAvailUI) - amount);
+        await attachScreenshot(page, `Withdrawal Money ${sourceAccount}`);
+    });
+
+});

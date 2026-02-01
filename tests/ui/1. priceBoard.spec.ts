@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
 import Menu from '../../page/ui/Menu';
 import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/MarketApi';
@@ -128,21 +128,28 @@ const assertMatchedOrPositive = (
 
 
 
-test.describe('Market Watch Automation Suite', () => {
+test.describe('Market Dashboard Automation Suite', () => {
     let priceBoardPage: PriceBoardPage;
     let marketApi: MarketApi;
     let marketGatewayApi: MarketGatewayApi;
     let marketWapiApi: MarketWapiApi;
     let menu: Menu;
+    let page: Page;
 
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
         priceBoardPage = new PriceBoardPage(page);
         marketApi = new MarketApi();
         marketGatewayApi = new MarketGatewayApi();
         marketWapiApi = new MarketWapiApi();
         menu = new Menu(page);
+
         await priceBoardPage.openPriceBoard();
+    });
+
+    test.afterAll(async () => {
+        await page.close();
     });
     // --- TEST CASE CHO BIỂU ĐỒ MINI CHART ---
 
@@ -152,7 +159,7 @@ test.describe('Market Watch Automation Suite', () => {
 
 
     for (const indexCode of indexCodes) {
-        test(`TC_001: Verify index value and logic color for ${indexCode}`, async () => {
+        test(`TC_001: Check index value and logic color for ${indexCode}`, async () => {
 
             const [indexPanelData, indexDataApi] = await Promise.all([
                 priceBoardPage.getIndexPanelData(indexCode),
@@ -180,7 +187,7 @@ test.describe('Market Watch Automation Suite', () => {
         });
     }
 
-    test(`TC_002: Verify index value and logic color for DVX`, async () => {
+    test(`TC_002: Check index value and logic color for DVX`, async () => {
         const latestDvx = await marketApi.getLatestDvx();
         const indexCode = latestDvx.indexCode;
         const [indexPanelData, indexDataApi] = await Promise.all([
@@ -204,7 +211,7 @@ test.describe('Market Watch Automation Suite', () => {
         assertIndexColorByChange(indexColor, ui.indexChange);
     });
 
-    test('TC_003: Should render mini chart panels (VNI/VN30/HNX/UPCOM/VN100/DVX) with SVG', async () => {
+    test('TC_003: Check render mini chart panels (VNI/VN30/HNX/UPCOM/VN100/DVX) with SVG', async () => {
         const latestDvx = await marketApi.getLatestDvx();
         const indexCode = latestDvx.indexCode;
         const indexCodes = Object.values(TEST_DATA.INDEX_CODES).concat(indexCode);

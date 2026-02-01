@@ -336,6 +336,15 @@ export class WaitUtils {
  */
 export class FormUtils {
     private static readonly MESSAGE_TIMEOUT = 10000;
+
+
+    static async fillTextBox(textBoxSelector: Locator, value: string | number): Promise<void> {
+        await textBoxSelector.waitFor({ state: 'visible' });
+        await textBoxSelector.clear();
+        await textBoxSelector.fill(String(value));
+        await WaitUtils.delay(500);
+    }
+
     /**
      * Fill form field with retry mechanism
      */
@@ -826,6 +835,44 @@ export class TableUtils {
 
         await fs.mkdir(path.dirname(`playwright/data/${outputFile}`), { recursive: true });
         await fs.writeFile(`playwright/data/${outputFile}`, lines.join('\n'), 'utf8');
+    }
+
+    /**
+     * Read table data into objects using visible headers.
+     */
+    static async getTableRowObjects(
+        page: Page,
+        tableHeaders: Locator,
+        tableRows: Locator,
+        scrollContainer?: Locator,
+        useScrolling: boolean = true
+    ): Promise<Record<string, string>[]> {
+        if (useScrolling && scrollContainer) {
+            await ScrollUtils.loadAllData(page, scrollContainer);
+        }
+
+        await tableRows.first().waitFor({ state: 'visible' });
+        const headers = await TableUtils.getTableHeaders(tableHeaders);
+        const rowCount = await tableRows.count();
+        const data: Record<string, string>[] = [];
+
+        for (let i = 0; i < rowCount; i++) {
+            try {
+                const row = tableRows.nth(i);
+                await row.waitFor({ state: 'visible' });
+                const cells = await row.locator('td').allTextContents();
+                if (!cells.length) continue;
+                const rowObject: Record<string, string> = {};
+                headers.forEach((header, index) => {
+                    rowObject[header] = (cells[index] ?? '').trim();
+                });
+                data.push(rowObject);
+            } catch (error) {
+                console.log(`Failed to read row ${i} for table data: ${error}`);
+            }
+        }
+
+        return data;
     }
 
     /**

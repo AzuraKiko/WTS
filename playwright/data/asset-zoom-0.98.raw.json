@@ -1,0 +1,141 @@
+{
+  "text": [
+    "Tổng",
+    "tài",
+    "sản",
+    "Tài",
+    "sản",
+    "ròng",
+    "Tiền",
+    "được",
+    "rút",
+    "Tiền",
+    "có",
+    "thể",
+    "ứng",
+    "Tổng",
+    "dư",
+    "nợ",
+    "margin",
+    "RTT",
+    "Sức",
+    "mua",
+    "222,318",
+    "222,317",
+    "198,217",
+    "0",
+    "0",
+    "100.00%",
+    "198,217"
+  ],
+  "items": [
+    {
+      "text": "Tổng",
+      "confidence": 96
+    },
+    {
+      "text": "tài",
+      "confidence": 97
+    },
+    {
+      "text": "sản",
+      "confidence": 96
+    },
+    {
+      "text": "Tài",
+      "confidence": 96
+    },
+    {
+      "text": "sản",
+      "confidence": 96
+    },
+    {
+      "text": "ròng",
+      "confidence": 96
+    },
+    {
+      "text": "Tiền",
+      "confidence": 87
+    },
+    {
+      "text": "được",
+      "confidence": 96
+    },
+    {
+      "text": "rút",
+      "confidence": 96
+    },
+    {
+      "text": "Tiền",
+      "confidence": 96
+    },
+    {
+      "text": "có",
+      "confidence": 96
+    },
+    {
+      "text": "thể",
+      "confidence": 96
+    },
+    {
+      "text": "ứng",
+      "confidence": 96
+    },
+    {
+      "text": "Tổng",
+      "confidence": 96
+    },
+    {
+      "text": "dư",
+      "confidence": 96
+    },
+    {
+      "text": "nợ",
+      "confidence": 93
+    },
+    {
+      "text": "margin",
+      "confidence": 92
+    },
+    {
+      "text": "RTT",
+      "confidence": 92
+    },
+    {
+      "text": "Sức",
+      "confidence": 96
+    },
+    {
+      "text": "mua",
+      "confidence": 95
+    },
+    {
+      "text": "222,318",
+      "confidence": 95
+    },
+    {
+      "text": "222,317",
+      "confidence": 93
+    },
+    {
+      "text": "198,217",
+      "confidence": 96
+    },
+    {
+      "text": "0",
+      "confidence": 96
+    },
+    {
+      "text": "0",
+      "confidence": 96
+    },
+    {
+      "text": "100.00%",
+      "confidence": 53
+    },
+    {
+      "text": "198,217",
+      "confidence": 96
+    }
+  ]
+}

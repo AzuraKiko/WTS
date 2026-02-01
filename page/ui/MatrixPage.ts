@@ -55,6 +55,8 @@ class MatrixPage extends BasePage {
         await this.confirmButton.click();
     }
 
+
+
     async enterMatrixInvalid(): Promise<void> {
         await this.refreshMatrix.waitFor({ state: 'visible', timeout: 3000 });
 
@@ -88,6 +90,29 @@ class MatrixPage extends BasePage {
         await expect(this.popup2FA).toBeVisible();
         const text = await this.popup2FA.textContent();
         return text?.trim() === "Chọn Phương Thức Xác Thực";
+    }
+
+    async enterMatrixConfirm(section: Locator): Promise<void> {
+        const matrix = section.locator('.matrix-section');
+        const refresh = section.locator('.resend-section');
+        const input = section.locator('.matrix-section input');
+
+
+        await refresh.waitFor({ state: 'visible', timeout: 3000 });
+
+        const coords: string[] = await matrix.allTextContents();
+        const validCoords: string[] = coords.filter((coord: string) => isValidCoordinate(coord.trim()));
+
+        if (validCoords.length < 3) {
+            throw new Error(`Expected 3 valid coordinates, but got ${validCoords.length}. Coordinates: ${coords.join(', ')}`);
+        }
+
+        const matrixValues: string[] = getMatrixCodes(validCoords.slice(0, 3));
+
+        // Use for...of loop instead of forEach for proper async handling
+        for (let index = 0; index < matrixValues.length; index++) {
+            await input.nth(index).fill(matrixValues[index]);
+        }
     }
 
 }

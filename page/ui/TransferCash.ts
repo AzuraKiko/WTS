@@ -129,7 +129,7 @@ class TransferCashPage extends BasePage {
     }
 
     async fillTransferAmount(amount: number | string): Promise<void> {
-        await FormUtils.fillField(this.transferAmountInput, amount);
+        await FormUtils.fillTextBox(this.transferAmountInput, amount);
     }
 
 

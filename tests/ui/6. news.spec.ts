@@ -1,7 +1,7 @@
 import { test, expect, Locator, Page } from '@playwright/test';
-import LoginPage from '../../page/ui/LoginPage';
 import Menu from '../../page/ui/Menu';
 import { WaitUtils } from '../../helpers/uiUtils';
+import LoginPage from '../../page/ui/LoginPage';
 import { TEST_CONFIG } from '../utils/testConfig';
 
 const NEWS_ITEM_SELECTORS = [
@@ -82,21 +82,31 @@ const getSectionContainers = (sectionHeader: Locator): Locator[] => ([
     sectionHeader.locator('xpath=ancestor::*[self::section or self::div][2]'),
 ]);
 
-test.describe('Others screens', () => {
-    let loginPage: LoginPage;
+test.describe('News screens', () => {
     let menu: Menu;
+    let page: Page;
+    let loginPage: LoginPage;
 
-    test.beforeEach(async ({ page }) => {
-        loginPage = new LoginPage(page);
+    test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
         menu = new Menu(page);
+        loginPage = new LoginPage(page);
 
-        await loginPage.loginSuccess();
-        expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
-    });
+        await loginPage.gotoWeb(TEST_CONFIG.WEB_LOGIN_URL);
 
-    test('Quick check Tin tức has data', async ({ page }) => {
+        if (await page.locator('.adv-modal__body').isVisible()) {
+            await page.click('.btn-icon.btn--cancel');
+            await page.waitForTimeout(3000);
+        }
         await menu.openMenuHeader('Tin tức');
 
+    });
+
+    test.afterAll(async () => {
+        await page.close();
+    });
+
+    test('TC_001: Check news data', async () => {
         const newsHeader = page.getByText('Bảng tin', { exact: true });
         await expect(newsHeader).toBeVisible();
 

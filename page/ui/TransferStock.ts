@@ -188,7 +188,7 @@ class TransferStockPage extends BasePage {
     async fillTransferQuantity(rowIndex: number, quantity: number | string): Promise<void> {
         const row = this.sourceRows.nth(rowIndex);
         const input = row.locator('input[placeholder="Nhập KL"]');
-        await FormUtils.fillField(input, quantity);
+        await FormUtils.fillTextBox(input, quantity);
     }
 
     async submitTransferStock(): Promise<void> {

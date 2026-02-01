@@ -1,15 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import TransferCashPage from '../../page/ui/TransferCash';
 import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { NumberValidator } from '../../helpers/validationUtils';
-import { AssetApi, getCashTransferHist } from '../../page/api/AssetApi';
+import { AssetApi } from '../../page/api/AssetApi';
 import { getSharedLoginSession } from "../api/sharedSession";
 import { v4 as uuidv4 } from 'uuid';
 import OrderPage from '../../page/ui/OrderPage';
 import { WaitUtils } from '../../helpers/uiUtils';
-import apiHelper from '../../helpers/ApiHelper';
 
 
 
@@ -27,22 +26,38 @@ test.describe('Transfer Cash Tests', () => {
     let loginPage: LoginPage;
     let transferCashPage: TransferCashPage;
     let orderPage: OrderPage;
-    let apiHelper: apiHelper;
     let maxWithdrawableSubAccount: { subAcntNo: string; wdrawAvail: number };
     let availableSubAccounts: string[] = [];
     let cashTransferHistAPI: any[] = [];
+    let page: Page;
 
     let assetApi = new AssetApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
-    let getCashTransferHistApi = new getCashTransferHist({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
 
-    test.describe.configure({ mode: 'serial' });
+    // test.describe.configure({ mode: 'serial' });
 
-    test.beforeEach(async ({ page }) => {
+    const getSubAccountNo = (account: string) => account.split('-')[0].trim();
+    const assertAccountInfo = (info: { balance: string; withdrawable: string }) => {
+        expect(NumberValidator.parseNumber(info.balance)).toBeGreaterThanOrEqual(0);
+        expect(NumberValidator.parseNumber(info.withdrawable)).toBeGreaterThanOrEqual(0);
+    };
+    const selectIfDifferent = async (
+        current: string,
+        target: string,
+        selector: (subAcntNo: string) => Promise<void>
+    ) => {
+        if (current !== target) {
+            await selector(target);
+        }
+    };
+
+    test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
         loginPage = new LoginPage(page);
         transferCashPage = new TransferCashPage(page);
         orderPage = new OrderPage(page);
+
         const loginData = await getSharedLoginSession();
-        const { session, cif, token, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
+        const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
         availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
             .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
 
@@ -69,16 +84,17 @@ test.describe('Transfer Cash Tests', () => {
             wdrawAvailEntries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
         );
 
-        // Login before each test
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
         await attachScreenshot(page, 'After Login');
-
+        await transferCashPage.navigateToTransferCash();
     });
 
-    test('TC_001: Verify transfer cash page data', async ({ page }) => {
+    test.afterAll(async () => {
+        await page.close();
+    });
 
-        await transferCashPage.navigateToTransferCash();
+    test('TC_001: Check transfer cash function', async () => {
 
         const title = await transferCashPage.getTitle();
         expect(title).toContain('Chuyển tiền tiểu khoản');
@@ -88,99 +104,78 @@ test.describe('Transfer Cash Tests', () => {
             transferCashPage.getDestinationAccountValue(),
         ]);
 
-        const getSubAccountNo = (account: string) => account.split('-')[0].trim();
-        const assertAccountInfo = (info: { balance: string; withdrawable: string }) => {
-            expect(NumberValidator.parseNumber(info.balance)).toBeGreaterThanOrEqual(0);
-            expect(NumberValidator.parseNumber(info.withdrawable)).toBeGreaterThanOrEqual(0);
-        };
-        const selectIfDifferent = async (
-            current: string,
-            target: string,
-            selector: (subAcntNo: string) => Promise<void>
-        ) => {
-            if (current !== target) {
-                await selector(target);
-            }
-        };
-
         let sourceSubAccountNo = getSubAccountNo(sourceAccount);
         let destinationSubAccountNo = getSubAccountNo(destinationAccount);
 
+        let [sourceAccountInfo, destinationAccountInfo] = await Promise.all([
+            transferCashPage.getSourceAccountInfo(),
+            transferCashPage.getDestinationAccountInfo(),
+        ]);
+
+        assertAccountInfo(sourceAccountInfo);
+        assertAccountInfo(destinationAccountInfo);
+
+        // Check transfer content
+        const note = await transferCashPage.getTransferContent();
+        expect(note).toContain(`chuyển tiền online từ ${sourceSubAccountNo} đến ${destinationSubAccountNo}`);
+
         if (maxWithdrawableSubAccount.wdrawAvail <= 0) {
             console.log('Không có tiểu khoản có tiền để chuyển');
+            return;
+        }
 
-            const [sourceAccountInfo, destinationAccountInfo] = await Promise.all([
-                transferCashPage.getSourceAccountInfo(),
-                transferCashPage.getDestinationAccountInfo(),
-            ]);
+        await selectIfDifferent(
+            sourceSubAccountNo,
+            maxWithdrawableSubAccount.subAcntNo,
+            (target) => transferCashPage.selectSourceAccount(target)
+        );
+        sourceSubAccountNo = maxWithdrawableSubAccount.subAcntNo;
+        sourceAccountInfo = await transferCashPage.getSourceAccountInfo();
 
-            assertAccountInfo(sourceAccountInfo);
-            assertAccountInfo(destinationAccountInfo);
-
-            // Check transfer content
-            const note = await transferCashPage.getTransferContent();
-            expect(note).toContain(`chuyển tiền online từ ${sourceSubAccountNo} đến ${destinationSubAccountNo}`);
-
-        } else {
-            await selectIfDifferent(
-                sourceSubAccountNo,
-                maxWithdrawableSubAccount.subAcntNo,
-                (target) => transferCashPage.selectSourceAccount(target)
+        if (destinationSubAccountNo === sourceSubAccountNo) {
+            const alternateSubAccountNo = availableSubAccounts.find(
+                (subAcntNo) => subAcntNo !== sourceSubAccountNo
             );
-            sourceSubAccountNo = maxWithdrawableSubAccount.subAcntNo;
-            if (destinationSubAccountNo === sourceSubAccountNo) {
-                const alternateSubAccountNo = availableSubAccounts.find(
-                    (subAcntNo) => subAcntNo !== sourceSubAccountNo
+            if (alternateSubAccountNo) {
+                await selectIfDifferent(
+                    destinationSubAccountNo,
+                    alternateSubAccountNo,
+                    (target) => transferCashPage.selectDestinationAccount(target)
                 );
-                if (alternateSubAccountNo) {
-                    await selectIfDifferent(
-                        destinationSubAccountNo,
-                        alternateSubAccountNo,
-                        (target) => transferCashPage.selectDestinationAccount(target)
-                    );
-                    destinationSubAccountNo = alternateSubAccountNo;
-                }
-            }
-
-
-            const [sourceAccountInfo, destinationAccountInfo] = await Promise.all([
-                transferCashPage.getSourceAccountInfo(),
-                transferCashPage.getDestinationAccountInfo(),
-            ]);
-
-            assertAccountInfo(sourceAccountInfo);
-            assertAccountInfo(destinationAccountInfo);
-
-            // Check transfer content
-            const note = await transferCashPage.getTransferContent();
-            expect(note).toContain(`chuyển tiền online từ ${sourceSubAccountNo} đến ${destinationSubAccountNo}`);
-
-            // Transfer cash
-            const amount = 10000;
-            await transferCashPage.transferCash(amount);
-
-
-            const messageError = await orderPage.getMessage();
-            if (messageError.description.includes('Hệ thống đang chạy batch')) {
-                console.log('Transfer cash failed:', messageError);
-            } else {
-                await orderPage.verifyMessage(['Thông báo'], [`Quý khách vừa chuyển số tiền: ${amount} VNĐ từ tiểu khoản ${sourceSubAccountNo} sang tiểu khoản ${destinationSubAccountNo}`]);
-
-                await WaitUtils.delay(8000);
-
-                const [newSourceAccountInfo, newDestinationAccountInfo] = await Promise.all([
-                    transferCashPage.getSourceAccountInfo(),
-                    transferCashPage.getDestinationAccountInfo(),
-                ]);
-
-                expect(NumberValidator.parseNumber(newSourceAccountInfo.balance)).toBe(NumberValidator.parseNumber(sourceAccountInfo.balance) - amount);
-                expect(NumberValidator.parseNumber(newDestinationAccountInfo.balance)).toBe(NumberValidator.parseNumber(destinationAccountInfo.balance) + amount);
-
-                expect(NumberValidator.parseNumber(newSourceAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(sourceAccountInfo.withdrawable) - amount);
-                expect(NumberValidator.parseNumber(newDestinationAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(destinationAccountInfo.withdrawable) + amount);
+                destinationSubAccountNo = alternateSubAccountNo;
             }
         }
 
+        // Transfer cash
+        const amount = 10000;
+        await transferCashPage.transferCash(amount);
+
+
+        const messageError = await orderPage.getMessage();
+        if (messageError.description.includes('Hệ thống đang chạy batch')) {
+            console.log('Transfer cash failed:', messageError);
+        } else {
+            await orderPage.verifyMessage(['Thông báo'], [`Quý khách vừa chuyển số tiền: ${amount} VNĐ từ tiểu khoản ${sourceSubAccountNo} sang tiểu khoản ${destinationSubAccountNo}`]);
+
+            await WaitUtils.delay(8000);
+
+            const [newSourceAccountInfo, newDestinationAccountInfo] = await Promise.all([
+                transferCashPage.getSourceAccountInfo(),
+                transferCashPage.getDestinationAccountInfo(),
+            ]);
+
+            expect(NumberValidator.parseNumber(newSourceAccountInfo.balance)).toBe(NumberValidator.parseNumber(sourceAccountInfo.balance) - amount);
+            expect(NumberValidator.parseNumber(newDestinationAccountInfo.balance)).toBe(NumberValidator.parseNumber(destinationAccountInfo.balance) + amount);
+
+            expect(NumberValidator.parseNumber(newSourceAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(sourceAccountInfo.withdrawable) - amount);
+            expect(NumberValidator.parseNumber(newDestinationAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(destinationAccountInfo.withdrawable) + amount);
+
+        }
+
+        await attachScreenshot(page, 'Transfer Cash Page');
+    });
+
+    test('TC_002: Check history table', async () => {
 
         // Check history table
         const headers = await transferCashPage.getHistoryTableHeaders();
@@ -188,6 +183,9 @@ test.describe('Transfer Cash Tests', () => {
         expectedHeaders.forEach((header) => {
             expect(headers).toContain(header);
         });
+
+        const sourceAccount = await transferCashPage.getSourceAccountValue();
+        let sourceSubAccountNo = getSubAccountNo(sourceAccount);
 
         const normalSubAcntNo = availableSubAccounts[0];
         const marginSubAcntNo = availableSubAccounts[1];
@@ -241,7 +239,5 @@ test.describe('Transfer Cash Tests', () => {
         } else {
             console.log('No data in history table');
         }
-
-        await attachScreenshot(page, 'Transfer Cash Page');
     });
 });
