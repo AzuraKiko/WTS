@@ -156,7 +156,7 @@ export const TEST_DATA = {
         VANG: "Vàng",
         DAU_THO: "Dầu thô",
         GAS: "Gas",
-        CA_PHIEU: "Cà phieu",
+        CA_PHIEU: "Cà phê",
         DUONG: "Đường",
         DONG: "Đồng",
         NGO: "Ngô",

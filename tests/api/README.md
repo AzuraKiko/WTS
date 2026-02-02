@@ -52,6 +52,13 @@ The `login.spec.ts` file includes tests for:
 ### Basic Commands
 
 ```bash
+
+# Set cho phiên hiện tại:
+export NODE_ENV=PROD
+npx playwright test tests/ui/8.pineB.spec.ts --update-snapshots
+# Hoặc set inline cho 1 lệnh:
+NODE_ENV=PROD PROD_WEB_LOGIN_URL="https://trade.pinetree.vn" npx playwright test tests/ui/8.pineB.spec.ts
+
 # Run all LoginApi tests
 npx playwright test tests/api/login.spec.ts
 

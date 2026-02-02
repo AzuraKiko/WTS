@@ -291,74 +291,76 @@ test.describe('Market Dashboard Automation Suite', () => {
     test('TC_006: Check global data', async () => {
         const globalIndexNames = Object.values(TEST_DATA.Global_INDEX_CODES);
         for (const globalIndexName of globalIndexNames) {
-            try {
-                const { matched, ui, api } = await retryCompareData(async () => {
-                    const [globalData, globalDataApi] = await Promise.all([
-                        priceBoardPage.getGlobalDataByLabel(globalIndexName),
-                        marketGatewayApi.getGlobalDataByName(globalIndexName),
-                    ]);
-                    return {
-                        ui: {
-                            indexValue: parseNumber(globalData.indexValue),
-                            indexChange: parseNumber(globalData.indexChange),
-                            indexChangePercent: parseNumber(globalData.indexChangePercent),
-                        },
-                        api: {
-                            indexValue: parseNumber(globalDataApi.indexValue),
-                            indexChange: parseNumber(globalDataApi.indexChange),
-                            indexChangePercent: parseNumber(globalDataApi.indexChangePercent),
-                        },
-                    };
-                });
-
-                assertMatchedOrPositive(
-                    matched,
-                    ui,
-                    api,
-                    `Global ${globalIndexName}`,
-                    ui.indexValue,
-                    `Global ${globalIndexName} index value should be greater than 0`
-                );
-            } catch {
+            if (TimeUtils.isWeekend(new Date()) || (TimeUtils.isMonday(new Date()) && await TimeUtils.checkDataWithTimeRange(new Date(), 0, 0, 9, 0))) {
                 console.log(`${globalIndexName} is out of trading time`);
+                continue;
             }
+
+            const { matched, ui, api } = await retryCompareData(async () => {
+                const [globalData, globalDataApi] = await Promise.all([
+                    priceBoardPage.getGlobalDataByLabel(globalIndexName),
+                    marketGatewayApi.getGlobalDataByName(globalIndexName),
+                ]);
+                return {
+                    ui: {
+                        indexValue: parseNumber(globalData.indexValue),
+                        indexChange: parseNumber(globalData.indexChange),
+                        indexChangePercent: parseNumber(globalData.indexChangePercent),
+                    },
+                    api: {
+                        indexValue: parseNumber(globalDataApi.indexValue),
+                        indexChange: parseNumber(globalDataApi.indexChange),
+                        indexChangePercent: parseNumber(globalDataApi.indexChangePercent),
+                    },
+                };
+            });
+
+            assertMatchedOrPositive(
+                matched,
+                ui,
+                api,
+                `Global ${globalIndexName}`,
+                ui.indexValue,
+                `Global ${globalIndexName} index value should be greater than 0`
+            );
         }
     });
 
     test('TC_007: Check commodity data', async () => {
         const commodityNames = Object.values(TEST_DATA.COMMODITY_CODES);
         for (const commodityName of commodityNames) {
-            try {
-                const { matched, ui, api } = await retryCompareData(async () => {
-                    const [commodityData, commodityDataApi] = await Promise.all([
-                        priceBoardPage.getCommodityDataByLabel(commodityName),
-                        marketWapiApi.getCommodityDataByName(commodityName),
-                    ]);
-                    return {
-                        ui: {
-                            commodityValue: parseNumber(commodityData.indexValue),
-                            commodityChange: parseNumber(commodityData.indexChange),
-                            commodityChangePercent: parseNumber(commodityData.indexChangePercent),
-                        },
-                        api: {
-                            commodityValue: NumberValidator.formatNumberRound(commodityDataApi.indexValue),
-                            commodityChange: NumberValidator.formatNumberRound(commodityDataApi.indexChange),
-                            commodityChangePercent: NumberValidator.formatNumberRound(commodityDataApi.indexChangePercent),
-                        },
-                    };
-                });
+            // if (TimeUtils.isWeekend(new Date()) || (TimeUtils.isMonday(new Date()) && await TimeUtils.checkDataWithTimeRange(new Date(), 0, 0, 9, 0))) {
+            //     console.log(`${commodityName} is out of trading time`);
+            //     continue;
+            // }
 
-                assertMatchedOrPositive(
-                    matched,
-                    ui,
-                    api,
-                    `Commodity ${commodityName}`,
-                    ui.commodityValue,
-                    `Commodity ${commodityName} commodity value should be greater than 0`
-                );
-            } catch {
-                console.log(`${commodityName} is out of trading time`);
-            }
+            const { matched, ui, api } = await retryCompareData(async () => {
+                const [commodityData, commodityDataApi] = await Promise.all([
+                    priceBoardPage.getCommodityDataByLabel(commodityName),
+                    marketWapiApi.getCommodityDataByName(commodityName),
+                ]);
+                return {
+                    ui: {
+                        commodityValue: parseNumber(commodityData.indexValue),
+                        commodityChange: parseNumber(commodityData.indexChange),
+                        commodityChangePercent: parseNumber(commodityData.indexChangePercent),
+                    },
+                    api: {
+                        commodityValue: NumberValidator.formatNumberRound(commodityDataApi.indexValue),
+                        commodityChange: NumberValidator.formatNumberRound(commodityDataApi.indexChange),
+                        commodityChangePercent: NumberValidator.formatNumberRound(commodityDataApi.indexChangePercent),
+                    },
+                };
+            });
+
+            assertMatchedOrPositive(
+                matched,
+                ui,
+                api,
+                `Commodity ${commodityName}`,
+                ui.commodityValue,
+                `Commodity ${commodityName} commodity value should be greater than 0`
+            );
         }
     });
 

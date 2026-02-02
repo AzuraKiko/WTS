@@ -1087,9 +1087,6 @@ export class TimeUtils {
     ): Promise<boolean> {
         const currentDay = now.getDay(); // 0: CN, 6: T7
 
-        const isWeekend = currentDay === 0 || currentDay === 6;
-        if (isWeekend) return false;
-
         // 2. Quy đổi thời gian hiện tại ra tổng số phút trong ngày
         const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -1098,6 +1095,15 @@ export class TimeUtils {
         const endTotalMinutes = toHour * 60 + toMinute;
 
         return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
+    }
+
+    static isWeekend(now: Date = new Date()): boolean {
+        const currentDay = now.getDay(); // 0=CN, 6=T7
+        return currentDay === 0 || currentDay === 6;
+    }
+
+    static isMonday(now: Date = new Date()): boolean {
+        return now.getDay() === 1;
     }
 }
 
