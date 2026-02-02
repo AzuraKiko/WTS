@@ -51,8 +51,11 @@ test.describe('Order Management Tests', () => {
     await orderPage.placeBuyOrder({ stockCode, quantity: 1 });
 
     const messageError = await orderPage.getMessage();
-    if (messageError.title.includes('Đặt lệnh không thành công')) {
+    if (messageError.description.includes('Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.')) {
       console.log('Order placement failed:', messageError);
+      return;
+    } else if (messageError) {
+      throw new Error(messageError.title + ': ' + messageError.description);
     } else {
       await orderPage.openOrderInDayTab();
       expect(await orderPage.getStockCodeInDayRowData(0)).toBe(stockCode);
@@ -81,8 +84,11 @@ test.describe('Order Management Tests', () => {
       await orderPage.openOrderInDayTab();
       expect(await orderPage.getStockCodeInDayRowData(0)).toBe(usedStockCode);
       const messageError = await orderPage.getMessage();
-      if (messageError.title.includes('Đặt lệnh không thành công')) {
+      if (messageError.description.includes('Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.')) {
         console.log('Order placement failed:', messageError);
+        return;
+      } else if (messageError) {
+        throw new Error(messageError.title + ': ' + messageError.description);
       } else {
         if (await orderBook.isModifyOrderEnabled(0)) {
           const priceText = await orderPage.priceFloor.textContent();

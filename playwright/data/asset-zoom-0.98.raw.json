@@ -1,5 +1,12 @@
 {
   "text": [
+    "ƒïmHmAaAIAIAaÊ",
+    "số",
+    "ốỎÔỐÔÔÔỐốC",
+    "CÔ",
+    "CÔ",
+    "CÔ.",
+    "C.CC.CC.CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCcCCCCCCCCCCCCC..........................................................ẻéốốaa",
     "Tổng",
     "tài",
     "sản",
@@ -20,8 +27,8 @@
     "RTT",
     "Sức",
     "mua",
-    "222,318",
-    "222,317",
+    "229,798",
+    "229,797",
     "198,217",
     "0",
     "0",
@@ -30,12 +37,40 @@
   ],
   "items": [
     {
+      "text": "ƒïmHmAaAIAIAaÊ",
+      "confidence": 0
+    },
+    {
+      "text": "số",
+      "confidence": 0
+    },
+    {
+      "text": "ốỎÔỐÔÔÔỐốC",
+      "confidence": 0
+    },
+    {
+      "text": "CÔ",
+      "confidence": 14
+    },
+    {
+      "text": "CÔ",
+      "confidence": 34
+    },
+    {
+      "text": "CÔ.",
+      "confidence": 33
+    },
+    {
+      "text": "C.CC.CC.CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCcCCCCCCCCCCCCC..........................................................ẻéốốaa",
+      "confidence": 0
+    },
+    {
       "text": "Tổng",
       "confidence": 96
     },
     {
       "text": "tài",
-      "confidence": 97
+      "confidence": 96
     },
     {
       "text": "sản",
@@ -55,7 +90,7 @@
     },
     {
       "text": "Tiền",
-      "confidence": 87
+      "confidence": 96
     },
     {
       "text": "được",
@@ -107,15 +142,15 @@
     },
     {
       "text": "mua",
+      "confidence": 96
+    },
+    {
+      "text": "229,798",
       "confidence": 95
     },
     {
-      "text": "222,318",
+      "text": "229,797",
       "confidence": 95
-    },
-    {
-      "text": "222,317",
-      "confidence": 93
     },
     {
       "text": "198,217",
@@ -131,7 +166,7 @@
     },
     {
       "text": "100.00%",
-      "confidence": 53
+      "confidence": 92
     },
     {
       "text": "198,217",

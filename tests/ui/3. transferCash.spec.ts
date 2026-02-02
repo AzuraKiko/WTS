@@ -150,11 +150,14 @@ test.describe('Transfer Cash Tests', () => {
         const amount = 10000;
         await transferCashPage.transferCash(amount);
 
-
         const messageError = await orderPage.getMessage();
         if (messageError.description.includes('Hệ thống đang chạy batch')) {
             console.log('Transfer cash failed:', messageError);
+            return;
+        } else if (messageError) {
+            throw new Error(messageError.title + ': ' + messageError.description);
         } else {
+
             await orderPage.verifyMessage(['Thông báo'], [`Quý khách vừa chuyển số tiền: ${amount} VNĐ từ tiểu khoản ${sourceSubAccountNo} sang tiểu khoản ${destinationSubAccountNo}`]);
 
             await WaitUtils.delay(8000);
@@ -169,9 +172,7 @@ test.describe('Transfer Cash Tests', () => {
 
             expect(NumberValidator.parseNumber(newSourceAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(sourceAccountInfo.withdrawable) - amount);
             expect(NumberValidator.parseNumber(newDestinationAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(destinationAccountInfo.withdrawable) + amount);
-
         }
-
         await attachScreenshot(page, 'Transfer Cash Page');
     });
 

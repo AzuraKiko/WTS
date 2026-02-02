@@ -1,4 +1,4 @@
-import { BaseApi, BaseApiConfig, BaseRequestParams, ApiResponse } from "./BaseApi";
+import { BaseApi, BaseApiConfig, BaseRequestParams, ApiResponse, BasePayloadNotLogin } from "./BaseApi";
 
 interface BondListPayload {
     data: {
@@ -130,8 +130,7 @@ export class BondListApi extends BaseApi {
      * @param params - Bond product list request parameters
      * @returns Promise<ApiResponse> - API response with bond product list data
      */
-    async getBondProductList(params: BaseRequestParams, additionalData: Record<string, any> = {}): Promise<ApiResponse> {
-        this.validateParameters(params);
+    async getBondProductList(rqId: string, additionalData: Record<string, any> = {}): Promise<ApiResponse> {
 
         const payload: BondListPayload = {
             data: {
@@ -145,7 +144,7 @@ export class BondListApi extends BaseApi {
             },
             group: BaseApi.DEFAULT_GROUP,
             cmd: BondListApi.DEFAULT_COMMAND,
-            rqId: params.rqId,
+            rqId,
             channel: BaseApi.DEFAULT_CHANNEL
         };
 

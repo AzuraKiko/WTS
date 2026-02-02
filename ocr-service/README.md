@@ -32,6 +32,7 @@ source venv/bin/activate   # macOS / Linux
 # venv\Scripts\activate    # Windows
 
 pip install -r requirements.txt
+pip install -r ocr-service/requirements.txt
 
 # Nếu máy có nhiều version Python:
 pip3 install -r requirements.txt

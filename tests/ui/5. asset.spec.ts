@@ -172,7 +172,7 @@ test.describe('Asset Summary test', () => {
             const assetResult = await ocrPipeline(page, {
                 locator: assetPage.overviewLocator,
                 zoomLevels: [0.98],
-                ocrScale: 1.5,
+                ocrScale: 2,
                 cropper: async () => {
                     return await assetPage.cropAssetSummary();
                 },
@@ -183,6 +183,9 @@ test.describe('Asset Summary test', () => {
             });
 
             expect(assetResult.success).toBeTruthy();
+            // console.log('assetResult.data', JSON.stringify(assetResult.data, null, 2));
+            // console.log('assetData', JSON.stringify(assetData, null, 2));
+
             compareNumericData(assetResult.data, assetData);
 
             await attachScreenshot(page, `Asset Summary ${subAccountTab}`);
@@ -235,7 +238,7 @@ test.describe('Asset Summary test', () => {
                 buyT0: list.buyT0,
                 avgPrice: list.avgPrice,
                 currentPrice: Math.round(Number(list.lastPrice) * 100) / 100,
-                change: list.change,
+                change: (Math.round((Number(list.change) / 1000) * 100) / 100).toFixed(2),
                 changePercent: list.changePC,
                 initialValue: list.totBuyAmt,
                 marketValue: list.totCurAmt,
@@ -297,8 +300,8 @@ test.describe('Asset Summary test', () => {
             return;
         }
 
-        // console.log('portfolioData', JSON.stringify(portfolioData, null, 2));
-        // console.log('uiRows', JSON.stringify(uiRows, null, 2));
+        console.log('portfolioData', JSON.stringify(portfolioData, null, 2));
+        console.log('uiRows', JSON.stringify(uiRows, null, 2));
 
         const numericKeys = Object.keys(columnMap).filter(key => key !== 'stockCode');
         const mismatches = compareApiRowWithUiRow(

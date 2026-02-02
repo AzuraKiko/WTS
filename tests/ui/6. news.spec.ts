@@ -2,7 +2,12 @@ import { test, expect, Locator, Page } from '@playwright/test';
 import Menu from '../../page/ui/Menu';
 import LoginPage from '../../page/ui/LoginPage';
 import { TEST_CONFIG } from '../utils/testConfig';
-import { NewsPage, NEWS_ITEM_SELECTORS, EVENT_ITEM_SELECTORS } from '../../page/ui/News';
+import {
+    NewsPage,
+    NEWS_ITEM_SELECTORS,
+    EVENT_ITEM_SELECTORS,
+    LEFT_PANEL_SELECTORS,
+} from '../../page/ui/News';
 
 test.describe('News screens', () => {
     let menu: Menu;
@@ -38,38 +43,63 @@ test.describe('News screens', () => {
         await expect(eventHeader).toBeVisible();
 
         try {
-            await NewsPage.expectNewsListHasData(page);
+            await NewsPage.expectLeftPanelHasData(page);
         } catch {
-            let newsChecked = false;
-            for (const container of NewsPage.getSectionContainers(newsHeader)) {
-                try {
-                    await NewsPage.findVisibleNonEmptyItem(container, NEWS_ITEM_SELECTORS, 'bản tin');
-                    newsChecked = true;
-                    break;
-                } catch {
-                    continue;
-                }
+            let leftChecked = false;
+            const container = page.locator('.body-panel--left');
+
+            try {
+                await NewsPage.findVisibleNonEmptyItem(
+                    container,
+                    LEFT_PANEL_SELECTORS,
+                    'Left panel'
+                );
+                leftChecked = true;
+            } catch {
+                throw new Error('No data found for Left panel');
             }
-            if (!newsChecked) {
-                await NewsPage.findVisibleNonEmptyItem(page, NEWS_ITEM_SELECTORS, 'bản tin');
+
+            if (!leftChecked) {
+                await NewsPage.findVisibleNonEmptyItem(
+                    page,
+                    LEFT_PANEL_SELECTORS,
+                    'Left panel'
+                );
             }
         }
 
         try {
-            await NewsPage.expectEventListHasData(page);
+            await NewsPage.expectNewsListHasData(page);
         } catch {
-            let eventChecked = false;
-            for (const container of NewsPage.getSectionContainers(eventHeader)) {
+            let newsChecked = false;
+            const container = page.locator('.body-panel--center');
+
+            try {
+                await NewsPage.findVisibleNonEmptyItem(container, NEWS_ITEM_SELECTORS, 'bản tin');
+                newsChecked = true;
+            } catch {
+                throw new Error('No data found for Newsfeed');
+            }
+
+            if (!newsChecked) {
+                await NewsPage.findVisibleNonEmptyItem(page, NEWS_ITEM_SELECTORS, 'bản tin');
+            }
+
+            try {
+                await NewsPage.expectEventListHasData(page);
+            } catch {
+                let eventChecked = false;
+                const container = page.locator('.body-panel--right');
                 try {
                     await NewsPage.findVisibleNonEmptyItem(container, EVENT_ITEM_SELECTORS, 'sự kiện');
                     eventChecked = true;
-                    break;
                 } catch {
-                    continue;
+                    throw new Error('No data found for Events');
                 }
-            }
-            if (!eventChecked) {
-                await NewsPage.findVisibleNonEmptyItem(page, EVENT_ITEM_SELECTORS, 'sự kiện');
+                if (!eventChecked) {
+                    await NewsPage.findVisibleNonEmptyItem(page, EVENT_ITEM_SELECTORS, 'sự kiện');
+
+                }
             }
         }
     });
