@@ -875,6 +875,7 @@ export class TableUtils {
         return data;
     }
 
+
     /**
      * Find row by search criteria with scrolling
      */

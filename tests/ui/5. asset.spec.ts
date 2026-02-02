@@ -5,7 +5,7 @@ import { NumberValidator } from '../../helpers/validationUtils';
 import { WaitUtils, TableUtils } from '../../helpers/uiUtils';
 import { compareApiRowWithUiRow } from '../../helpers/tableCompareUtils';
 
-import { ocrPipeline } from '../../page/ui/ocrPipeline';
+import { ocrPipeline } from '../../page/ui/OcrPipeline';
 import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { getSharedLoginSession } from "../api/sharedSession";
@@ -300,8 +300,8 @@ test.describe('Asset Summary test', () => {
             return;
         }
 
-        console.log('portfolioData', JSON.stringify(portfolioData, null, 2));
-        console.log('uiRows', JSON.stringify(uiRows, null, 2));
+        // console.log('portfolioData', JSON.stringify(portfolioData, null, 2));
+        // console.log('uiRows', JSON.stringify(uiRows, null, 2));
 
         const numericKeys = Object.keys(columnMap).filter(key => key !== 'stockCode');
         const mismatches = compareApiRowWithUiRow(

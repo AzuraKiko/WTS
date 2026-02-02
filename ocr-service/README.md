@@ -1,73 +1,41 @@
-# Setup OCR service (Tesseract)
+# Setup OCR service (Tesseract.js - TypeScript)
 
-## 1) Cài Tesseract
+## 1) Cài Node.js
 
-### macOS (Homebrew)
+Khuyến nghị Node.js 18+.
 
-```bash
-brew install tesseract
-brew install tesseract-lang
-```
-
-### Ubuntu/Debian
+## 2) Cài deps
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y tesseract-ocr tesseract-ocr-vie
-```
-
-### Windows (Chocolatey)
-
-```powershell
-choco install tesseract
-```
-
-Nếu hệ thống không tự nhận được `tesseract`, cần thêm vào PATH hoặc set `TESSDATA_PREFIX`.
-
-## 2) Tạo venv + cài deps
-
-```bash
-python3 -m venv venv
-source venv/bin/activate   # macOS / Linux
-# venv\Scripts\activate    # Windows
-
-pip install -r requirements.txt
-pip install -r ocr-service/requirements.txt
-
-# Nếu máy có nhiều version Python:
-pip3 install -r requirements.txt
-
-## Kiểm tra đã cài thành công chưa
-pip list
-# hoặc
-pip freeze
-
-## Chạy service
-cd ocr-service
-
-python app.py
-
-uvicorn app:app --port 8000
-
-uvicorn app:app --reload
-
+npm install
 ```
 
 ## 3) Chạy service
 
 ```bash
-cd ocr-service
-uvicorn app:app --port 8000 --reload
+npm run ocr:build
+npm run ocr:start
 ```
 
-## 4) Test nhanh
+Service mặc định chạy ở `http://localhost:8000`.
+
+## 4) Tesseract.js language data
+
+`tesseract.js` sẽ tự tải language data khi chạy lần đầu. Nếu muốn cache cố định:
+
+```bash
+export TESSERACT_LANG_PATH="/path/to/tessdata"
+export TESSERACT_CACHE_PATH="/path/to/cache"
+```
+
+## 5) Test nhanh
 
 ```bash
 curl -X POST "http://localhost:8000/ocr" \
   -F "file=@./sample.png"
 ```
 
-## 5) Params hỗ trợ
+## 6) Params hỗ trợ
 
 `/ocr` hỗ trợ query:
 
@@ -76,6 +44,7 @@ curl -X POST "http://localhost:8000/ocr" \
 - `invert` (default: false)
 - `blur` (default: 0)
 - `lang` (default: vie)
+- `min_confidence` (default: 0)
 
 Ví dụ:
 

@@ -133,10 +133,10 @@ export async function ocrPipeline<T>(
             } else {
                 texts = [];
             }
-            fs.writeFileSync(
-                ocrRawPath,
-                JSON.stringify(response.raw ?? response, null, 2)
-            );
+            // fs.writeFileSync(
+            //     ocrRawPath,
+            //     JSON.stringify(response.raw ?? response, null, 2)
+            // );
         } catch (error) {
             texts = [];
             fs.writeFileSync(

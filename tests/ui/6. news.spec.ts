@@ -1,4 +1,4 @@
-import { test, expect, Locator, Page } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import Menu from '../../page/ui/Menu';
 import LoginPage from '../../page/ui/LoginPage';
 import { TEST_CONFIG } from '../utils/testConfig';

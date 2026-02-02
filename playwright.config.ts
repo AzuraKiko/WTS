@@ -77,5 +77,11 @@ export default defineConfig({
     //     }] //Reporter Allure tạo báo cáo chi tiết, tương tác và trực quan, cần cài đặt package allure-playwright và Allure CLI để sử dụng và xem báo cáo này.
     // ],
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: 'html'
+    reporter: 'html',
+    webServer: {
+        command: 'npm run ocr:build && npm run ocr:start',
+        url: 'http://localhost:8000/health',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120000
+    }
 });

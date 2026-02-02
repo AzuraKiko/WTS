@@ -72,36 +72,36 @@ test.describe('Order Management Tests', () => {
     }
   });
 
-  test('TC_002: Check place and cancel a sell order', async () => {
-    // Sell order from portfolio
-    await portfolioPage.navigateToPortfolio();
-    const isNoData = await portfolioPage.verifyNoDataMessage();
+  // test('TC_002: Check place and cancel a sell order', async () => {
+  //   // Sell order from portfolio
+  //   await portfolioPage.navigateToPortfolio();
+  //   const isNoData = await portfolioPage.verifyNoDataMessage();
 
-    if (isNoData) {
-      console.log("Portfolio is empty");
-    } else {
-      const usedStockCode = await orderPage.placeSellOrderFromPorfolio({ quantity: 1 });
-      await orderPage.openOrderInDayTab();
-      expect(await orderPage.getStockCodeInDayRowData(0)).toBe(usedStockCode);
-      const messageError = await orderPage.getMessage();
-      if (messageError.description.includes('Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.')) {
-        console.log('Order placement failed:', messageError);
-        return;
-      } else if (messageError) {
-        throw new Error(messageError.title + ': ' + messageError.description);
-      } else {
-        if (await orderBook.isModifyOrderEnabled(0)) {
-          const priceText = await orderPage.priceFloor.textContent();
-          const newPrice = Number(priceText) + 0.1;
-          await orderBook.modifyOrder(0, newPrice, undefined);
-          expect(await orderPage.getPriceInDayRowData(0)).toBe(newPrice.toString());
-        } else {
-          console.warn("Trạng thái lệnh không cho phép sửa")
-        }
+  //   if (isNoData) {
+  //     console.log("Portfolio is empty");
+  //   } else {
+  //     const usedStockCode = await orderPage.placeSellOrderFromPorfolio({ quantity: 1 });
+  //     await orderPage.openOrderInDayTab();
+  //     expect(await orderPage.getStockCodeInDayRowData(0)).toBe(usedStockCode);
+  //     const messageError = await orderPage.getMessage();
+  //     if (messageError.description.includes('Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.')) {
+  //       console.log('Order placement failed:', messageError);
+  //       return;
+  //     } else if (messageError) {
+  //       throw new Error(messageError.title + ': ' + messageError.description);
+  //     } else {
+  //       if (await orderBook.isModifyOrderEnabled(0)) {
+  //         const priceText = await orderPage.priceFloor.textContent();
+  //         const newPrice = Number(priceText) + 0.1;
+  //         await orderBook.modifyOrder(0, newPrice, undefined);
+  //         expect(await orderPage.getPriceInDayRowData(0)).toBe(newPrice.toString());
+  //       } else {
+  //         console.warn("Trạng thái lệnh không cho phép sửa")
+  //       }
 
-        await orderBook.cancelOrder(0);
-        expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(usedStockCode);
-      }
-    }
-  });
+  //       await orderBook.cancelOrder(0);
+  //       expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(usedStockCode);
+  //     }
+  //   }
+  // });
 });

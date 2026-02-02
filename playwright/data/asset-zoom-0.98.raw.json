@@ -1,12 +1,5 @@
 {
   "text": [
-    "ƒïmHmAaAIAIAaÊ",
-    "số",
-    "ốỎÔỐÔÔÔỐốC",
-    "CÔ",
-    "CÔ",
-    "CÔ.",
-    "C.CC.CC.CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCcCCCCCCCCCCCCC..........................................................ẻéốốaa",
     "Tổng",
     "tài",
     "sản",
@@ -37,140 +30,112 @@
   ],
   "items": [
     {
-      "text": "ƒïmHmAaAIAIAaÊ",
-      "confidence": 0
-    },
-    {
-      "text": "số",
-      "confidence": 0
-    },
-    {
-      "text": "ốỎÔỐÔÔÔỐốC",
-      "confidence": 0
-    },
-    {
-      "text": "CÔ",
-      "confidence": 14
-    },
-    {
-      "text": "CÔ",
-      "confidence": 34
-    },
-    {
-      "text": "CÔ.",
-      "confidence": 33
-    },
-    {
-      "text": "C.CC.CC.CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCcCCCCCCCCCCCCC..........................................................ẻéốốaa",
-      "confidence": 0
-    },
-    {
       "text": "Tổng",
-      "confidence": 96
+      "confidence": 96.93268585205078
     },
     {
       "text": "tài",
-      "confidence": 96
+      "confidence": 96.73917388916016
     },
     {
       "text": "sản",
-      "confidence": 96
+      "confidence": 96.77867889404297
     },
     {
       "text": "Tài",
-      "confidence": 96
+      "confidence": 96.64238739013672
     },
     {
       "text": "sản",
-      "confidence": 96
+      "confidence": 96.14990234375
     },
     {
       "text": "ròng",
-      "confidence": 96
+      "confidence": 96.69373321533203
     },
     {
       "text": "Tiền",
-      "confidence": 96
+      "confidence": 96.1257553100586
     },
     {
       "text": "được",
-      "confidence": 96
+      "confidence": 96.62060546875
     },
     {
       "text": "rút",
-      "confidence": 96
+      "confidence": 96.72875213623047
     },
     {
       "text": "Tiền",
-      "confidence": 96
+      "confidence": 95.31292724609375
     },
     {
       "text": "có",
-      "confidence": 96
+      "confidence": 96.99517059326172
     },
     {
       "text": "thể",
-      "confidence": 96
+      "confidence": 96.7890625
     },
     {
       "text": "ứng",
-      "confidence": 96
+      "confidence": 96.45719146728516
     },
     {
       "text": "Tổng",
-      "confidence": 96
+      "confidence": 96.98211669921875
     },
     {
       "text": "dư",
-      "confidence": 96
+      "confidence": 96.72935485839844
     },
     {
       "text": "nợ",
-      "confidence": 93
+      "confidence": 93.30143737792969
     },
     {
       "text": "margin",
-      "confidence": 92
+      "confidence": 92.96195983886719
     },
     {
       "text": "RTT",
-      "confidence": 92
+      "confidence": 92.55795288085938
     },
     {
       "text": "Sức",
-      "confidence": 96
+      "confidence": 96.54773712158203
     },
     {
       "text": "mua",
-      "confidence": 96
+      "confidence": 96.6669692993164
     },
     {
       "text": "229,798",
-      "confidence": 95
+      "confidence": 95.83917999267578
     },
     {
       "text": "229,797",
-      "confidence": 95
+      "confidence": 95.53307342529297
     },
     {
       "text": "198,217",
-      "confidence": 96
+      "confidence": 96.15031433105469
     },
     {
       "text": "0",
-      "confidence": 96
+      "confidence": 96.88140869140625
     },
     {
       "text": "0",
-      "confidence": 96
+      "confidence": 96.91268920898438
     },
     {
       "text": "100.00%",
-      "confidence": 92
+      "confidence": 68.35279846191406
     },
     {
       "text": "198,217",
-      "confidence": 96
+      "confidence": 96.49945831298828
     }
   ]
 }
