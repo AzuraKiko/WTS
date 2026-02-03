@@ -143,6 +143,7 @@ test.describe('Transfer Cash Tests', () => {
                     (target) => transferCashPage.selectDestinationAccount(target)
                 );
                 destinationSubAccountNo = alternateSubAccountNo;
+                destinationAccountInfo = await transferCashPage.getDestinationAccountInfo();
             }
         }
 
@@ -151,15 +152,13 @@ test.describe('Transfer Cash Tests', () => {
         await transferCashPage.transferCash(amount);
 
         const messageError = await orderPage.getMessage();
+
         if (messageError.description.includes('Hệ thống đang chạy batch')) {
             console.log('Transfer cash failed:', messageError);
             return;
-        } else if (messageError) {
-            throw new Error(messageError.title + ': ' + messageError.description);
-        } else {
-
+        } else if (messageError.description.includes('Quý khách vừa chuyển số tiền')) {
             await orderPage.verifyMessage(['Thông báo'], [`Quý khách vừa chuyển số tiền: ${amount} VNĐ từ tiểu khoản ${sourceSubAccountNo} sang tiểu khoản ${destinationSubAccountNo}`]);
-
+            await attachScreenshot(page, 'Transfer Cash Page');
             await WaitUtils.delay(8000);
 
             const [newSourceAccountInfo, newDestinationAccountInfo] = await Promise.all([
@@ -172,9 +171,12 @@ test.describe('Transfer Cash Tests', () => {
 
             expect(NumberValidator.parseNumber(newSourceAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(sourceAccountInfo.withdrawable) - amount);
             expect(NumberValidator.parseNumber(newDestinationAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(destinationAccountInfo.withdrawable) + amount);
+
+        } else {
+            throw new Error(messageError.title + ': ' + messageError.description);
         }
-        await attachScreenshot(page, 'Transfer Cash Page');
     });
+
 
     test('TC_002: Check history table', async () => {
 

@@ -84,8 +84,8 @@ class StockDetailPage extends BasePage {
         this.symbolExchange = this.leftPanel.locator(".symbol-brand__exchange");
         this.symbolName = this.leftPanel.locator(".symbol-name");
         this.symbolPrice = this.leftPanel.locator(".symbol-price--big");
-        this.symbolChange = this.leftPanel.locator(".symbol-price.d > span:nth-child(2)");
-        this.symbolChangePercent = this.leftPanel.locator(".symbol-price.d > span:nth-child(3)");
+        this.symbolChange = this.leftPanel.locator(".symbol-price > span:nth-child(2)");
+        this.symbolChangePercent = this.leftPanel.locator(".symbol-price > span:nth-child(3)");
         this.floorPrice = this.leftPanel.locator(".symbol-open-price .f");
         this.referencePrice = this.leftPanel.locator(".symbol-open-price .r");
         this.ceilingPrice = this.leftPanel.locator(".symbol-open-price .c");
@@ -168,13 +168,40 @@ class StockDetailPage extends BasePage {
         this.chartListPanel = this.rightPanel.locator(".price-list-total");
     }
 
+    private async clickTabSafely(tab: Locator, label: string): Promise<void> {
+        await this.ensureVisible(tab);
+        const handle = await tab.elementHandle();
+        if (!handle) {
+            throw new Error(`Tab not found: ${label}`);
+        }
+
+        try {
+            await tab.click({ timeout: 10000 });
+        } catch {
+            await tab.click({ force: true });
+        }
+
+        try {
+            await this.page.waitForFunction(
+                (el) =>
+                    el.classList.contains('active') ||
+                    el.getAttribute('aria-selected') === 'true',
+                handle,
+                { timeout: 5000 }
+            );
+            return;
+        } catch {
+            await tab.evaluate((el) => (el as HTMLElement).click());
+        }
+    }
+
     async openFromPriceBoardFirstRow(): Promise<{ stockCode: string }> {
         const firstRow = this.page.locator("table.price-table tbody tr").first();
         await firstRow.waitFor({ state: "visible", timeout: 15000 });
 
         const stockCode = (await firstRow.locator("td").first().innerText()).trim();
 
-        await firstRow.locator("td a").first().click();
+        await this.safeClick(firstRow.locator("td a").first());
         let opened = await WaitUtils.waitForCondition(
             async () => await this.modal.isVisible(),
             { timeout: 10000, delay: 500, maxAttempts: 8 }
@@ -200,7 +227,7 @@ class StockDetailPage extends BasePage {
     }
 
     async clickOddLotSwitch(): Promise<void> {
-        await this.oddLotSwitch.click();
+        await this.safeClick(this.oddLotSwitch);
     }
 
     async searchSymbol(stockCode: string): Promise<void> {
@@ -255,7 +282,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectMatchListHasData(): Promise<void> {
-        await this.matchTab.click();
+        await this.clickTabSafely(this.matchTab, "Lệnh khớp");
         const hasRows = await WaitUtils.waitForCondition(
             async () => (await this.matchTableRows.count()) > 0,
             { timeout: 15000, delay: 500, maxAttempts: 10 }
@@ -269,7 +296,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectPriceAnalysisListHasData(): Promise<void> {
-        await this.analysisTab.click();
+        await this.clickTabSafely(this.analysisTab, "Phân tích giá");
         const hasRows = await WaitUtils.waitForCondition(
             async () => (await this.priceAnalysisTableRows.count()) > 0,
             { timeout: 15000, delay: 500, maxAttempts: 10 }
@@ -283,7 +310,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectChartVisible(): Promise<void> {
-        await this.chartTab.click();
+        await this.clickTabSafely(this.chartTab, "Biểu đồ");
         await expect(this.chartFrame, "Chart iframe should be visible").toBeVisible();
         await expect(this.chartFrame, "Chart iframe should have src").toHaveAttribute(
             "src",
@@ -292,7 +319,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectPriceHistoryHasData(): Promise<void> {
-        await this.priceHistoryTab.click();
+        await this.clickTabSafely(this.priceHistoryTab, "Lịch sử giá");
         await expect(this.priceHistoryPanel, "Price history panel should be visible").toBeVisible();
         await expect(this.priceHistoryChart, "Price history chart should be visible").toBeVisible();
         await expect(
@@ -314,7 +341,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectFinanceHasData(): Promise<void> {
-        await this.financeTab.click();
+        await this.safeClick(this.financeTab);
         await expect(this.financePanel, "Finance panel should be visible").toBeVisible();
         await expect(this.financeTabs.first(), "Finance tabs should be visible").toBeVisible();
         await expect(
@@ -327,11 +354,11 @@ class StockDetailPage extends BasePage {
 
         for (let tabIndex = 0; tabIndex < tabCount; tabIndex++) {
             const tab = this.financeTabs.nth(tabIndex);
-            await tab.click();
+            await this.safeClick(tab);
 
             for (let periodIndex = 0; periodIndex < periodCount; periodIndex++) {
                 const periodButton = this.financePeriodButtons.nth(periodIndex);
-                await periodButton.click();
+                await this.safeClick(periodButton);
 
                 const hasRows = await WaitUtils.waitForCondition(
                     async () => (await this.financeTableRows.count()) > 0,
@@ -351,7 +378,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectNewsListHasData(): Promise<void> {
-        await this.newsTab.click();
+        await this.safeClick(this.newsTab);
         const hasNews = await WaitUtils.waitForCondition(
             async () => (await this.newsItems.count()) > 0,
             { timeout: 15000, delay: 500, maxAttempts: 10 }
@@ -370,7 +397,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectEventListHasData(): Promise<void> {
-        await this.eventTab.click();
+        await this.safeClick(this.eventTab);
         const hasEvents = await WaitUtils.waitForCondition(
             async () => (await this.eventItems.count()) > 0,
             { timeout: 15000, delay: 500, maxAttempts: 10 }
@@ -389,7 +416,7 @@ class StockDetailPage extends BasePage {
     };
 
     async expectStockProfileHasData(): Promise<void> {
-        await this.profileTab.click();
+        await this.safeClick(this.profileTab);
         await expect(this.profileTabBody, "Profile tab should be visible").toBeVisible();
         await expect(this.profileTitleName, "Profile name should not be empty").toHaveText(/\S/);
         await expect(this.profileAddress, "Profile address should not be empty").toHaveText(/\S/);
@@ -402,7 +429,7 @@ class StockDetailPage extends BasePage {
     }
 
     async expectCWProfileHasData(): Promise<void> {
-        await this.profileTab.click();
+        await this.safeClick(this.profileTab);
         await expect(this.profileTabBody, "Profile tab should be visible").toBeVisible();
         await expect(this.cwProfile, "CW profile should be visible").toBeVisible();
         await expect(this.cwProfileChart, "CW profile chart should be visible").toBeVisible();
@@ -433,8 +460,26 @@ class StockDetailPage extends BasePage {
         await expect(this.chartListPanel, "Chart list panel should be visible").toBeVisible();
     }
 
+    async expectPriceListCWVisible(): Promise<void> {
+        const priceListCWPanel = this.rightPanel.locator(".card-panel.price-list").first();
+        const underlyingPriceListPanel = this.rightPanel.locator(".card-panel.price-list").last();
+
+        await expect(priceListCWPanel, "Price list CW panel should be visible").toBeVisible();
+        await expect(underlyingPriceListPanel, "Underlying price list CW panel should be visible").toBeVisible();
+        const hasSteps = await WaitUtils.waitForCondition(
+            async () => (await this.priceListSteps.count()) > 0,
+            { timeout: 10000, delay: 500, maxAttempts: 8 }
+        );
+        if (!hasSteps) {
+            throw new Error("Price list data not found in Stock Detail");
+        }
+        await expect(this.priceListSteps.first(), "Price list step should be visible").toBeVisible();
+        await expect(this.chartListPanel.first(), "Chart list CW panel should be visible").toBeVisible();
+        await expect(this.chartListPanel.last(), "Underlying chart list panel should be visible").toBeVisible();
+    }
+
     async close(): Promise<void> {
-        await this.closeButton.click();
+        await this.safeClick(this.closeButton);
         await this.modal.waitFor({ state: "hidden", timeout: 10000 });
     }
 }

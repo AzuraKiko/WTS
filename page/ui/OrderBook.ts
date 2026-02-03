@@ -225,22 +225,22 @@ class OrderBook extends BasePage {
     // =================== NAVIGATION METHODS ===================
 
     async openOrderBook(): Promise<void> {
-        await this.orderBookButton.click();
+        await this.safeClick(this.orderBookButton);
         await this.page.waitForSelector('.card-panel-body', { timeout: OrderBook.DEFAULT_TIMEOUT });
     }
 
     async reloadOrderBook(): Promise<void> {
-        await this.reloadOrderBookButton.click();
+        await this.safeClick(this.reloadOrderBookButton);
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async expandOrderBook(): Promise<void> {
-        await this.expandOrderBookButton.click();
+        await this.safeClick(this.expandOrderBookButton);
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async closeOrderBook(): Promise<void> {
-        await this.closeOrderBookButton.click();
+        await this.safeClick(this.closeOrderBookButton);
     }
 
     async switchToTab(tabName: TabName): Promise<void> {
@@ -251,7 +251,7 @@ class OrderBook extends BasePage {
             putthrough: this.putThroughOrderTab
         };
 
-        await tabMap[tabName].click();
+        await this.safeClick(tabMap[tabName]);
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
@@ -279,23 +279,23 @@ class OrderBook extends BasePage {
     }
 
     async filterByStatus(status: string): Promise<void> {
-        await this.statusSelect.click();
+        await this.safeClick(this.statusSelect);
         await this.page.waitForSelector('.filter-control-select__menu-list', { state: 'visible' });
-        await this.page.locator('.filter-control-select__option').filter({ hasText: status }).click();
+        await this.safeClick(this.page.locator('.filter-control-select__option').filter({ hasText: status }));
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async filterByAccount(account: string): Promise<void> {
-        await this.accountSelect.click();
+        await this.safeClick(this.accountSelect);
         await this.page.waitForSelector('.filter-control-select__menu-list', { state: 'visible' });
-        await this.page.locator('.filter-control-select__option').filter({ hasText: account }).click();
+        await this.safeClick(this.page.locator('.filter-control-select__option').filter({ hasText: account }));
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async filterByOrderType(orderType: string): Promise<void> {
-        await this.orderTypeSelect.click();
+        await this.safeClick(this.orderTypeSelect);
         await this.page.waitForSelector('.filter-control-select__menu-list', { state: 'visible' });
-        await this.page.locator('.filter-control-select__option').filter({ hasText: orderType }).click();
+        await this.safeClick(this.page.locator('.filter-control-select__option').filter({ hasText: orderType }));
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
@@ -387,12 +387,12 @@ class OrderBook extends BasePage {
     // =================== SELECTION METHODS ===================
 
     async selectAllOrders(): Promise<void> {
-        await this.checkboxHeaderAll.click();
+        await this.safeClick(this.checkboxHeaderAll);
         await this.page.waitForTimeout(OrderBook.POLLING_INTERVAL);
     }
 
     async selectOrderByIndex(rowIndex: number): Promise<void> {
-        await this.checkboxColumn(rowIndex).click();
+        await this.safeClick(this.checkboxColumn(rowIndex));
         await this.page.waitForTimeout(300);
     }
 
@@ -405,31 +405,31 @@ class OrderBook extends BasePage {
     // =================== ORDER ACTION METHODS ===================
 
     async cancelOrder(rowIndex: number = 0): Promise<void> {
-        await this.cancelOrderButton(rowIndex).click();
+        await this.safeClick(this.cancelOrderButton(rowIndex));
         await this.deleteOrderModal.waitFor({ state: 'visible', timeout: OrderBook.DEFAULT_TIMEOUT });
-        await this.deleteOrderConfirmButton.click();
+        await this.safeClick(this.deleteOrderConfirmButton);
         await this.deleteOrderModal.waitFor({ state: 'hidden', timeout: OrderBook.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async cancelOrderConditional(rowIndex: number = 0): Promise<void> {
-        await this.cancelOrderButton(rowIndex).click();
+        await this.safeClick(this.cancelOrderButton(rowIndex));
         await this.deleteOrderModal.waitFor({ state: 'visible', timeout: OrderBook.DEFAULT_TIMEOUT });
-        await this.deleteOrderConfirmButtonConditional.click();
+        await this.safeClick(this.deleteOrderConfirmButtonConditional);
         await this.deleteOrderModal.waitFor({ state: 'hidden', timeout: OrderBook.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async cancelActionCancelOrder(rowIndex: number = 0): Promise<void> {
-        await this.cancelOrderButton(rowIndex).click();
+        await this.safeClick(this.cancelOrderButton(rowIndex));
         await this.deleteOrderModal.waitFor({ state: 'visible', timeout: OrderBook.DEFAULT_TIMEOUT });
-        await this.deleteOrderCancelButton.click();
+        await this.safeClick(this.deleteOrderCancelButton);
         await this.deleteOrderModal.waitFor({ state: 'hidden', timeout: OrderBook.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async getDeleteOrderModalInfo(rowIndex: number = 0): Promise<OrderModalInfo> {
-        await this.cancelOrderButton(rowIndex).click();
+        await this.safeClick(this.cancelOrderButton(rowIndex));
         await this.deleteOrderModal.waitFor({ state: 'visible', timeout: OrderBook.DEFAULT_TIMEOUT });
         return {
             stockCode: await this.deleteOrderStockCode.textContent() ?? '',
@@ -605,7 +605,7 @@ class OrderBook extends BasePage {
     }
 
     async openModifyOrderModal(rowIndex: number = 0): Promise<void> {
-        await this.modifyOrderButton(rowIndex).click();
+        await this.safeClick(this.modifyOrderButton(rowIndex));
         await this.modifyOrderModal.waitFor({ state: 'visible', timeout: OrderBook.DEFAULT_TIMEOUT });
     }
 
@@ -640,13 +640,13 @@ class OrderBook extends BasePage {
             await this.modifyOrderQuantity(newQuantity);
         }
 
-        await this.modifyOrderConfirmButton.click();
+        await this.safeClick(this.modifyOrderConfirmButton);
         await this.modifyOrderModal.waitFor({ state: 'hidden', timeout: OrderBook.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
 
     async cancelModifyOrder(): Promise<void> {
-        await this.modifyOrderCancelButton.click();
+        await this.safeClick(this.modifyOrderCancelButton);
         await this.modifyOrderModal.waitFor({ state: 'hidden', timeout: OrderBook.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(OrderBook.SHORT_TIMEOUT);
     }
@@ -679,9 +679,9 @@ class OrderBook extends BasePage {
         await this.selectAllOrders();
         const isChecked = await this.page.locator('.table-bordered.tbl-list thead th:nth-child(1) span .checkbox2__status--checked').isVisible();
         if (isChecked) {
-            await this.cancelAllOrderButton.click();
+            await this.safeClick(this.cancelAllOrderButton);
             await this.cancelAllModal.waitFor({ state: 'visible', timeout: OrderBook.DEFAULT_TIMEOUT });
-            await this.cancelAllConfirmButton.click();
+            await this.safeClick(this.cancelAllConfirmButton);
             await this.cancelAllModal.waitFor({ state: 'hidden', timeout: OrderBook.DEFAULT_TIMEOUT });
             await this.page.waitForTimeout(2000);
         } else {
@@ -690,14 +690,14 @@ class OrderBook extends BasePage {
     }
 
     async closeCancelAllModal(): Promise<void> {
-        await this.cancelAllModalCloseButton.click();
+        await this.safeClick(this.cancelAllModalCloseButton);
         await this.cancelAllModal.waitFor({ state: 'hidden', timeout: 5000 });
     }
 
     async cancelSelectedOrders(): Promise<void> {
-        await this.cancelAllOrderButton.click();
+        await this.safeClick(this.cancelAllOrderButton);
         await this.cancelAllModal.waitFor({ state: 'visible', timeout: OrderBook.DEFAULT_TIMEOUT });
-        await this.cancelAllConfirmButton.click();
+        await this.safeClick(this.cancelAllConfirmButton);
         await this.cancelAllModal.waitFor({ state: 'hidden', timeout: OrderBook.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(2000);
     }
@@ -738,7 +738,7 @@ class OrderBook extends BasePage {
 
     async openCancelAllModalAndGetData(): Promise<OrderData[]> {
         await this.selectAllOrders();
-        await this.cancelAllOrderButton.click();
+        await this.safeClick(this.cancelAllOrderButton);
         return await this.getCancelAllModalOrdersData();
     }
 

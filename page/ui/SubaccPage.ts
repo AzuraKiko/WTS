@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { InteractionUtils } from '../../helpers/uiUtils';
 
 class SelectSubacc {
     page: Page;
@@ -20,6 +21,7 @@ class SelectSubacc {
     }
 
     async openDropdownSubacc() {
+        await InteractionUtils.ensureVisible(this.dropdownSubacc);
         await this.dropdownSubacc.click();
         await this.listSubacc.waitFor({ state: 'visible', timeout: 10000 });
         await this.page.waitForTimeout(1000);
@@ -27,11 +29,13 @@ class SelectSubacc {
 
     async selectNormalSubacc() {
         await this.openDropdownSubacc();
+        await InteractionUtils.ensureVisible(this.normalSubacc);
         await this.normalSubacc.click();
     }
 
     async selectMarginSubacc() {
         await this.openDropdownSubacc();
+        await InteractionUtils.ensureVisible(this.marginSubacc);
         await this.marginSubacc.click();
         const dropText = await this.dropdownSubacc.textContent();
         console.log('dropText', dropText);
@@ -40,11 +44,13 @@ class SelectSubacc {
 
     async selectFutureSubacc() {
         await this.openDropdownSubacc();
+        await InteractionUtils.ensureVisible(this.futureSubacc);
         await this.futureSubacc.click();
     }
 
     async selectFolioSubacc() {
         await this.openDropdownSubacc();
+        await InteractionUtils.ensureVisible(this.folioSubacc);
         await this.folioSubacc.click();
     }
 }

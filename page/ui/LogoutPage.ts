@@ -13,8 +13,8 @@ class LogoutPage extends BasePage {
     }
 
     async logout() {
-        await this.loginPage.verifyUser.click();
-        await this.logoutButton.click();
+        await this.safeClick(this.loginPage.verifyUser);
+        await this.safeClick(this.logoutButton);
         await this.waitForPageLoad();
     }
 

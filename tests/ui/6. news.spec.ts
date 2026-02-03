@@ -2,6 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 import Menu from '../../page/ui/Menu';
 import LoginPage from '../../page/ui/LoginPage';
 import { TEST_CONFIG } from '../utils/testConfig';
+import { InteractionUtils } from '../../helpers/uiUtils';
 import {
     NewsPage,
     NEWS_ITEM_SELECTORS,
@@ -24,7 +25,9 @@ test.describe('News screens', () => {
         await loginPage.gotoWeb(TEST_CONFIG.WEB_LOGIN_URL);
 
         if (await page.locator('.adv-modal__body').isVisible()) {
-            await page.click('.btn-icon.btn--cancel');
+            const cancelButton = page.locator('.btn-icon.btn--cancel');
+            await InteractionUtils.ensureVisible(cancelButton);
+            await cancelButton.click();
             await page.waitForTimeout(3000);
         }
         await menu.openMenuHeader('Tin tức');

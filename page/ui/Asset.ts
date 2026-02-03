@@ -92,7 +92,26 @@ class AssetPage extends BasePage {
     }
 
     async clickSubAccountTab(subAccountTab: string): Promise<void> {
-        await this.viewAsset.locator('.card-panel-2__tab').filter({ hasText: subAccountTab }).click();
+        const tab = this.viewAsset
+            .locator('.card-panel-2__tab')
+            .filter({ hasText: subAccountTab })
+            .first();
+        await this.ensureVisible(tab);
+
+        try {
+            await tab.click({ timeout: 10000 });
+            return;
+        } catch {
+            // fallback to avoid overlay intercept in headless
+            await tab.click({ force: true });
+        }
+
+        const isActive = await tab.evaluate((el) =>
+            el.classList.contains('active') || el.getAttribute('aria-selected') === 'true'
+        );
+        if (isActive) return;
+
+        await tab.evaluate((el) => (el as HTMLElement).click());
     }
 
     async cropCardDataByText(text: string): Promise<Buffer> {
@@ -100,6 +119,31 @@ class AssetPage extends BasePage {
             output: `playwright/data/asset-card-${text}.png`,
             padding: 20
         });
+    }
+
+    async getOverviewData(): Promise<{
+        totalAsset: string;
+        netAsset: string;
+        withdrawable: string;
+        advanceAvail: string;
+        mgDebt: string;
+    }> {
+        const getValueByLabel = async (label: RegExp) => {
+            const metric = this.overviewLocator
+                .locator('.overview-metric')
+                .filter({ hasText: label })
+                .first();
+            const value = await metric.locator('.overview-metric__value').textContent();
+            return value?.trim() || '';
+        };
+        const [totalAsset, netAsset, withdrawable, advanceAvail, mgDebt] = await Promise.all([
+            getValueByLabel(/Tổng\s*tài\s*sản/),
+            getValueByLabel(/Tài\s*sản\s*ròng/),
+            getValueByLabel(/Tiền\s*được\s*rút/),
+            getValueByLabel(/Tiền\s*có\s*thể\s*ứng/),
+            getValueByLabel(/Tổng\s*dư\s*nợ\s*margin/),
+        ]);
+        return { totalAsset, netAsset, withdrawable, advanceAvail, mgDebt };
     }
 
     async navigateToPortfolio(): Promise<void> {
@@ -150,36 +194,35 @@ class AssetPage extends BasePage {
     }
 
     async clickPerformanceTab(tab: string): Promise<void> {
-        await this.viewAsset.locator('.performance-header__tab').filter({ hasText: tab }).click();
+        await this.safeClick(this.viewAsset.locator('.performance-header__tab').filter({ hasText: tab }));
     }
 
     async selectCalendarChart(): Promise<void> {
         const calendarBtn = this.viewAsset.locator('div:has(> .icon.iCalendar2)'); // find the first div that has the icon.iCalendar2 class
-        await calendarBtn.click();
+        await this.safeClick(calendarBtn);
         await this.page.waitForTimeout(3000);
     }
 
     async selectLineChart(): Promise<void> {
         const lineBtn = this.viewAsset.locator('div:has(> .icon.iChart3 )'); // find the first div that has the icon.iChart3 class
-        await lineBtn.click();
+        await this.safeClick(lineBtn);
         await this.page.waitForTimeout(3000);
     }
 
     async openWithdrawalMoneyModal(): Promise<void> {
-        await this.withdrawalButton.click();
+        await this.safeClick(this.withdrawalButton);
         if (await this.matrixPage.isMatrixVisible()) {
             await this.matrixPage.enterMatrixValid();
             await this.page.waitForTimeout(3000);
-            await this.withdrawalButton.click();
+            await this.safeClick(this.withdrawalButton);
         }
         await this.withdrawalModal.waitFor({ state: 'visible' });
     }
 
     async selectAccount(accountLabel: string): Promise<void> {
-        await this.selectControlSubAccount.click();
+        await this.safeClick(this.selectControlSubAccount);
         const option = this.selectOptions.filter({ hasText: accountLabel });
-        await option.waitFor({ state: 'visible', timeout: 10000 });
-        await option.click();
+        await this.safeClick(option);
     }
 
     async getSelectValue(): Promise<string> {
@@ -198,11 +241,11 @@ class AssetPage extends BasePage {
     }
 
     async submitWithdrawal(): Promise<void> {
-        await this.withdrawalModal.locator('.input-container button').filter({ hasText: 'Rút tiền' }).click();
+        await this.safeClick(this.withdrawalModal.locator('.input-container button').filter({ hasText: 'Rút tiền' }));
     }
 
     async clickConfirmWithdrawal(): Promise<void> {
-        await this.withdrawalModalConfirm.locator('.input-container button').filter({ hasText: 'Xác nhận' }).click();
+        await this.safeClick(this.withdrawalModalConfirm.locator('.input-container button').filter({ hasText: 'Xác nhận' }));
     }
 
     async verifyOTP(): Promise<void> {
@@ -212,7 +255,7 @@ class AssetPage extends BasePage {
         if (currentMethodActive === 'Ma trận') {
             await this.matrixPage.enterMatrixConfirm(authenSection);
         } else {
-            await authenSection.locator('.authen-type-switch').filter({ hasText: 'Ma trận' }).click();
+            await this.safeClick(authenSection.locator('.authen-type-switch').filter({ hasText: 'Ma trận' }));
             await this.matrixPage.enterMatrixConfirm(authenSection);
         }
         await this.page.waitForTimeout(3000);

@@ -1,5 +1,5 @@
 import { Page, Locator, expect } from "@playwright/test";
-import { WaitUtils } from "../../helpers/uiUtils";
+import { WaitUtils, InteractionUtils } from "../../helpers/uiUtils";
 import BasePage from "./BasePage";
 
 export const NEWS_ITEM_SELECTORS = [
@@ -142,6 +142,7 @@ export class NewsPage extends BasePage {
         ).toHaveText(/\S/);
 
         await expect(briefTab, "Brief tab should be visible").toBeVisible();
+        await InteractionUtils.ensureVisible(briefTab);
         await briefTab.click();
         const briefItems = page.locator(".body-panel--left .brief-list .brief-container");
 

@@ -74,7 +74,7 @@ class PortfolioPage extends BasePage {
      * Navigate to Portfolio tab
      */
     async navigateToPortfolio(): Promise<void> {
-        await this.portfolioTab.click();
+        await this.safeClick(this.portfolioTab);
         await this.page.waitForTimeout(PortfolioPage.DEFAULT_TIMEOUT);
     }
 
@@ -101,9 +101,9 @@ class PortfolioPage extends BasePage {
         const currentPrice = await row.locator('td:nth-child(5)').textContent() || '';
         const percentage = await row.locator('td:nth-child(6)').textContent() || '';
 
-        await this.portfolioTableToggleRight.click();
+        await this.safeClick(this.portfolioTableToggleRight);
         const painLoss = await row.locator('td:nth-child(6)').textContent() || '';
-        await this.portfolioTableToggleRight.click();
+        await this.safeClick(this.portfolioTableToggleRight);
 
         return {
             stockCode: stockCode.trim(),
@@ -135,9 +135,9 @@ class PortfolioPage extends BasePage {
 
         const totalAmount = await totalAmountElement.textContent() || '';
         const totalPercentage = await totalPercentageElement.textContent() || '';
-        await this.portfolioTableToggleLeft.click();
+        await this.safeClick(this.portfolioTableToggleLeft);
         const totalPainLoss = await totalPercentageElement.textContent() || '';
-        await this.portfolioTableToggleRight.click();
+        await this.safeClick(this.portfolioTableToggleRight);
 
         return {
             totalAmount: totalAmount.trim(),
@@ -283,7 +283,7 @@ class PortfolioPage extends BasePage {
     async togglePortfolioPercentageView(direction: 'left' | 'right'): Promise<void> {
         const toggleButton = direction === 'left' ? this.portfolioTableToggleLeft : this.portfolioTableToggleRight;
         await toggleButton.waitFor({ state: 'visible' });
-        await toggleButton.click();
+        await this.safeClick(toggleButton);
         await this.page.waitForTimeout(PortfolioPage.SCROLL_TIMEOUT);
     }
 
@@ -313,7 +313,7 @@ class PortfolioPage extends BasePage {
             await this.portfolioTableToggleLeft.waitFor({ state: 'visible' });
             await this.portfolioTableToggleRight.waitFor({ state: 'visible' });
 
-            await this.portfolioTableToggleRight.click();
+            await this.safeClick(this.portfolioTableToggleRight);
             await this.page.waitForTimeout(PortfolioPage.SCROLL_TIMEOUT);
 
             const newHeaders = await this.getPortfolioTableHeaders();
@@ -329,7 +329,7 @@ class PortfolioPage extends BasePage {
                 }
             }
 
-            await this.portfolioTableToggleRight.click();
+            await this.safeClick(this.portfolioTableToggleRight);
             return true;
         } catch (error) {
             console.log(`Portfolio table validation failed: ${error}`);
@@ -351,7 +351,7 @@ class PortfolioPage extends BasePage {
             if (!NumberValidator.validatePercentageFormat(rowData.percentage)) return false;
 
             // Check extended fields
-            await this.portfolioTableToggleRight.click();
+            await this.safeClick(this.portfolioTableToggleRight);
             await this.page.waitForTimeout(PortfolioPage.SCROLL_TIMEOUT);
 
             const painLoss = await this.portfolioTableRows.nth(rowIndex).locator('td:nth-child(6)').textContent();
@@ -359,12 +359,12 @@ class PortfolioPage extends BasePage {
                 const painLossPattern = /^-?(\d{1,3}(,\d{3})*(\.\d+)?|\d+(\.\d+)?)$/;
                 if (!painLossPattern.test(painLoss.trim())) {
                     console.log(`Invalid Pain/Loss format: ${painLoss}`);
-                    await this.portfolioTableToggleRight.click();
+                    await this.safeClick(this.portfolioTableToggleRight);
                     return false;
                 }
             }
 
-            await this.portfolioTableToggleRight.click();
+            await this.safeClick(this.portfolioTableToggleRight);
             return true;
         } catch (error) {
             console.log(`Portfolio row data validation failed: ${error}`);

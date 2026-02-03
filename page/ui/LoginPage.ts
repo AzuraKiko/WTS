@@ -26,28 +26,25 @@ class LoginPage extends BasePage {
     }
 
     async clickOpenLogin() {
-        await this.openLogin.waitFor({ state: 'visible' });
-        await this.openLogin.click();
+        await this.safeClick(this.openLogin);
     }
 
     async enterUsername(username: string) {
-        await this.usernameInput.waitFor({ state: 'visible' });
-        await this.usernameInput.fill(username);
+        await this.safeFill(this.usernameInput, username);
     }
 
     async enterPassword(password: string) {
-        await this.passwordInput.waitFor({ state: 'visible' });
-        await this.passwordInput.fill(password);
+        await this.safeFill(this.passwordInput, password);
     }
 
     async clickLoginButton() {
-        await this.loginButton.click();
+        await this.safeClick(this.loginButton);
     }
 
     async clickCloseBanner() {
         await WaitUtils.delay(3000);
         if (await this.closeBanner.isVisible()) {
-            await this.closeBanner.click();
+            await this.safeClick(this.closeBanner);
         }
     }
 
@@ -73,12 +70,15 @@ class LoginPage extends BasePage {
         if (!loginFormVisible) {
             await this.clickCloseBanner();
             await this.clickOpenLogin();
-            await this.usernameInput.waitFor({ state: 'visible' });
+            await this.ensureVisible(this.usernameInput);
         }
         await this.enterUsernameAndPassword(TEST_CONFIG.TEST_USER, TEST_CONFIG.TEST_PASS);
         await this.waitForPageLoad();
         await this.page.waitForTimeout(3000);
         await this.clickCloseBanner();
+        if (await this.page.locator('.modal-content .btn--reset').isVisible()) {
+            await this.safeClick(this.page.locator('.modal-content .btn--reset'));
+        }
     }
 
     async verifyLoginSuccess(username: string) {

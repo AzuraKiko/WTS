@@ -4,7 +4,7 @@ import { expect } from '@playwright/test';
 
 class Menu extends BasePage {
     private menuContainer: Locator;
-    
+
 
     constructor(page: Page) {
         super(page);
@@ -28,7 +28,7 @@ class Menu extends BasePage {
 
     async openMenuHeader(menuName: string): Promise<void> {
         const menuLink = await this.getMenuHeaderLinkByName(menuName);
-        await menuLink.click();
+        await this.safeClick(menuLink);
         await this.expectMenuHeaderActive(menuName);
         await this.page.waitForTimeout(3000);
     }
@@ -57,14 +57,14 @@ class Menu extends BasePage {
      */
     async openMenu(menuName: string): Promise<void> {
         const header = this.getMenuHeader(menuName);
-        await header.waitFor({ state: 'visible' });
+        await this.ensureVisible(header);
 
         const isClosed = await header.locator('.icon.iUp2').evaluate((el) =>
             el.classList.contains('is--close')
         ).catch(() => false);
 
         if (isClosed) {
-            await header.click();
+            await this.safeClick(header);
             await this.getMenuBody(menuName).waitFor({ state: 'visible' });
         }
     }
@@ -77,14 +77,13 @@ class Menu extends BasePage {
         const subMenu = this.getMenuBody(menuName)
             .locator('.category.nav-item a', { hasText: subMenuName });
 
-        await subMenu.waitFor({ state: 'visible' });
-        await subMenu.click();
+        await this.safeClick(subMenu);
     }
 
     async clickSubMenu(menuName: string, subMenuName: string): Promise<void> {
         const subMenu = this.getMenuBody(menuName)
             .locator('.category.nav-item a', { hasText: subMenuName });
-        await subMenu.click();
+        await this.safeClick(subMenu);
     }
 }
 

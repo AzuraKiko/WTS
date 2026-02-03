@@ -5,6 +5,7 @@ import { TEST_CONFIG } from '../utils/testConfig';
 import { BondListApi } from '../../page/api/BondApis';
 import { v4 as uuidv4 } from 'uuid';
 import { NumberValidator } from '../../helpers/validationUtils';
+import { InteractionUtils } from '../../helpers/uiUtils';
 
 
 const tabLabels = ['Danh sách trái phiếu', 'Sổ lệnh', 'Danh mục', 'Minh họa dòng tiền'];
@@ -31,7 +32,9 @@ test.describe('PineB visual compare', () => {
 
         await loginPage.gotoWeb(TEST_CONFIG.WEB_LOGIN_URL);
         if (await page.locator('.adv-modal__body').isVisible()) {
-            await page.click('.btn-icon.btn--cancel');
+            const cancelButton = page.locator('.btn-icon.btn--cancel');
+            await InteractionUtils.ensureVisible(cancelButton);
+            await cancelButton.click();
             await page.waitForTimeout(3000);
         }
         await menu.openMenuHeader('Trái phiếu');
@@ -42,7 +45,7 @@ test.describe('PineB visual compare', () => {
         await page.close();
     });
 
-    test('TC_001: PineB snapshot compare', async () => {
+    test('TC_001: Check data on PineB page', async () => {
         const bondView: Locator = page.locator('.bond-content');
         const tabGroup: Locator = bondView.locator('.bond-header__left');
         const filterGroup: Locator = bondView.locator('.bond-layout__filters');

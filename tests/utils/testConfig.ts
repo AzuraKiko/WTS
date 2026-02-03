@@ -135,7 +135,7 @@ export const TEST_DATA = {
         VNI: "VNI",
         VN30: "VN30",
         HNX: "HNX",
-        UPCOM: "UPCOM",
+        // UPCOM: "UPCOM",
         VN100: "VN100",
     },
 

@@ -52,7 +52,7 @@ class MatrixPage extends BasePage {
             await this.matrixInput.nth(index).fill(matrixValues[index]);
         }
 
-        await this.confirmButton.click();
+        await this.safeClick(this.confirmButton);
     }
 
 
@@ -64,7 +64,7 @@ class MatrixPage extends BasePage {
             await this.matrixInput.nth(index).fill('123');
         }
 
-        await this.confirmButton.click();
+        await this.safeClick(this.confirmButton);
         const errorMessage = await this.errorMessage.textContent();
         expect(errorMessage).toBe('Error: Bạn đã nhập sai mã OTP.');
     }
@@ -73,7 +73,7 @@ class MatrixPage extends BasePage {
      * Refresh matrix when needed
      */
     async refreshMatrixCodes(): Promise<void> {
-        await this.refreshMatrix.click();
+        await this.safeClick(this.refreshMatrix);
 
         // Wait for element to be disabled first
         await expect(this.matrixGen).toBeDisabled({ timeout: 5000 });
@@ -86,7 +86,7 @@ class MatrixPage extends BasePage {
      * Verify 2FA method change popup
      */
     async verifyChange2FAPopup(): Promise<boolean> {
-        await this.change2FA.click();
+        await this.safeClick(this.change2FA);
         await expect(this.popup2FA).toBeVisible();
         const text = await this.popup2FA.textContent();
         return text?.trim() === "Chọn Phương Thức Xác Thực";

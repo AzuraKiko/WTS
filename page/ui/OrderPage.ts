@@ -3,7 +3,7 @@ import BasePage from './BasePage';
 import { getRandomStockCode } from '../../tests/utils/testConfig';
 import MatrixPage from './MatrixPage';
 import OrderBook from './OrderBook';
-import PortfolioPage from './PorfolioPage';
+import PortfolioPage from './PortfolioPage';
 import { FormUtils, TableUtils, CommonSelectors } from '../../helpers/uiUtils';
 
 // Interface definitions for better type safety
@@ -372,7 +372,7 @@ class OrderPage extends BasePage {
      */
     async navigateToOrder(): Promise<void> {
         try {
-            await this.orderButton.click();
+            await this.safeClick(this.orderButton);
             await this.page.waitForTimeout(OrderPage.NAVIGATION_TIMEOUT);
 
             if (await this.matrixPage.isMatrixVisible()) {
@@ -386,15 +386,15 @@ class OrderPage extends BasePage {
     }
 
     async switchToNormalTab(): Promise<void> {
-        await this.normalTab.click();
+        await this.safeClick(this.normalTab);
     }
 
     async switchToConditionalTab(): Promise<void> {
-        await this.conditionalTab.click();
+        await this.safeClick(this.conditionalTab);
     }
 
     async switchToOddTab(): Promise<void> {
-        await this.oddTab.click();
+        await this.safeClick(this.oddTab);
     }
 
     // Conditional Navigation
@@ -406,7 +406,7 @@ class OrderPage extends BasePage {
             stopLoss: this.stopLossTab,
             purchase: this.purchaseTab
         };
-        await tabMap[tabName].click();
+        await this.safeClick(tabMap[tabName]);
     }
 
 
@@ -471,7 +471,7 @@ class OrderPage extends BasePage {
             await this.priceInput.focus();
 
             await expect(selectedElement).toBeVisible();
-            await selectedElement.click();
+            await this.safeClick(selectedElement);
         } catch (error) {
             throw new Error(`Failed to select market price: ${error}`);
         }
@@ -492,8 +492,8 @@ class OrderPage extends BasePage {
      */
     async submitOrder(): Promise<void> {
         try {
-            await this.placeOrderButton.click();
-            await this.confirmOrderButton.click();
+            await this.safeClick(this.placeOrderButton);
+            await this.safeClick(this.confirmOrderButton);
         } catch (error) {
             throw new Error(`Failed to submit order: ${error}`);
         }
@@ -595,7 +595,7 @@ class OrderPage extends BasePage {
         } = orderData || {};
 
         try {
-            await this.buyTab.click();
+            await this.safeClick(this.buyTab);
             // Fill stock code
             const usedStockCode = await this.fillStockCode(stockCode);
 
@@ -624,7 +624,7 @@ class OrderPage extends BasePage {
         } = orderData || {};
 
         try {
-            await this.sellTab.click();
+            await this.safeClick(this.sellTab);
             // Fill stock code
             const usedStockCode = await this.fillStockCode(stockCode);
 
@@ -647,7 +647,7 @@ class OrderPage extends BasePage {
         const {
             quantity = OrderPage.DEFAULT_QUANTITY
         } = orderData || {};
-        await this.sellTab.click();
+        await this.safeClick(this.sellTab);
 
         await this.portfolioPage.navigateToPortfolio();
         await this.portfolioPage.clickPorfolioRowByQuantity(quantity);
@@ -672,9 +672,9 @@ class OrderPage extends BasePage {
 
         try {
             if (side === 'buy') {
-                await this.buyTab.click();
+                await this.safeClick(this.buyTab);
             } else {
-                await this.sellTab.click();
+                await this.safeClick(this.sellTab);
             }
 
             // Fill stock code
@@ -708,9 +708,9 @@ class OrderPage extends BasePage {
 
         try {
             if (side === 'buy') {
-                await this.buyTab.click();
+                await this.safeClick(this.buyTab);
             } else {
-                await this.sellTab.click();
+                await this.safeClick(this.sellTab);
             }
 
             // Fill stock code
@@ -741,9 +741,9 @@ class OrderPage extends BasePage {
 
         try {
             if (sideConditional === 'buy') {
-                await this.buyTabConditional.click();
+                await this.safeClick(this.buyTabConditional);
             } else {
-                await this.sellTabConditional.click();
+                await this.safeClick(this.sellTabConditional);
             }
             await this.switchConditionalTab('outTime');
             await this.fillStockCodeConditional(stockCodeConditional);
@@ -753,7 +753,7 @@ class OrderPage extends BasePage {
             } else {
                 await this.selectPriceOptionConditional('ceil');
             }
-            await this.placeConditionalButton.click();
+            await this.safeClick(this.placeConditionalButton);
             return stockCodeConditional || '';
         } catch (error) {
             throw new Error(`Failed to place out time order: ${error}`);
@@ -771,9 +771,9 @@ class OrderPage extends BasePage {
         } = orderData || {};
         try {
             if (sideConditional === 'buy') {
-                await this.buyTabConditional.click();
+                await this.safeClick(this.buyTabConditional);
             } else {
-                await this.sellTabConditional.click();
+                await this.safeClick(this.sellTabConditional);
             }
             await this.switchConditionalTab('trend');
             await this.fillStockCodeConditional(stockCodeConditional);
@@ -785,7 +785,7 @@ class OrderPage extends BasePage {
             } else {
                 await this.fillLowestPriceConditional();
             }
-            await this.placeConditionalButton.click();
+            await this.safeClick(this.placeConditionalButton);
             return stockCodeConditional || '';
         } catch (error) {
             throw new Error(`Failed to place trend order: ${error}`);
@@ -803,7 +803,7 @@ class OrderPage extends BasePage {
             await this.switchConditionalTab('takeProfit');
             await this.fillQuantityConditional(quantityConditional);
             await this.fillDifferenceBQConditional(differenceBQ!);
-            await this.placeConditionalButton.click();
+            await this.safeClick(this.placeConditionalButton);
             return stockCodeConditional || '';
 
         } catch (error) {
@@ -822,7 +822,7 @@ class OrderPage extends BasePage {
             await this.switchConditionalTab('stopLoss');
             await this.fillQuantityConditional(quantityConditional);
             await this.fillDifferenceBQConditional(differenceBQ!);
-            await this.placeConditionalButton.click();
+            await this.safeClick(this.placeConditionalButton);
             return stockCodeConditional || '';
         } catch (error) {
             throw new Error(`Failed to place stop loss order: ${error}`);
@@ -838,13 +838,13 @@ class OrderPage extends BasePage {
         try {
             await this.switchConditionalTab('purchase');
             if (sideConditional === 'buy') {
-                await this.buyTabConditional.click();
+                await this.safeClick(this.buyTabConditional);
             } else {
-                await this.sellTabConditional.click();
+                await this.safeClick(this.sellTabConditional);
             }
             await this.fillStockCodeConditional(stockCodeConditional);
             await this.fillQuantityConditional(quantityConditional);
-            await this.placeConditionalButton.click();
+            await this.safeClick(this.placeConditionalButton);
             return stockCodeConditional || '';
         } catch (error) {
             throw new Error(`Failed to place purchase order: ${error}`);
@@ -865,7 +865,7 @@ class OrderPage extends BasePage {
     }
 
     async closeToastMessageOrder(): Promise<void> {
-        await this.closeToastMessage.click();
+        await this.safeClick(this.closeToastMessage);
     }
 
     async closeAllToastMessages(elements?: Locator): Promise<void> {
@@ -883,7 +883,7 @@ class OrderPage extends BasePage {
             // Check if close button exists and is visible before clicking
             if (await iconClose.isVisible()) {
                 try {
-                    await iconClose.click();
+                    await this.safeClick(iconClose);
                 } catch (error) {
                     // Skip silently if click fails
                     continue;
@@ -914,28 +914,28 @@ class OrderPage extends BasePage {
     }
 
     async updatePurchasePower(): Promise<void> {
-        await this.reloadPurchasePower.click();
+        await this.safeClick(this.reloadPurchasePower);
     }
 
     async closeOrder(): Promise<void> {
-        await this.closeOrderButton.click();
+        await this.safeClick(this.closeOrderButton);
     }
 
     // =================== ORDER IN DAY METHODS ===================
 
     async openOrderInDayTab(): Promise<void> {
-        await this.orderIndayTab.click();
+        await this.safeClick(this.orderIndayTab);
     }
 
     async switchToAssetTab(): Promise<void> {
-        await this.assetTab.click();
+        await this.safeClick(this.assetTab);
     }
 
     async reloadData(): Promise<void> {
         await this.orderBook.reloadOrderBook();
     }
     async closeOrderInDay(): Promise<void> {
-        await this.page.locator('.card-panel.asset-panel .icon.iClose').click();
+        await this.safeClick(this.page.locator('.card-panel.asset-panel .icon.iClose'));
     }
     async verifyToggleWaitingMatchOn(): Promise<boolean> {
         return await FormUtils.verifyToggle(this.toggleWaitingMatch, 'ON');
@@ -946,7 +946,7 @@ class OrderPage extends BasePage {
     }
 
     async clickToggleWaitingMatch(): Promise<void> {
-        await this.toggleWaitingMatch.click();
+        await this.safeClick(this.toggleWaitingMatch);
     }
 
     async getOrderInDayRowData(rowIndex: number): Promise<any> {
@@ -960,12 +960,12 @@ class OrderPage extends BasePage {
         const remainingQuantity = await rows.locator('td:nth-child(4)').textContent();
         const status = await rows.locator('td:nth-child(5)').textContent();
 
-        await this.switchQtyColumn.click();
+        await this.safeClick(this.switchQtyColumn);
         await FormUtils.selectOption(this.page, this.dropdownQty, this.dropdownQty, 'KL');
 
         const quantity = await rows.locator('td:nth-child(4)').textContent();
 
-        await this.switchQtyColumn.click();
+        await this.safeClick(this.switchQtyColumn);
         await FormUtils.selectOption(this.page, this.dropdownQty, this.dropdownQty, 'KL khớp');
         const matchedQuantity = await rows.locator('td:nth-child(4)').textContent();
 

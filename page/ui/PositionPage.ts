@@ -285,18 +285,18 @@ class PositionPage extends BasePage {
     // =================== NAVIGATION METHODS ===================
 
     async openPositionPanel(): Promise<void> {
-        await this.positionButton.click();
+        await this.safeClick(this.positionButton);
         await this.page.waitForSelector('.card-panel-body', { timeout: PositionPage.DEFAULT_TIMEOUT });
     }
 
 
     async expandPositionPanel(): Promise<void> {
-        await this.expandPositionButton.click();
+        await this.safeClick(this.expandPositionButton);
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
     async closePositionPanel(): Promise<void> {
-        await this.closePositionButton.click();
+        await this.safeClick(this.closePositionButton);
     }
 
     async switchToTab(tabName: TabName): Promise<void> {
@@ -310,7 +310,7 @@ class PositionPage extends BasePage {
             Asset: this.AssetTab
         };
 
-        await tabMap[tabName].click();
+        await this.safeClick(tabMap[tabName]);
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
@@ -415,7 +415,7 @@ class PositionPage extends BasePage {
     // =================== ORDER ACTION METHODS ===================
 
     async stopTakeProfit(rowIndex: number = 0): Promise<void> {
-        await this.stopTakeProfitButton(rowIndex).click();
+        await this.safeClick(this.stopTakeProfitButton(rowIndex));
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
@@ -430,23 +430,23 @@ class PositionPage extends BasePage {
     // =================== CANCEL ORDER METHODS ===================
 
     async cancelOrder(rowIndex: number = 0): Promise<void> {
-        await this.cancelOrderButton(rowIndex).click();
+        await this.safeClick(this.cancelOrderButton(rowIndex));
         await this.cancelModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
-        await this.cancelModalConfirmButton.click();
+        await this.safeClick(this.cancelModalConfirmButton);
         await this.cancelModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
     async cancelActionCancelOrder(rowIndex: number = 0): Promise<void> {
-        await this.cancelOrderButton(rowIndex).click();
+        await this.safeClick(this.cancelOrderButton(rowIndex));
         await this.cancelModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
-        await this.cancelModalCancelButton.click();
+        await this.safeClick(this.cancelModalCancelButton);
         await this.cancelModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
     async getCancelOrderModalInfo(rowIndex: number = 0): Promise<OrderModalInfo> {
-        await this.cancelOrderButton(rowIndex).click();
+        await this.safeClick(this.cancelOrderButton(rowIndex));
         await this.cancelModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
         return {
             contractCode: await this.cancelModalContractCode.textContent() || '',
@@ -504,29 +504,29 @@ class PositionPage extends BasePage {
     // =================== CANCEL ALL ORDERS METHODS ===================
 
     async cancelAllOrders(): Promise<void> {
-        await this.cancelAllOrderButton.click();
+        await this.safeClick(this.cancelAllOrderButton);
         await this.cancelAllModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
-        await this.cancelAllConfirmButton.click();
+        await this.safeClick(this.cancelAllConfirmButton);
         await this.cancelAllModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(2000);
     }
 
     async closeCancelAllModal(): Promise<void> {
-        await this.cancelAllModalCloseButton.click();
+        await this.safeClick(this.cancelAllModalCloseButton);
         await this.cancelAllModal.waitFor({ state: 'hidden', timeout: 5000 });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
     async closeAllPositions(): Promise<void> {
-        await this.closeAllPositionButton.click();
+        await this.safeClick(this.closeAllPositionButton);
         await this.closeAllPositionModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
-        await this.closeAllPositionConfirmButton.click();
+        await this.safeClick(this.closeAllPositionConfirmButton);
         await this.closeAllPositionModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(2000);
     }
 
     async closeCloseAllPositions(): Promise<void> {
-        await this.closeAllPositionModalCloseButton.click();
+        await this.safeClick(this.closeAllPositionModalCloseButton);
         await this.closeAllPositionModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
@@ -534,7 +534,7 @@ class PositionPage extends BasePage {
     // =================== EDIT ORDER METHODS ===================
 
     async openEditOrderModal(rowIndex: number = 0): Promise<void> {
-        await this.editOrderButton(rowIndex).click();
+        await this.safeClick(this.editOrderButton(rowIndex));
         await this.editOrderModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
     }
 
@@ -558,13 +558,13 @@ class PositionPage extends BasePage {
         if (newQuantity) {
             await FormUtils.fillField(this.editOrderModalCurrentQuantity, newQuantity);
         }
-        await this.editOrderModalConfirmButton.click();
+        await this.safeClick(this.editOrderModalConfirmButton);
         await this.editOrderModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
     async cancelEditOrder(): Promise<void> {
-        await this.editOrderModalCancelButton.click();
+        await this.safeClick(this.editOrderModalCancelButton);
         await this.editOrderModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
@@ -592,7 +592,7 @@ class PositionPage extends BasePage {
 
     // =================== REVERSE POSITION METHODS ===================
     async openReversePositionModal(rowIndex: number = 0): Promise<void> {
-        await this.reversePositionButton(rowIndex).click();
+        await this.safeClick(this.reversePositionButton(rowIndex));
         await this.reversePositionModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
     }
 
@@ -608,15 +608,15 @@ class PositionPage extends BasePage {
         };
     }
     async reversePosition(rowIndex: number = 0): Promise<void> {
-        await this.reversePositionButton(rowIndex).click();
+        await this.safeClick(this.reversePositionButton(rowIndex));
         await this.reversePositionModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
-        await this.reversePositionModalConfirmButton.click();
+        await this.safeClick(this.reversePositionModalConfirmButton);
         await this.reversePositionModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
     async cancelReversePosition(): Promise<void> {
-        await this.reversePositionModalCancelButton.click();
+        await this.safeClick(this.reversePositionModalCancelButton);
         await this.reversePositionModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
@@ -631,7 +631,7 @@ class PositionPage extends BasePage {
 
     // =================== CLOSE OPEN POSITION METHODS ===================
     async openCloseOpenPositionModal(rowIndex: number = 0): Promise<void> {
-        await this.closeOpenPositionButton(rowIndex).click();
+        await this.safeClick(this.closeOpenPositionButton(rowIndex));
         await this.closeOpenPositionModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
     }
 
@@ -648,15 +648,15 @@ class PositionPage extends BasePage {
     }
 
     async closeOpenPosition(rowIndex: number = 0): Promise<void> {
-        await this.closeOpenPositionButton(rowIndex).click();
+        await this.safeClick(this.closeOpenPositionButton(rowIndex));
         await this.closeOpenPositionModal.waitFor({ state: 'visible', timeout: PositionPage.DEFAULT_TIMEOUT });
-        await this.closeOpenPositionModalConfirmButton.click();
+        await this.safeClick(this.closeOpenPositionModalConfirmButton);
         await this.closeOpenPositionModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }
 
     async cancelCloseOpenPosition(): Promise<void> {
-        await this.closeOpenPositionModalCancelButton.click();
+        await this.safeClick(this.closeOpenPositionModalCancelButton);
         await this.closeOpenPositionModal.waitFor({ state: 'hidden', timeout: PositionPage.DEFAULT_TIMEOUT });
         await this.page.waitForTimeout(PositionPage.SHORT_TIMEOUT);
     }

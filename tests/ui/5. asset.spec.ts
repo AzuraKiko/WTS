@@ -5,7 +5,7 @@ import { NumberValidator } from '../../helpers/validationUtils';
 import { WaitUtils, TableUtils } from '../../helpers/uiUtils';
 import { compareApiRowWithUiRow } from '../../helpers/tableCompareUtils';
 
-import { ocrPipeline } from '../../page/ui/OcrPipeline';
+// import { ocrPipeline } from '../../page/ui/OcrPipeline';
 import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { getSharedLoginSession } from "../api/sharedSession";
@@ -128,7 +128,7 @@ test.describe('Asset Summary test', () => {
             let subAccount = "";
             const alternateTab = listSubAccountTabs.find((tab) => tab !== subAccountTab);
             if (subAccountTab.includes('Tất cả')) {
-                subAccount = "";
+                subAccount = '"subAcntNo":""';
             } else {
                 subAccount = subAccountTab.split(' - ')[0].trim();
             }
@@ -168,25 +168,26 @@ test.describe('Asset Summary test', () => {
                 mgDebt: apiData.mgDebt,
             };
 
+            // const assetResult = await ocrPipeline(page, {
+            //     locator: assetPage.overviewLocator,
+            //     zoomLevels: [0.98],
+            //     ocrScale: 2,
+            //     cropper: async () => {
+            //         return await assetPage.cropAssetSummary();
+            //     },
+            //     parse: parseAsset,
+            //     countMatches: countAssetLabelMatches,
+            //     artifactPrefix: 'asset',
+            //     minMatches: 4
+            // });
 
-            const assetResult = await ocrPipeline(page, {
-                locator: assetPage.overviewLocator,
-                zoomLevels: [0.98],
-                ocrScale: 2,
-                cropper: async () => {
-                    return await assetPage.cropAssetSummary();
-                },
-                parse: parseAsset,
-                countMatches: countAssetLabelMatches,
-                artifactPrefix: 'asset',
-                minMatches: 4
-            });
+            // expect(assetResult.success).toBeTruthy();
 
-            expect(assetResult.success).toBeTruthy();
-            // console.log('assetResult.data', JSON.stringify(assetResult.data, null, 2));
+            const assetResult = await assetPage.getOverviewData();
+            // console.log('assetResult', JSON.stringify(assetResult, null, 2));
             // console.log('assetData', JSON.stringify(assetData, null, 2));
 
-            compareNumericData(assetResult.data, assetData);
+            compareNumericData(assetResult, assetData);
 
             await attachScreenshot(page, `Asset Summary ${subAccountTab}`);
         }
@@ -231,7 +232,7 @@ test.describe('Asset Summary test', () => {
                 quantity: list.balQty,
                 transaction: list.trdAvailQty,
                 dividendQuantity: list.devidendQty,
-                pendingDelivery: list.paidQty,
+                pendingDelivery: list.sellTn,
                 pendingTrade: list.waitTrdQty,
                 buyT2: list.buyT2,
                 buyT1: list.buyT1,
@@ -325,7 +326,7 @@ test.describe('Asset Summary test', () => {
             const performanceSection = page.locator('.personal-assets.performance');
             await expect(performanceSection).toBeVisible();
 
-            if (subAccountTab.includes('Folio')) {
+            if (subAccountTab.toLowerCase().includes('folio')) {
                 await expect(page.getByText('Dữ liệu không hỗ trợ cho tiểu khoản Pinefolio')).toBeVisible();
                 await attachScreenshot(page, `Investment Performance ${subAccountTab}`);
 

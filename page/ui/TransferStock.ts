@@ -92,11 +92,10 @@ class TransferStockPage extends BasePage {
     }
 
     async selectAccount(control: Locator, accountLabel: string): Promise<void> {
-        await control.scrollIntoViewIfNeeded();
-        await control.click();
+        await this.ensureVisible(control);
+        await this.safeClick(control);
         const option = this.selectOptions.filter({ hasText: accountLabel }).first();
-        await option.waitFor({ state: 'visible', timeout: 10000 });
-        await option.click();
+        await this.safeClick(option);
     }
 
     async selectSourceAccount(accountLabel: string): Promise<void> {
@@ -181,8 +180,8 @@ class TransferStockPage extends BasePage {
 
     async clickMaxButtonRow(rowIndex: number): Promise<void> {
         const row = this.sourceRows.nth(rowIndex);
-        await row.waitFor({ state: 'visible' });
-        await row.locator('.sit-input__overlay').click();
+        await this.ensureVisible(row);
+        await this.safeClick(row.locator('.sit-input__overlay'));
     }
 
     async fillTransferQuantity(rowIndex: number, quantity: number | string): Promise<void> {
@@ -192,7 +191,7 @@ class TransferStockPage extends BasePage {
     }
 
     async submitTransferStock(): Promise<void> {
-        await this.transferButton.click();
+        await this.safeClick(this.transferButton);
     }
 
     async transferStock(rowIndex: number, quantity: number): Promise<void> {

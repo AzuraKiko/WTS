@@ -317,10 +317,20 @@ export class WaitUtils {
         page.on('response', handler);
 
         try {
+            const responsePromise = page.waitForResponse(async (response) => {
+                await handler(response);
+                return latestResponse !== null;
+            }, { timeout }).catch(() => null);
+
             // 👉 trigger UI action
             await trigger();
 
-            // 👉 chờ API settle để lấy response cuối
+            const response = await responsePromise;
+            if (response) {
+                return response;
+            }
+
+            // 👉 fallback: chờ API settle để lấy response cuối (nếu có)
             await page.waitForTimeout(timeout);
         } finally {
             page.off('response', handler);
@@ -332,6 +342,23 @@ export class WaitUtils {
 }
 
 /**
+ * Common interaction utilities (auto scroll/visibility)
+ */
+export class InteractionUtils {
+    private static readonly DEFAULT_TIMEOUT = 10000;
+
+    static async ensureVisible(
+        locator: Locator,
+        options: WaitOptions = {}
+    ): Promise<void> {
+        const { timeout = InteractionUtils.DEFAULT_TIMEOUT } = options;
+        await locator.waitFor({ state: 'attached', timeout });
+        await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+        await locator.waitFor({ state: 'visible', timeout });
+    }
+}
+
+/**
  * Form interaction utilities
  */
 export class FormUtils {
@@ -339,7 +366,7 @@ export class FormUtils {
 
 
     static async fillTextBox(textBoxSelector: Locator, value: string | number): Promise<void> {
-        await textBoxSelector.waitFor({ state: 'visible' });
+        await InteractionUtils.ensureVisible(textBoxSelector);
         await textBoxSelector.clear();
         await textBoxSelector.fill(String(value));
         await WaitUtils.delay(500);
@@ -358,7 +385,7 @@ export class FormUtils {
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                await field.waitFor({ state: 'visible' });
+                await InteractionUtils.ensureVisible(field);
                 await field.clear();
                 await field.fill(stringValue);
 
@@ -411,6 +438,7 @@ export class FormUtils {
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
+                await InteractionUtils.ensureVisible(selectElement);
                 await selectElement.click();
                 await dropdownSelector.waitFor({ state: 'visible' });
                 await dropdownSelector
@@ -439,8 +467,7 @@ export class FormUtils {
         const dropdownLocator = page.locator(dropdownSelector);
         const optionsLocator = page.locator(optionsSelector);
 
-        await dropdownLocator.waitFor({ state: 'visible' });
-        await dropdownLocator.scrollIntoViewIfNeeded();
+        await InteractionUtils.ensureVisible(dropdownLocator);
         await dropdownLocator.click();
 
         await page.locator(optionsSelector).waitFor({ state: 'visible' });
@@ -476,8 +503,7 @@ export class FormUtils {
         const dropdownLocator = page.locator(dropdownSelector);
         const optionsLocator = page.locator(optionsSelector);
 
-        await dropdownLocator.waitFor({ state: 'visible' });
-        await dropdownLocator.scrollIntoViewIfNeeded();
+        await InteractionUtils.ensureVisible(dropdownLocator);
         await dropdownLocator.click();
 
         await page.locator(optionsSelector).waitFor({ state: 'visible' });
@@ -506,8 +532,7 @@ export class FormUtils {
         const dropdownLocator = page.locator(dropdownSelector);
         const valueLocator = page.locator(valueSelector);
 
-        await dropdownLocator.waitFor({ state: 'visible' });
-        await dropdownLocator.scrollIntoViewIfNeeded();
+        await InteractionUtils.ensureVisible(dropdownLocator);
         await dropdownLocator.click();
 
         await page.locator(valueSelector).waitFor({ state: 'visible' });
@@ -533,6 +558,7 @@ export class FormUtils {
         const dropdownLocator = page.locator(dropdownSelector);
         const valueDisplayLocator = page.locator(valueDisplaySelector);
 
+        await InteractionUtils.ensureVisible(dropdownLocator);
         await dropdownLocator.click();
         await page.waitForTimeout(500);
 
@@ -563,8 +589,7 @@ export class FormUtils {
         const dropdownLocator = page.locator(dropdownSelector);
         const optionsLocator = page.locator(optionsSelector);
 
-        await dropdownLocator.waitFor({ state: 'visible' });
-        await dropdownLocator.scrollIntoViewIfNeeded();
+        await InteractionUtils.ensureVisible(dropdownLocator);
         await dropdownLocator.click();
 
         await page.locator(optionsSelector).waitFor({ state: 'visible' });
@@ -590,9 +615,11 @@ export class FormUtils {
         confirmButton?: Locator,
         options: WaitOptions = {}
     ): Promise<void> {
+        await InteractionUtils.ensureVisible(submitButton, options);
         await submitButton.click();
 
         if (confirmButton) {
+            await InteractionUtils.ensureVisible(confirmButton, options);
             await WaitUtils.waitForElement(confirmButton, options);
             await confirmButton.click();
         }
@@ -604,6 +631,7 @@ export class FormUtils {
     static async clearForm(fields: Locator[]): Promise<void> {
         for (const field of fields) {
             try {
+                await InteractionUtils.ensureVisible(field);
                 await field.clear();
             } catch (error) {
                 console.log(`Failed to clear field: ${error}`);
@@ -864,7 +892,11 @@ export class TableUtils {
                 if (!cells.length) continue;
                 const rowObject: Record<string, string> = {};
                 headers.forEach((header, index) => {
-                    rowObject[header] = (cells[index] ?? '').trim();
+                    const cellValue = (cells[index] ?? '').trim();
+                    rowObject[header] = cellValue;
+                    if (cellValue === '-%' || cellValue === '-') {
+                        rowObject[header] = '0';
+                    }
                 });
                 data.push(rowObject);
             } catch (error) {
@@ -945,7 +977,7 @@ export class TableUtils {
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 const row = tableRows.nth(rowIndex);
-                await row.waitFor({ state: 'visible' });
+                await InteractionUtils.ensureVisible(row);
                 await row.click();
                 return;
             } catch (error) {
@@ -986,6 +1018,7 @@ export class ModalUtils {
         try {
             if (closeButtonSelector) {
                 const closeButton = modal.locator(closeButtonSelector);
+                await InteractionUtils.ensureVisible(closeButton);
                 await closeButton.click();
             } else {
                 await page.keyboard.press('Escape');
@@ -1004,6 +1037,7 @@ export class ModalUtils {
         confirmButtonSelector: string = '.btn-confirm, .btn-primary'
     ): Promise<void> {
         const confirmButton = modal.locator(confirmButtonSelector);
+        await InteractionUtils.ensureVisible(confirmButton);
         await confirmButton.click();
         await modal.waitFor({ state: 'hidden', timeout: 10000 });
     }
@@ -1016,6 +1050,7 @@ export class ModalUtils {
         cancelButtonSelector: string = '.btn-cancel, .btn-secondary'
     ): Promise<void> {
         const cancelButton = modal.locator(cancelButtonSelector);
+        await InteractionUtils.ensureVisible(cancelButton);
         await cancelButton.click();
         await modal.waitFor({ state: 'hidden', timeout: 10000 });
     }
@@ -1112,6 +1147,7 @@ export class TimeUtils {
 export const UIUtils = {
     Scroll: ScrollUtils,
     Wait: WaitUtils,
+    Interact: InteractionUtils,
     Form: FormUtils,
     Table: TableUtils,
     Modal: ModalUtils,

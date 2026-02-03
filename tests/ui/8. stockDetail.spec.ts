@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { PriceBoardPage } from "../../page/ui/PriceBoard";
 import StockDetailPage from "../../page/ui/StockDetail";
 import { attachScreenshot } from "../../helpers/reporterHelper";
+import { TimeUtils } from "../../helpers/uiUtils";
 
 test.describe("Stock Detail modal", () => {
     let page: Page;
@@ -30,18 +31,31 @@ test.describe("Stock Detail modal", () => {
 
         await stockDetailPage.expectModalVisible();
         await stockDetailPage.expectHeaderVisible();
+
         await stockDetailPage.expectSymbolMatched(stockCode);
         await stockDetailPage.expectSymbolInfoVisible();
-        await stockDetailPage.expectMatchListHasData();
+
+        if (await TimeUtils.checkDataWithTimeRange(new Date(), 8, 15, 9, 15)) {
+            console.warn("Clear data at the beginning of the day (8h15)");
+        } else {
+            await stockDetailPage.expectMatchListHasData();
+            await stockDetailPage.expectPriceAnalysisListHasData();
+        }
+
+        await stockDetailPage.expectChartVisible();
         await stockDetailPage.expectPriceHistoryHasData();
         await stockDetailPage.expectFinanceHasData();
-        await stockDetailPage.expectChartVisible();
-        await stockDetailPage.expectStockProfileHasData();
+
         await stockDetailPage.expectNewsListHasData();
+        await stockDetailPage.expectStockProfileHasData();
         await stockDetailPage.expectEventListHasData();
         await stockDetailPage.expectPriceListVisible();
 
         await attachScreenshot(page, `Stock Detail ${stockCode}`);
+
+
+
+
         await stockDetailPage.close();
     });
 
@@ -49,18 +63,27 @@ test.describe("Stock Detail modal", () => {
         await priceBoardPage.getFirstCWCodeUI();
         const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow();
 
+
         await stockDetailPage.expectModalVisible();
         await stockDetailPage.expectHeaderVisible();
         await stockDetailPage.expectSymbolMatched(stockCode);
         await stockDetailPage.expectSymbolInfoVisible();
-        await stockDetailPage.expectMatchListHasData();
+
+        if (await TimeUtils.checkDataWithTimeRange(new Date(), 8, 15, 9, 15)) {
+            console.warn("Clear data at the beginning of the day (8h15)");
+        } else {
+            await stockDetailPage.expectMatchListHasData();
+            await stockDetailPage.expectPriceAnalysisListHasData();
+        }
+
+        await stockDetailPage.expectChartVisible();
         await stockDetailPage.expectPriceHistoryHasData();
         await stockDetailPage.expectFinanceHasData();
-        await stockDetailPage.expectChartVisible();
-        await stockDetailPage.expectCWProfileHasData();
+
         await stockDetailPage.expectNewsListHasData();
+        await stockDetailPage.expectCWProfileHasData();
         await stockDetailPage.expectEventListHasData();
-        await stockDetailPage.expectPriceListVisible();
+        await stockDetailPage.expectPriceListCWVisible()
 
         await attachScreenshot(page, `CW Detail ${stockCode}`);
         await stockDetailPage.close();

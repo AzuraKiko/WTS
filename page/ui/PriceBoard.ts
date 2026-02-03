@@ -304,6 +304,15 @@ export class PriceBoardPage {
         };
     }
 
+    async isGlobalNoData(): Promise<boolean> {
+        const content = this.globalCard
+            .locator('.card-index-info__body').textContent();
+        if (content === null || content === undefined) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Lấy data card Commodity
      */
@@ -323,6 +332,15 @@ export class PriceBoardPage {
             indexChange: await values.nth(1).innerText(),
             indexChangePercent: await values.nth(2).innerText(),
         };
+    }
+
+    async isCommodityNoData(): Promise<boolean> {
+        const content = this.commodityCard
+            .locator('.card-index-info__body').textContent();
+        if (content === null || content === undefined) {
+            return true;
+        }
+        return false;
     }
 
     // Hàm lấy cái nút Dropdown theo tên (ví dụ: "HNX")

@@ -88,11 +88,10 @@ class TransferCashPage extends BasePage {
     }
 
     async selectAccount(control: Locator, accountLabel: string): Promise<void> {
-        await control.scrollIntoViewIfNeeded();
-        await control.click();
+        await this.ensureVisible(control);
+        await this.safeClick(control);
         const option = this.selectOptions.filter({ hasText: accountLabel }).first();
-        await option.waitFor({ state: 'visible', timeout: 10000 });
-        await option.click();
+        await this.safeClick(option);
     }
 
     async selectSourceAccount(accountLabel: string): Promise<void> {
@@ -134,7 +133,7 @@ class TransferCashPage extends BasePage {
 
 
     async submitTransfer(): Promise<void> {
-        await this.transferButton.click();
+        await this.safeClick(this.transferButton);
     }
 
     async transferCash(amount: number): Promise<void> {

@@ -15,6 +15,8 @@ UI_MODE="false"
 LIST_ONLY="false"
 SUITE_NAME=""
 TEST_PATHS=()
+OCR_PID=""
+ENABLE_OCR="true"
 
 print_help() {
   cat <<'EOF'
@@ -35,6 +37,7 @@ Options:
       --ui-tests             Chạy tests/ui
   -r, --reporter <name>      html | allure | <custom>
       --open-report          Mở báo cáo sau khi chạy (html/allure)
+      --no-ocr               Không khởi động OCR service
       --headed               Chạy ở chế độ có UI trình duyệt
       --ui                   Chạy Playwright UI mode
       --list                 Liệt kê tests sẽ chạy (không execute)
@@ -99,6 +102,10 @@ while [[ $# -gt 0 ]]; do
       OPEN_REPORT="true"
       shift
       ;;
+    --no-ocr)
+      ENABLE_OCR="false"
+      shift
+      ;;
     --headed)
       HEADED="true"
       shift
@@ -128,6 +135,37 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+start_ocr_service() {
+  local ocr_health_url="http://localhost:8000/health"
+
+  if curl --silent --fail "$ocr_health_url" >/dev/null; then
+    return 0
+  fi
+
+  echo "Starting OCR service at http://localhost:8000"
+  npm run ocr:build
+  npm run ocr:start &
+  OCR_PID="$!"
+
+  for _ in {1..20}; do
+    if curl --silent --fail "$ocr_health_url" >/dev/null; then
+      echo "OCR service is up"
+      return 0
+    fi
+    sleep 0.5
+  done
+
+  echo "OCR service failed to start after 10s"
+  return 1
+}
+
+cleanup() {
+  if [[ -n "$OCR_PID" ]]; then
+    kill "$OCR_PID" >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup EXIT
 
 if [[ "$LIST_ONLY" != "true" ]]; then
   rm -rf "$ROOT_DIR/playwright-report" "$ROOT_DIR/test-results" "$ROOT_DIR/allure-results"
@@ -172,6 +210,10 @@ fi
 
 if [[ ${#TEST_PATHS[@]} -gt 0 ]]; then
   CMD+=("${TEST_PATHS[@]}")
+fi
+
+if [[ "$LIST_ONLY" != "true" && "$ENABLE_OCR" == "true" ]]; then
+  start_ocr_service
 fi
 
 if [[ -n "$ENV_NAME" ]]; then

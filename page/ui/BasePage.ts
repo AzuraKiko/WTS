@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { InteractionUtils, WaitOptions } from '../../helpers/uiUtils';
 
 class BasePage {
     page: Page;
@@ -11,6 +12,30 @@ class BasePage {
         this.pageTitle = page.locator('h1.page-title');
         this.pageLoader = page.locator('.loading-spinner');
         this.errorMessage = page.locator('.error-message');
+    }
+
+    protected async ensureVisible(
+        locator: Locator,
+        options: WaitOptions = {}
+    ): Promise<void> {
+        await InteractionUtils.ensureVisible(locator, options);
+    }
+
+    protected async safeClick(
+        locator: Locator,
+        options: WaitOptions = {}
+    ): Promise<void> {
+        await InteractionUtils.ensureVisible(locator, options);
+        await locator.click();
+    }
+
+    protected async safeFill(
+        locator: Locator,
+        value: string,
+        options: WaitOptions = {}
+    ): Promise<void> {
+        await InteractionUtils.ensureVisible(locator, options);
+        await locator.fill(value);
     }
 
     async getPageTitle(): Promise<string> {

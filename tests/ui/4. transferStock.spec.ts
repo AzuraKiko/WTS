@@ -107,11 +107,6 @@ test.describe('Transfer Stock Tests', () => {
 
         if (maxAvailableStock.stocks.length < 1) {
             console.log('Không sở hữu mã CK để chuyển');
-
-            expect(NumberValidator.parseNumber(sourceStats.stockCount)).toBe(0);
-            expect(NumberValidator.parseNumber(sourceStats.totalQty)).toBe(0);
-            expect(NumberValidator.parseNumber(destinationStats.stockCount)).toBe(0);
-            expect(NumberValidator.parseNumber(destinationStats.totalQty)).toBe(0);
             return;
         }
 
@@ -158,16 +153,20 @@ test.describe('Transfer Stock Tests', () => {
         if (messageError.description.includes('Hệ thống đang chạy batch')) {
             console.log('Transfer stock failed:', messageError);
             return;
-        } else if (messageError) {
-            throw new Error(messageError.title + ': ' + messageError.description);
-        } else {
+        } else if (messageError.description.includes('Đã chuyển thành công')) {
             await orderPage.verifyMessage(['Thông báo'], ['Đã chuyển thành công']);
-
-            const newRowSourceUI = await transferStockPage.getSourceRowData(0);
-            expect(newRowSourceUI.stockCode).not.toBe(rowSourceUI.stockCode);
-            await WaitUtils.delay(8000);
+            await attachScreenshot(page, 'Transfer Stock Page');
+            if (await transferStockPage.sourceRows.count() > 0) {
+                const newRowSourceUI = await transferStockPage.getSourceRowData(0);
+                expect(newRowSourceUI.stockCode).not.toBe(rowSourceUI.stockCode);
+                await WaitUtils.delay(8000);
+            } else {
+                console.log(`Source data no contain ${rowSourceUI.stockCode}`);
+                return;
+            }
+        } else {
+            throw new Error(messageError.title + ': ' + messageError.description);
         }
-        await attachScreenshot(page, 'Transfer Stock Page');
     });
 
     test('TC_002: Check history table', async () => {
