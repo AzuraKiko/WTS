@@ -30,6 +30,8 @@ test.describe('Transfer Cash Tests', () => {
     let availableSubAccounts: string[] = [];
     let cashTransferHistAPI: any[] = [];
     let page: Page;
+    let session = '';
+    let acntNo = '';
 
     let assetApi = new AssetApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
 
@@ -50,17 +52,7 @@ test.describe('Transfer Cash Tests', () => {
         }
     };
 
-    test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
-        loginPage = new LoginPage(page);
-        transferCashPage = new TransferCashPage(page);
-        orderPage = new OrderPage(page);
-
-        const loginData = await getSharedLoginSession();
-        const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
-        availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
-            .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
-
+    const refreshMaxWithdrawableSubAccount = async () => {
         async function getwdrawAvailSubAccount(subAcntNo: string): Promise<number> {
             const response = await assetApi.getTotalAssetAll({
                 user: TEST_CONFIG.TEST_USER,
@@ -83,6 +75,22 @@ test.describe('Transfer Cash Tests', () => {
             (max, current) => (current.wdrawAvail > max.wdrawAvail ? current : max),
             wdrawAvailEntries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
         );
+    };
+
+    test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
+        loginPage = new LoginPage(page);
+        transferCashPage = new TransferCashPage(page);
+        orderPage = new OrderPage(page);
+
+        const loginData = await getSharedLoginSession();
+        const { session: sessionValue, acntNo: acntNoValue, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
+        session = sessionValue;
+        acntNo = acntNoValue;
+        availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
+            .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
+
+        await refreshMaxWithdrawableSubAccount();
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
@@ -95,6 +103,7 @@ test.describe('Transfer Cash Tests', () => {
     });
 
     test('TC_001: Check transfer cash function', async () => {
+        await refreshMaxWithdrawableSubAccount();
 
         const title = await transferCashPage.getTitle();
         expect(title).toContain('Chuyển tiền tiểu khoản');

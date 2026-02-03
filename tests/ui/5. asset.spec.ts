@@ -32,6 +32,8 @@ test.describe('Asset Summary test', () => {
     let assetApi = new AssetApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
     let maxWithdrawableSubAccount: { subAcntNo: string; wdrawAvail: number };
     let page: Page;
+    let session = '';
+    let acntNo = '';
 
     const overviewLabels = [
         'Tổng tài sản',
@@ -53,6 +55,30 @@ test.describe('Asset Summary test', () => {
         Object.keys(expected).forEach((key) => {
             expect(NumberValidator.parseNumber(actual[key])).toBe(NumberValidator.parseNumber(expected[key]));
         });
+    };
+
+    const getwdrawAvailSubAccount = async (subAcntNo: string): Promise<number> => {
+        const response = await assetApi.getTotalAssetAll({
+            user: TEST_CONFIG.TEST_USER,
+            session,
+            acntNo,
+            subAcntNo,
+            rqId: uuidv4(),
+        });
+        return response?.data?.data?.wdrawAvail ?? 0;
+    };
+
+    const refreshMaxWithdrawableSubAccount = async () => {
+        wdrawAvailEntries = await Promise.all(
+            availableSubAccounts.map(async (subAcntNo) => ({
+                subAcntNo,
+                wdrawAvail: await getwdrawAvailSubAccount(subAcntNo),
+            }))
+        );
+        maxWithdrawableSubAccount = wdrawAvailEntries.reduce(
+            (max, current) => (current.wdrawAvail > max.wdrawAvail ? current : max),
+            wdrawAvailEntries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
+        );
     };
 
     const verifyOverviewLabels = async () => {
@@ -83,31 +109,13 @@ test.describe('Asset Summary test', () => {
         orderPage = new OrderPage(page);
 
         const loginData = await getSharedLoginSession();
-        const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
+        const { session: sessionValue, acntNo: acntNoValue, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
+        session = sessionValue;
+        acntNo = acntNoValue;
         availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
             .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
 
-        const getwdrawAvailSubAccount = async (subAcntNo: string): Promise<number> => {
-            const response = await assetApi.getTotalAssetAll({
-                user: TEST_CONFIG.TEST_USER,
-                session,
-                acntNo,
-                subAcntNo,
-                rqId: uuidv4(),
-            });
-            return response?.data?.data?.wdrawAvail ?? 0;
-        };
-
-        wdrawAvailEntries = await Promise.all(
-            availableSubAccounts.map(async (subAcntNo) => ({
-                subAcntNo,
-                wdrawAvail: await getwdrawAvailSubAccount(subAcntNo),
-            }))
-        );
-        maxWithdrawableSubAccount = wdrawAvailEntries.reduce(
-            (max, current) => (current.wdrawAvail > max.wdrawAvail ? current : max),
-            wdrawAvailEntries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
-        );
+        await refreshMaxWithdrawableSubAccount();
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
@@ -372,6 +380,7 @@ test.describe('Asset Summary test', () => {
     });
 
     test('TC_004: Check withdrawal money function', async () => {
+        await refreshMaxWithdrawableSubAccount();
         await assetPage.openWithdrawalMoneyModal();
         let sourceAccount = await assetPage.getSelectValue();
         if (sourceAccount !== maxWithdrawableSubAccount.subAcntNo) {
