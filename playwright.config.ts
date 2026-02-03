@@ -33,7 +33,7 @@ export default defineConfig({
             name: 'Chrome',
             use: {
                 browserName: 'chromium',
-                headless: false, //false nghĩa là trình duyệt sẽ hiển thị UI (có thể nhìn thấy), true sẽ chạy ẩn
+                headless: true, //false nghĩa là trình duyệt sẽ hiển thị UI (có thể nhìn thấy), true sẽ chạy ẩn
                 viewport: null, //null nghĩa là sử dụng kích thước cửa sổ trình duyệt mặc định thay vì kích thước cố định
                 // viewport: { width: 1920, height: 1080 },
                 launchOptions: {
@@ -42,31 +42,31 @@ export default defineConfig({
                 }
             },
         },
-        {
-            name: 'Firefox',
-            use: {
-                browserName: 'firefox',
-                headless: false,
-                viewport: null,
-                launchOptions: {
-                    slowMo: 100,
-                    args: ['--kiosk']
-                }
-            },
-        },
-        {
-            name: 'Edge',
-            use: {
-                browserName: 'chromium',
-                channel: 'msedge',
-                headless: false,
-                viewport: null,
-                launchOptions: {
-                    slowMo: 100,
-                    args: ['--start-maximized']
-                }
-            },
-        },
+        // {
+        //     name: 'Firefox',
+        //     use: {
+        //         browserName: 'firefox',
+        //         headless: false,
+        //         viewport: null,
+        //         launchOptions: {
+        //             slowMo: 100,
+        //             args: ['--kiosk']
+        //         }
+        //     },
+        // },
+        // {
+        //     name: 'Edge',
+        //     use: {
+        //         browserName: 'chromium',
+        //         channel: 'msedge',
+        //         headless: false,
+        //         viewport: null,
+        //         launchOptions: {
+        //             slowMo: 100,
+        //             args: ['--start-maximized']
+        //         }
+        //     },
+        // },
     ],
     // reporter: [
     //     ['list'], //Reporter mặc định hiển thị kết quả test dưới dạng danh sách trong terminal.
