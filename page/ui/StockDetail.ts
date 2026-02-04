@@ -2,8 +2,10 @@ import { Page, Locator, expect } from "@playwright/test";
 import BasePage from "./BasePage";
 import { WaitUtils } from "../../helpers/uiUtils";
 import { NumberValidator } from "../../helpers/validationUtils";
+import LoginPage from "./LoginPage";
 
 class StockDetailPage extends BasePage {
+    loginPage: LoginPage;
     modal: Locator;
     header: Locator;
     headerTitle: Locator;
@@ -82,15 +84,23 @@ class StockDetailPage extends BasePage {
     derivativeFloorPrice: Locator;
     derivativeReferencePrice: Locator;
     derivativeCeilingPrice: Locator;
+
+    derivativeSymbolStatic: Locator;
+    derivativeSymbolStaticItems: Locator;
     derivativeLoginButton: Locator;
     derivativeChartFrame: Locator;
     derivativePriceListPanel: Locator;
     derivativePriceListSteps: Locator;
+    derivativeMatchTab: Locator;
+    derivativeAnalysisTab: Locator;
     derivativeMatchTableHeaders: Locator;
     derivativeMatchTableRows: Locator;
+    derivativePriceAnalysisRows: Locator;
+
 
     constructor(page: Page) {
         super(page);
+        this.loginPage = new LoginPage(page);
         this.modal = page.locator(".stock-detail-modal");
         this.header = this.modal.locator(".stock-detail-modal-header");
         this.headerTitle = this.header.getByText("Chi tiết mã", { exact: true });
@@ -202,14 +212,28 @@ class StockDetailPage extends BasePage {
         this.derivativeCeilingPrice = this.derivativeHeader.locator(".market__index-prices .c");
         this.derivativeReferencePrice = this.derivativeHeader.locator(".market__index-prices .r");
         this.derivativeFloorPrice = this.derivativeHeader.locator(".market__index-prices .f");
+        this.derivativeSymbolStatic = this.derivativeHeader.locator("market__index-statistic");
         this.derivativeLoginButton = this.derivativeHeader.locator(".btn--loginToOrder");
-        this.derivativeChartFrame = this.derivativeModal.locator("iframe.chart");
+
         this.derivativePriceListPanel = this.derivativeModal.locator("#d_price-list");
         this.derivativePriceListSteps = this.derivativePriceListPanel.locator(".price-list-step");
+
+        this.derivativeMatchTab = this.derivativeModal
+            .locator(".panel-header.panel-header--left ")
+            .filter({ hasText: "Chi tiết khớp" })
+            .first();
+
         this.derivativeMatchTableHeaders = this.derivativeModal.locator(
             ".match-analystic .grid-table-header div",
         );
         this.derivativeMatchTableRows = this.derivativeModal.locator(".match-analystic .grid-table-body");
+
+        this.derivativeAnalysisTab = this.derivativeModal
+            .locator(".panel-header.panel-header--left ")
+            .filter({ hasText: "Phân tích giá" })
+            .first();
+
+        this.derivativePriceAnalysisRows = this.derivativeModal.locator(".price-analystic .pa-row.as-grid");
     }
 
     private async clickTabSafely(tab: Locator, label: string): Promise<void> {
@@ -264,28 +288,23 @@ class StockDetailPage extends BasePage {
     }
 
     async expectHeaderVisible(): Promise<void> {
-        // If derivative modal is visible, validate its header instead of stock header
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            await expect(this.derivativeHeader, "Derivative detail header should be visible").toBeVisible();
-            await expect(
-                this.derivativeSymbolCode,
-                "Derivative symbol code should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeSymbolPrice,
-                "Derivative symbol price should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeLoginButton,
-                "Login to place order button should be visible",
-            ).toBeVisible();
-            return;
-        }
-
         await expect(this.header, "Stock detail header should be visible").toBeVisible();
         await expect(this.headerTitle, "Stock detail title should be visible").toBeVisible();
         await expect(this.oddLotSwitch, "Odd lot switch should be visible").toBeVisible();
         await expect(this.closeButton, "Close button should be visible").toBeVisible();
+    }
+
+    async expectHeaderDerivativeVisible(): Promise<void> {
+        await expect(this.derivativeHeader, "Derivative detail header should be visible").toBeVisible();
+        await expect(this.derivativeSymbolCode, "Derivative symbol code should be visible").toBeVisible();
+        await expect(this.derivativeSymbolPrice, "Derivative symbol price should be visible").toBeVisible();
+        await expect(this.derivativeSymbolChange, "Derivative symbol change should be visible").toBeVisible();
+        await expect(this.derivativeSymbolChangePercent, "Derivative symbol change percent should be visible").toBeVisible();
+        await expect(this.derivativeFloorPrice, "Derivative floor price should be visible").toBeVisible();
+        await expect(this.derivativeReferencePrice, "Derivative reference price should be visible").toBeVisible();
+        await expect(this.derivativeCeilingPrice, "Derivative ceiling price should be visible").toBeVisible();
+        await expect(this.derivativeSymbolStatic, "Derivative symbol static should be visible").toBeVisible();
+        await expect(this.derivativeLoginButton, "Login to place order button should be visible").toBeVisible();
     }
 
     async clickOddLotSwitch(): Promise<void> {
@@ -298,39 +317,6 @@ class StockDetailPage extends BasePage {
     }
 
     async expectSymbolInfoVisible(): Promise<void> {
-        // Derivative detail has different DOM structure
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            await expect(
-                this.derivativeSymbolCode,
-                "Derivative symbol code should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeSymbolPrice,
-                "Derivative symbol price should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeSymbolChange,
-                "Derivative symbol change should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeSymbolChangePercent,
-                "Derivative symbol change percent should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeFloorPrice,
-                "Derivative floor price should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeReferencePrice,
-                "Derivative reference price should be visible",
-            ).toHaveText(/\S/);
-            await expect(
-                this.derivativeCeilingPrice,
-                "Derivative ceiling price should be visible",
-            ).toHaveText(/\S/);
-            return;
-        }
-
         await expect(this.symbolSearchInput, "Search input should be visible").toBeVisible();
         await expect(this.symbolCode, "Symbol code should be visible").toHaveText(/\S/);
         await expect(this.symbolExchange, "Symbol exchange should be visible").toHaveText(/\S/);
@@ -341,6 +327,11 @@ class StockDetailPage extends BasePage {
         await expect(this.floorPrice, "Floor price should be visible").toHaveText(/\S/);
         await expect(this.referencePrice, "Reference price should be visible").toHaveText(/\S/);
         await expect(this.ceilingPrice, "Ceiling price should be visible").toHaveText(/\S/);
+    }
+
+    async clickLoginButton(): Promise<void> {
+        await this.safeClick(this.derivativeLoginButton);
+        await this.ensureVisible(this.loginPage.usernameInput);
     }
 
     async getSymbolInfo(): Promise<{
@@ -354,26 +345,6 @@ class StockDetailPage extends BasePage {
         referencePrice: number;
         ceilingPrice: number;
     }> {
-        // Derivative detail has no exchange/name in the same structure;
-        // for derivative we only return the fields available from the header.
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            return {
-                symbolCode: (await this.derivativeSymbolCode.innerText()).trim(),
-                symbolExchange: "",
-                symbolName: "",
-                symbolPrice: NumberValidator.parseNumber(await this.derivativeSymbolPrice.innerText()),
-                symbolChange: NumberValidator.parseNumber(await this.derivativeSymbolChange.innerText()),
-                symbolChangePercent: NumberValidator.parseNumber(
-                    await this.derivativeSymbolChangePercent.innerText(),
-                ),
-                floorPrice: NumberValidator.parseNumber(await this.derivativeFloorPrice.innerText()),
-                referencePrice: NumberValidator.parseNumber(
-                    await this.derivativeReferencePrice.innerText(),
-                ),
-                ceilingPrice: NumberValidator.parseNumber(await this.derivativeCeilingPrice.innerText()),
-            };
-        }
-
         return {
             symbolCode: (await this.symbolCode.innerText()).trim(),
             symbolExchange: (await this.symbolExchange.innerText()).trim(),
@@ -393,37 +364,15 @@ class StockDetailPage extends BasePage {
 
 
     async expectSymbolMatched(stockCode: string): Promise<void> {
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            await expect(
-                this.derivativeSymbolCode,
-                "Derivative symbol code should match stock code",
-            ).toHaveText(stockCode);
-            return;
-        }
-
         await expect(this.symbolCode, "Symbol code should match stock code").toHaveText(stockCode);
+    }
+
+    async expectSymbolDerivativeMatched(stockCode: string): Promise<void> {
+        await expect(this.derivativeSymbolCode, "Derivative symbol code should match stock code").toHaveText(stockCode);
     }
 
 
     async expectMatchListHasData(): Promise<void> {
-        // Derivative detail has its own match list table without the stock tabs
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            const hasRows = await WaitUtils.waitForCondition(
-                async () => (await this.derivativeMatchTableRows.count()) > 0,
-                { timeout: 15000, delay: 500, maxAttempts: 10 },
-            );
-
-            if (!hasRows) {
-                throw new Error("No matched orders found in Derivative Detail");
-            }
-
-            await expect(
-                this.derivativeMatchTableRows.first(),
-                "Derivative match row should be visible",
-            ).toBeVisible();
-            return;
-        }
-
         await this.clickTabSafely(this.matchTab, "Lệnh khớp");
         const hasRows = await WaitUtils.waitForCondition(
             async () => (await this.matchTableRows.count()) > 0,
@@ -437,6 +386,18 @@ class StockDetailPage extends BasePage {
         await expect(this.matchTableRows.first(), "Match row should be visible").toBeVisible();
     }
 
+    async expectMatchListDerivativeHasData(): Promise<void> {
+        await this.clickTabSafely(this.derivativeMatchTab, "Chi tiết khớp");
+        const hasRows = await WaitUtils.waitForCondition(
+            async () => (await this.derivativeMatchTableRows.count()) > 0,
+            { timeout: 15000, delay: 500, maxAttempts: 10 }
+        );
+        if (!hasRows) {
+            throw new Error("No matched orders found in Derivative Detail");
+        }
+        await expect(this.derivativeMatchTableRows.first(), "Derivative match row should be visible").toBeVisible();
+    }
+
 
     async getFirstMatchListRowData(): Promise<{
         date: string;
@@ -444,26 +405,6 @@ class StockDetailPage extends BasePage {
         change: number;
         lastVol: number;
     }> {
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            const firstDerivativeRow = this.derivativeMatchTableRows.first();
-            const rowCells = firstDerivativeRow.locator("div");
-            const [date, lastPrice, change, lastVol] = (
-                await Promise.all([
-                    rowCells.nth(0).innerText(),
-                    rowCells.nth(1).innerText(),
-                    rowCells.nth(2).innerText(),
-                    rowCells.nth(3).innerText(),
-                ])
-            ).map((value) => value.trim());
-
-            return {
-                date,
-                lastPrice: NumberValidator.parseNumber(lastPrice),
-                change: NumberValidator.parseNumber(change),
-                lastVol: NumberValidator.parseNumber(lastVol),
-            };
-        }
-
         await this.clickTabSafely(this.matchTab, "Lệnh khớp");
         const firstStockRow = this.matchTableRows.first();
         const rowCells = firstStockRow.locator('div');
@@ -497,6 +438,19 @@ class StockDetailPage extends BasePage {
         await expect(this.priceAnalysisTableRows.first(), "Price analysis row should be visible").toBeVisible();
     }
 
+
+    async expectPriceAnalysisListDerivativeHasData(): Promise<void> {
+        await this.clickTabSafely(this.derivativeAnalysisTab, "Phân tích giá");
+        const hasRows = await WaitUtils.waitForCondition(
+            async () => (await this.derivativePriceAnalysisRows.count()) > 0,
+            { timeout: 15000, delay: 500, maxAttempts: 10 }
+        );
+        if (!hasRows) {
+            throw new Error("No price analysis found in Derivative Detail");
+        }
+        await expect(this.derivativePriceAnalysisRows.first(), "Derivative price analysis row should be visible").toBeVisible();
+    }
+
     async getFirstPriceAnalysisRowData(): Promise<{
         price: number;
         total: number;
@@ -514,15 +468,6 @@ class StockDetailPage extends BasePage {
     }
 
     async expectChartVisible(): Promise<void> {
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            await expect(this.derivativeChartFrame, "Derivative chart iframe should be visible").toBeVisible();
-            await expect(
-                this.derivativeChartFrame,
-                "Derivative chart iframe should have src",
-            ).toHaveAttribute("src", /charts\.pinetree\.vn/);
-            return;
-        }
-
         await this.clickTabSafely(this.chartTab, "Biểu đồ");
         await expect(this.chartFrame, "Chart iframe should be visible").toBeVisible();
         await expect(this.chartFrame, "Chart iframe should have src").toHaveAttribute(
@@ -660,26 +605,6 @@ class StockDetailPage extends BasePage {
     }
 
     async expectPriceListVisible(): Promise<void> {
-        if (await this.derivativeModal.isVisible().catch(() => false)) {
-            await expect(
-                this.derivativePriceListPanel,
-                "Derivative price list panel should be visible",
-            ).toBeVisible();
-            const hasDerivativeSteps = await WaitUtils.waitForCondition(
-                async () => (await this.derivativePriceListSteps.count()) > 0,
-                { timeout: 10000, delay: 500, maxAttempts: 8 },
-            );
-
-            if (!hasDerivativeSteps) {
-                throw new Error("Price list data not found in Derivative Detail");
-            }
-            await expect(
-                this.derivativePriceListSteps.first(),
-                "Derivative price list step should be visible",
-            ).toBeVisible();
-            return;
-        }
-
         await expect(this.priceListPanel, "Price list panel should be visible").toBeVisible();
         const hasSteps = await WaitUtils.waitForCondition(
             async () => (await this.priceListSteps.count()) > 0,
@@ -691,6 +616,18 @@ class StockDetailPage extends BasePage {
         }
         await expect(this.priceListSteps.first(), "Price list step should be visible").toBeVisible();
         await expect(this.chartListPanel, "Chart list panel should be visible").toBeVisible();
+    }
+
+    async expectPriceListDerivativeVisible(): Promise<void> {
+        await expect(this.derivativePriceListPanel, "Derivative price list panel should be visible").toBeVisible();
+        const hasSteps = await WaitUtils.waitForCondition(
+            async () => (await this.derivativePriceListSteps.count()) > 0,
+            { timeout: 10000, delay: 500, maxAttempts: 8 }
+        );
+        if (!hasSteps) {
+            throw new Error("Price list data not found in Derivative Detail");
+        }
+        await expect(this.derivativePriceListSteps.first(), "Derivative price list step should be visible").toBeVisible();
     }
 
     async expectPriceListCWVisible(): Promise<void> {

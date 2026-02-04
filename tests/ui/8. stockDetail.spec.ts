@@ -8,6 +8,8 @@ import { NumberValidator } from "../../helpers/validationUtils";
 import { ChartPage } from "../../page/ui/ChartPage";
 import { chartHasDataPipeline } from "../../page/ui/CharPipeline";
 import Menu from "../../page/ui/Menu";
+import { TEST_CONFIG } from "../utils/testConfig";
+import LoginPage from "../../page/ui/LoginPage";
 
 async function expectMatchListMatchesAPI(
     stockDetailPage: StockDetailPage,
@@ -66,6 +68,7 @@ test.describe("Stock Detail Tests", () => {
     let marketApi: MarketApi;
     let chartPage: ChartPage;
     let menu: Menu;
+    let loginPage: LoginPage;
 
 
     test.beforeAll(async ({ browser }) => {
@@ -75,6 +78,7 @@ test.describe("Stock Detail Tests", () => {
         marketApi = new MarketApi();
         chartPage = new ChartPage(page, page.frameLocator('iframe.chart'));
         menu = new Menu(page);
+        loginPage = new LoginPage(page);
 
         await priceBoardPage.openPriceBoard();
 
@@ -210,76 +214,9 @@ test.describe("Stock Detail Tests", () => {
         const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow();
 
         await stockDetailPage.expectModalVisible(stockDetailPage.derivativeModal);
-        await stockDetailPage.expectHeaderVisible();
+        await stockDetailPage.expectHeaderDerivativeVisible();
 
-        await stockDetailPage.expectSymbolMatched(stockCode);
-        await stockDetailPage.expectSymbolInfoVisible();
-
-        const symbolInfoUI = await stockDetailPage.getSymbolInfo();
-        const responseSymbolInfo = await marketApi.getDataStock(stockCode, "G1");
-        const symbolInfoAPI = {
-            symbolCode: responseSymbolInfo[0].sym,
-            symbolExchange:
-                responseSymbolInfo[0].mc === "10"
-                    ? "HOSE"
-                    : responseSymbolInfo[0].mc === "02"
-                    ? "HNX"
-                    : responseSymbolInfo[0].mc === "03"
-                    ? "UPCOM"
-                    : "",
-            symbolName: responseSymbolInfo[0].name,
-            symbolPrice: NumberValidator.parseNumber(responseSymbolInfo[0].lastPrice),
-            symbolChange:
-                NumberValidator.parseNumber(responseSymbolInfo[0].lastPrice) <
-                NumberValidator.parseNumber(responseSymbolInfo[0].r)
-                    ? -NumberValidator.parseNumber(responseSymbolInfo[0].ot)
-                    : NumberValidator.parseNumber(responseSymbolInfo[0].ot),
-            symbolChangePercent:
-                NumberValidator.parseNumber(responseSymbolInfo[0].lastPrice) <
-                NumberValidator.parseNumber(responseSymbolInfo[0].r)
-                    ? -NumberValidator.parseNumber(responseSymbolInfo[0].changePc)
-                    : NumberValidator.parseNumber(responseSymbolInfo[0].changePc),
-            floorPrice: NumberValidator.parseNumber(responseSymbolInfo[0].f),
-            referencePrice: NumberValidator.parseNumber(responseSymbolInfo[0].r),
-            ceilingPrice: NumberValidator.parseNumber(responseSymbolInfo[0].c),
-        };
-
-        if (symbolInfoAPI.symbolPrice === 0) {
-            symbolInfoAPI.symbolChange = 0;
-            symbolInfoAPI.symbolChangePercent = 0;
-        }
-
-        // Derivative detail header does not expose exchange/name,
-        // so only compare the fields actually displayed in the UI.
-        const derivativeFieldsToCompare: (keyof typeof symbolInfoUI)[] = [
-            "symbolCode",
-            "symbolPrice",
-            "symbolChange",
-            "symbolChangePercent",
-            "floorPrice",
-            "referencePrice",
-            "ceilingPrice",
-        ];
-
-        derivativeFieldsToCompare.forEach((key) => {
-            expect(
-                symbolInfoUI[key],
-                `Derivative symbol info ${key} should match API`,
-            ).toBe(symbolInfoAPI[key]);
-        });
-
-        if (await TimeUtils.checkDataWithTimeRange(new Date(), 8, 15, 9, 15)) {
-            console.warn("Clear data at the beginning of the day (8h15)");
-        } else {
-            await stockDetailPage.expectMatchListHasData();
-
-            if (await TimeUtils.checkDataWithTimeRange(new Date(), 9, 0, 14, 45)) {
-                console.warn("This time is realtime data, so we don't need to check match list");
-            } else {
-                await expectMatchListMatchesAPI(stockDetailPage, marketApi, stockCode, "G1");
-            }
-        }
-
+        await stockDetailPage.expectSymbolDerivativeMatched(stockCode);
 
         await stockDetailPage.expectChartVisible();
 
@@ -300,9 +237,24 @@ test.describe("Stock Detail Tests", () => {
         // console.log('chartResult bestZoom', chartResult.bestZoom);
 
 
-        await stockDetailPage.expectPriceListVisible();
-
+        if (await TimeUtils.checkDataWithTimeRange(new Date(), 8, 15, 9, 15)) {
+            console.warn("Clear data at the beginning of the day (8h15)");
+        } else {
+            await stockDetailPage.expectPriceListDerivativeVisible();
+            await stockDetailPage.expectMatchListDerivativeHasData();
+            await stockDetailPage.expectPriceAnalysisListDerivativeHasData();
+        }
         await attachScreenshot(page, `Stock Detail ${stockCode}`);
+
+        await stockDetailPage.clickLoginButton();
+        await loginPage.enterUsernameAndPassword(TEST_CONFIG.TEST_USER, TEST_CONFIG.TEST_PASS);
+        await loginPage.waitForPageLoad();
+        await page.waitForTimeout(3000);
+        await loginPage.clickCloseBanner();
+        if (await page.locator('.modal-content .btn--reset').isVisible()) {
+            await loginPage.page.locator('.modal-content .btn--reset').click();
+        }
+        expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
         await stockDetailPage.close();
 
     });
