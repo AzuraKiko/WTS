@@ -181,7 +181,7 @@ export class MarketApi extends apiHelper {
     }
 
     async getPriceAnalysis(symbol: string, board: string): Promise<any> {
-        const endpoint = `${API_ENDPOINTS.GET_PRICE_ANALYSIS}/${symbol}?board=${board} : ''}`;
+        const endpoint = `${API_ENDPOINTS.GET_PRICE_ANALYSIS}/${symbol}?board=${board}`;
         const response = await this.apiHelper.getFullResponse(endpoint);
         return response.data;
     }

@@ -86,8 +86,7 @@ async function pingService(url: string, timeoutMs: number): Promise<void> {
     } catch (error) {
       clearTimeout(timeoutGet);
       throw new Error(
-        `OCR service not reachable at ${url}: ${
-          error instanceof Error ? error.message : String(error)
+        `OCR service not reachable at ${url}: ${error instanceof Error ? error.message : String(error)
         }`
       );
     }
@@ -224,8 +223,7 @@ export async function ocrImageFull(
   }
 
   throw new Error(
-    `OCR failed after ${retries} attempts at ${serviceUrlWithParams}: ${
-      lastError instanceof Error ? lastError.message : 'unknown'
+    `OCR failed after ${retries} attempts at ${serviceUrlWithParams}: ${lastError instanceof Error ? lastError.message : 'unknown'
     }`
   );
 }
@@ -237,3 +235,4 @@ export async function ocrImage(
   const result = await ocrImageFull(input, options);
   return extractText(result, options.minConfidence);
 }
+

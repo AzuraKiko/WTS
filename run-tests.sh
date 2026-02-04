@@ -10,13 +10,15 @@ GREP_PATTERN=""
 WORKERS=""
 REPORTER="html"
 OPEN_REPORT="true"
+REPEAT_EACH=""
+REPEAT_RUNS=""
 HEADED="false"
 UI_MODE="false"
 LIST_ONLY="false"
 SUITE_NAME=""
 TEST_PATHS=()
 OCR_PID=""
-ENABLE_OCR="false"
+ENABLE_OCR="true"
 
 print_help() {
   cat <<'EOF'
@@ -32,6 +34,8 @@ Options:
   -p, --project <name>       Chỉ chạy project (Chrome/Firefox/Edge)
   -e, --env <dev|uat|prod>   Set NODE_ENV
   -w, --workers <n>          Override số workers
+  -n, --repeat-each <n>      Chạy mỗi test N lần liên tiếp (kiểm tra độ ổn định)
+  -n, --repeat-runs <n>      Chạy cả suite N lần liên tiếp (kiểm tra độ ổn định)
   -s, --suite <api|ui>       Chạy theo suite tests/api hoặc tests/ui
       --api                  Chạy tests/api
       --ui-tests             Chạy tests/ui
@@ -53,7 +57,24 @@ Examples:
   ./run-tests.sh -r allure --open-report
   ./run-tests.sh --api
   ./run-tests.sh --ui-tests
+  ./run-tests.sh -n 2                  # Chạy mỗi test 2 lần (kiểm tra flaky)
+  ./run-tests.sh -n 3                  # Chạy cả suite 3 lần liên tiếp (ổn định)
+  ./run-tests.sh -n 3 -s ui            # Chạy tests/ui 3 lần
   hoặc ./run-tests.sh -s api hoặc ./run-tests.sh -s ui
+
+1. Qua run-tests.sh
+  ./run-tests.sh -n 3                  # Chạy mỗi test 3 lần
+  ./run-tests.sh --repeat-each 5       # Chạy mỗi test 5 lần
+  ./run-tests.sh -n 3 -t tests/ui/8.\ stockDetail.spec.ts   # Chỉ file test này, mỗi test 3 lần
+
+  ./run-tests.sh -n 3           # Chạy cả suite 3 lần (hết lần 1 → lần 2 → lần 3)
+  ./run-tests.sh -n 5 -s ui     # Chạy tests/ui 5 lần
+  ./run-tests.sh --repeat-runs 3 -t tests/ui/8.\ stockDetail.spec.ts
+
+2. Qua biến môi trường
+REPEAT_EACH=3 ./run-tests.sh
+# hoặc
+REPEAT_EACH=3 npx playwright test
 EOF
 }
 
@@ -80,6 +101,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     -w|--workers)
       WORKERS="$2"
+      shift 2
+      ;;
+    # -n|--repeat-each)
+    #   REPEAT_EACH="$2"
+    #   shift 2
+    #   ;;
+       -n|--repeat-runs)
+      REPEAT_RUNS="$2"
       shift 2
       ;;
     -s|--suite)
@@ -167,6 +196,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
+clear_playwright_data() {
+  local data_dir="$ROOT_DIR/playwright/data"
+  if [[ -d "$data_dir" ]]; then
+    rm -rf "$data_dir"/*
+  fi
+}
+
 if [[ "$LIST_ONLY" != "true" ]]; then
   rm -rf "$ROOT_DIR/playwright-report" "$ROOT_DIR/test-results" "$ROOT_DIR/allure-results"
   rm -rf "$ROOT_DIR"/test-results-*
@@ -185,6 +221,11 @@ fi
 if [[ -n "$WORKERS" ]]; then
   CMD+=(--workers "$WORKERS")
 fi
+
+# if [[ -n "$REPEAT_EACH" ]]; then
+#   CMD+=(--repeat-each="$REPEAT_EACH")
+#   echo "Chạy mỗi test $REPEAT_EACH lần để kiểm tra độ ổn định"
+# fi
 
 if [[ "$HEADED" == "true" ]]; then
   CMD+=(--headed)
@@ -216,10 +257,28 @@ if [[ "$LIST_ONLY" != "true" && "$ENABLE_OCR" == "true" ]]; then
   start_ocr_service
 fi
 
-if [[ -n "$ENV_NAME" ]]; then
-  NODE_ENV="$ENV_NAME" "${CMD[@]}"
+run_tests() {
+  if [[ "$LIST_ONLY" != "true" ]]; then
+    clear_playwright_data
+  fi
+  if [[ -n "$ENV_NAME" ]]; then
+    NODE_ENV="$ENV_NAME" "${CMD[@]}"
+  else
+    "${CMD[@]}"
+  fi
+}
+
+if [[ -n "$REPEAT_RUNS" && "$REPEAT_RUNS" -gt 1 ]]; then
+  echo "=== Chạy cả suite $REPEAT_RUNS lần liên tiếp (kiểm tra độ ổn định) ==="
+  for ((i=1; i<=REPEAT_RUNS; i++)); do
+    echo ""
+    echo ">>> Lần chạy $i/$REPEAT_RUNS <<<"
+    run_tests
+  done
+  echo ""
+  echo "=== Đã chạy thành công $REPEAT_RUNS lần ==="
 else
-  "${CMD[@]}"
+  run_tests
 fi
 
 if [[ "$OPEN_REPORT" == "true" ]]; then
