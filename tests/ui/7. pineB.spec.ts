@@ -17,7 +17,7 @@ const getTextList = async (locator: Locator): Promise<string[]> =>
         .allTextContents()
         .then(texts => texts.map(text => text.trim()).filter(Boolean));
 
-test.describe('PineB visual compare', () => {
+test.describe('PineB Tests', () => {
     let page: Page;
     let loginPage: LoginPage;
     let menu: Menu;

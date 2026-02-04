@@ -10,7 +10,7 @@ import {
     LEFT_PANEL_SELECTORS,
 } from '../../page/ui/News';
 
-test.describe('News screens', () => {
+test.describe('News Tests', () => {
     let menu: Menu;
     let page: Page;
     let loginPage: LoginPage;

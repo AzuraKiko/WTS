@@ -8,9 +8,6 @@ import { compareApiRowWithUiRow } from '../../helpers/tableCompareUtils';
 // import { ocrPipeline } from '../../page/ui/OcrPipeline';
 import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
-import { getSharedLoginSession } from "../api/sharedSession";
-import { AssetApi } from '../../page/api/AssetApi';
-import { v4 as uuidv4 } from 'uuid';
 import OrderPage from '../../page/ui/OrderPage';
 
 
@@ -23,17 +20,11 @@ function getCurrentMonthLabel(): string {
 }
 
 
-test.describe('Asset Summary test', () => {
+test.describe('Asset Summary Tests', () => {
     let loginPage: LoginPage;
     let assetPage: AssetPage;
     let orderPage: OrderPage;
-    let availableSubAccounts: string[] = [];
-    let wdrawAvailEntries: { subAcntNo: string; wdrawAvail: number }[] = [];
-    let assetApi = new AssetApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
-    let maxWithdrawableSubAccount: { subAcntNo: string; wdrawAvail: number };
     let page: Page;
-    let session = '';
-    let acntNo = '';
 
     const overviewLabels = [
         'Tổng tài sản',
@@ -57,29 +48,6 @@ test.describe('Asset Summary test', () => {
         });
     };
 
-    const getwdrawAvailSubAccount = async (subAcntNo: string): Promise<number> => {
-        const response = await assetApi.getTotalAssetAll({
-            user: TEST_CONFIG.TEST_USER,
-            session,
-            acntNo,
-            subAcntNo,
-            rqId: uuidv4(),
-        });
-        return response?.data?.data?.wdrawAvail ?? 0;
-    };
-
-    const refreshMaxWithdrawableSubAccount = async () => {
-        wdrawAvailEntries = await Promise.all(
-            availableSubAccounts.map(async (subAcntNo) => ({
-                subAcntNo,
-                wdrawAvail: await getwdrawAvailSubAccount(subAcntNo),
-            }))
-        );
-        maxWithdrawableSubAccount = wdrawAvailEntries.reduce(
-            (max, current) => (current.wdrawAvail > max.wdrawAvail ? current : max),
-            wdrawAvailEntries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
-        );
-    };
 
     const verifyOverviewLabels = async () => {
         for (const label of overviewLabels) {
@@ -107,15 +75,6 @@ test.describe('Asset Summary test', () => {
         loginPage = new LoginPage(page);
         assetPage = new AssetPage(page);
         orderPage = new OrderPage(page);
-
-        const loginData = await getSharedLoginSession();
-        const { session: sessionValue, acntNo: acntNoValue, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
-        session = sessionValue;
-        acntNo = acntNoValue;
-        availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
-            .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
-
-        await refreshMaxWithdrawableSubAccount();
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
@@ -378,44 +337,4 @@ test.describe('Asset Summary test', () => {
         }
 
     });
-
-    test('TC_004: Check withdrawal money function', async () => {
-        await refreshMaxWithdrawableSubAccount();
-        await assetPage.openWithdrawalMoneyModal();
-        let sourceAccount = await assetPage.getSelectValue();
-        if (sourceAccount !== maxWithdrawableSubAccount.subAcntNo) {
-            await assetPage.selectAccount(maxWithdrawableSubAccount.subAcntNo);
-            sourceAccount = maxWithdrawableSubAccount.subAcntNo;
-        }
-
-        const [wdrawAvailUI, wdrawAvailAPI] = await Promise.all([
-            assetPage.getValueByText('Số tiền có thể rút'),
-            maxWithdrawableSubAccount.wdrawAvail,
-        ]);
-        expect(NumberValidator.parseNumber(wdrawAvailUI)).toEqual(wdrawAvailAPI);
-
-        if (wdrawAvailAPI <= 0) {
-            console.log('Không có tiểu khoản có tiền để rút');
-            return;
-        }
-
-        // Check withdrawal money
-        const amount = 2000;
-
-        await assetPage.withdrawalMoney(amount);
-
-        const messageError = await orderPage.getMessage();
-
-        if (messageError.description.includes('Hệ thống đang chạy batch')) {
-            console.log('Withdrawal money failed:', messageError);
-        } else {
-            await orderPage.verifyMessage(['Thông báo'], ['Đã chuyển thành công']);
-        }
-
-        await assetPage.openWithdrawalMoneyModal();
-        const newWdrawAvailUI = await assetPage.getValueByText('Số tiền có thể rút');
-        expect(NumberValidator.parseNumber(newWdrawAvailUI)).toEqual(NumberValidator.parseNumber(wdrawAvailUI) - amount);
-        await attachScreenshot(page, `Withdrawal Money ${sourceAccount}`);
-    });
-
 });

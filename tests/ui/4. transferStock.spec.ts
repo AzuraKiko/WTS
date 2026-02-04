@@ -4,11 +4,12 @@ import TransferStockPage from '../../page/ui/TransferStock';
 import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { NumberValidator } from '../../helpers/validationUtils';
-import { getSharedLoginSession } from "../api/sharedSession";
+import { getSharedLoginSession, resetSharedLoginSession } from "../api/sharedSession";
 import OrderPage from '../../page/ui/OrderPage';
 import { v4 as uuidv4 } from 'uuid';
 import { WaitUtils } from '../../helpers/uiUtils';
 import { getAvailStockList } from '../../page/api/AssetApi';
+import { getSubAccountNo, selectIfDifferent, buildAvailableSubAccounts } from '../utils/accountHelpers';
 
 const STOCK_TRANSFER_STATUS: Record<string, string> = {
     "0": "Thành công",
@@ -32,27 +33,16 @@ test.describe('Transfer Stock Tests', () => {
 
     let getAvailStockListApi = new getAvailStockList({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
 
-    const getSubAccountNo = (account: string) => account.split('-')[0].trim();
-    const selectIfDifferent = async (
-        current: string,
-        target: string,
-        selector: (subAcntNo: string) => Promise<void>
-    ) => {
-        if (current !== target) {
-            await selector(target);
-        }
-    };
-
     test.beforeAll(async ({ browser }) => {
         page = await browser.newPage();
         loginPage = new LoginPage(page);
         transferStockPage = new TransferStockPage(page);
         orderPage = new OrderPage(page);
 
-        const loginData = await getSharedLoginSession();
+        const loginData = await getSharedLoginSession("Matrix", true);
         const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
-        availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
-            .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
+        availableSubAccounts = buildAvailableSubAccounts(loginData);
+
 
         async function getAvailStockListSubAccount(subAcntNo: string): Promise<any[]> {
             const response = await getAvailStockListApi.getAvailStockList({
@@ -85,6 +75,7 @@ test.describe('Transfer Stock Tests', () => {
 
     test.afterAll(async () => {
         await page.close();
+        resetSharedLoginSession();
     });
 
     test('TC_001: Check transfer stock function', async () => {

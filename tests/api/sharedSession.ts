@@ -14,8 +14,11 @@ export interface SharedLoginData {
 
 let sharedLoginData: SharedLoginData | null = null;
 
-export const getSharedLoginSession = async (loginMode: string = "Matrix"): Promise<SharedLoginData> => {
-    if (!sharedLoginData) {
+export const getSharedLoginSession = async (
+    loginMode: string = "Matrix",
+    forceNew: boolean = false
+): Promise<SharedLoginData> => {
+    if (!sharedLoginData || forceNew) {
         const loginApi = new LoginApi(TEST_CONFIG.WEB_LOGIN_URL);
         const loginResponse = await loginApi.loginSuccess(loginMode);
         sharedLoginData = {

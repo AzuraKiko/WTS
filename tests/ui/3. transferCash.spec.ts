@@ -4,11 +4,17 @@ import TransferCashPage from '../../page/ui/TransferCash';
 import { TEST_CONFIG } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { NumberValidator } from '../../helpers/validationUtils';
-import { AssetApi } from '../../page/api/AssetApi';
-import { getSharedLoginSession } from "../api/sharedSession";
-import { v4 as uuidv4 } from 'uuid';
+import { getSharedLoginSession, resetSharedLoginSession } from "../api/sharedSession";
 import OrderPage from '../../page/ui/OrderPage';
 import { WaitUtils } from '../../helpers/uiUtils';
+import {
+    buildAvailableSubAccounts,
+    createAssetApi,
+    refreshMaxWithdrawableSubAccount,
+    getSubAccountNo,
+    selectIfDifferent,
+} from '../utils/accountHelpers';
+import AssetPage from '../../page/ui/Asset';
 
 
 
@@ -26,6 +32,7 @@ test.describe('Transfer Cash Tests', () => {
     let loginPage: LoginPage;
     let transferCashPage: TransferCashPage;
     let orderPage: OrderPage;
+    let assetPage: AssetPage;
     let maxWithdrawableSubAccount: { subAcntNo: string; wdrawAvail: number };
     let availableSubAccounts: string[] = [];
     let cashTransferHistAPI: any[] = [];
@@ -33,48 +40,20 @@ test.describe('Transfer Cash Tests', () => {
     let session = '';
     let acntNo = '';
 
-    let assetApi = new AssetApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
+    let assetApi = createAssetApi();
 
     // test.describe.configure({ mode: 'serial' });
 
-    const getSubAccountNo = (account: string) => account.split('-')[0].trim();
     const assertAccountInfo = (info: { balance: string; withdrawable: string }) => {
         expect(NumberValidator.parseNumber(info.balance)).toBeGreaterThanOrEqual(0);
         expect(NumberValidator.parseNumber(info.withdrawable)).toBeGreaterThanOrEqual(0);
     };
-    const selectIfDifferent = async (
-        current: string,
-        target: string,
-        selector: (subAcntNo: string) => Promise<void>
-    ) => {
-        if (current !== target) {
-            await selector(target);
-        }
-    };
-
-    const refreshMaxWithdrawableSubAccount = async () => {
-        async function getwdrawAvailSubAccount(subAcntNo: string): Promise<number> {
-            const response = await assetApi.getTotalAssetAll({
-                user: TEST_CONFIG.TEST_USER,
-                session,
-                acntNo,
-                subAcntNo,
-                rqId: uuidv4(),
-            });
-            return response?.data?.data?.wdrawAvail;
-        }
-
-        const wdrawAvailEntries: { subAcntNo: string; wdrawAvail: number }[] = await Promise.all(
-            availableSubAccounts.map(async (subAcntNo) => ({
-                subAcntNo,
-                wdrawAvail: await getwdrawAvailSubAccount(subAcntNo),
-            }))
-        );
-
-        maxWithdrawableSubAccount = wdrawAvailEntries.reduce(
-            (max, current) => (current.wdrawAvail > max.wdrawAvail ? current : max),
-            wdrawAvailEntries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
-        );
+    const refreshMaxWithdrawable = async () => {
+        maxWithdrawableSubAccount = await refreshMaxWithdrawableSubAccount(assetApi, {
+            session,
+            acntNo,
+            availableSubAccounts,
+        });
     };
 
     test.beforeAll(async ({ browser }) => {
@@ -82,15 +61,15 @@ test.describe('Transfer Cash Tests', () => {
         loginPage = new LoginPage(page);
         transferCashPage = new TransferCashPage(page);
         orderPage = new OrderPage(page);
+        assetPage = new AssetPage(page);
 
-        const loginData = await getSharedLoginSession();
+        const loginData = await getSharedLoginSession("Matrix", true);
         const { session: sessionValue, acntNo: acntNoValue, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
         session = sessionValue;
         acntNo = acntNoValue;
-        availableSubAccounts = [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
-            .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
+        availableSubAccounts = buildAvailableSubAccounts(loginData);
 
-        await refreshMaxWithdrawableSubAccount();
+        await refreshMaxWithdrawable();
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
@@ -100,11 +79,10 @@ test.describe('Transfer Cash Tests', () => {
 
     test.afterAll(async () => {
         await page.close();
+        resetSharedLoginSession();
     });
 
     test('TC_001: Check transfer cash function', async () => {
-        await refreshMaxWithdrawableSubAccount();
-
         const title = await transferCashPage.getTitle();
         expect(title).toContain('Chuyển tiền tiểu khoản');
 
@@ -181,6 +159,8 @@ test.describe('Transfer Cash Tests', () => {
             expect(NumberValidator.parseNumber(newSourceAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(sourceAccountInfo.withdrawable) - amount);
             expect(NumberValidator.parseNumber(newDestinationAccountInfo.withdrawable)).toBe(NumberValidator.parseNumber(destinationAccountInfo.withdrawable) + amount);
 
+            maxWithdrawableSubAccount.wdrawAvail = NumberValidator.parseNumber(newSourceAccountInfo.withdrawable);
+
         } else {
             throw new Error(messageError.title + ': ' + messageError.description);
         }
@@ -252,4 +232,45 @@ test.describe('Transfer Cash Tests', () => {
             console.log('No data in history table');
         }
     });
+
+
+    test('TC_003: Check withdrawal money function', async () => {
+        await assetPage.menu.openSubMenu('Tài sản', 'Tổng quan');
+        await assetPage.openWithdrawalMoneyModal();
+        let sourceAccount = await assetPage.getSelectValue();
+        if (sourceAccount !== maxWithdrawableSubAccount.subAcntNo) {
+            await assetPage.selectAccount(maxWithdrawableSubAccount.subAcntNo);
+            sourceAccount = maxWithdrawableSubAccount.subAcntNo;
+        }
+
+        const [wdrawAvailUI, wdrawAvailAPI] = await Promise.all([
+            assetPage.getValueByText('Số tiền có thể rút'),
+            maxWithdrawableSubAccount.wdrawAvail,
+        ]);
+        expect(NumberValidator.parseNumber(wdrawAvailUI)).toEqual(wdrawAvailAPI);
+
+        if (wdrawAvailAPI <= 0) {
+            console.log('Không có tiểu khoản có tiền để rút');
+            return;
+        }
+
+        // Check withdrawal money
+        const amount = 2000;
+
+        await assetPage.withdrawalMoney(amount);
+
+        const messageError = await orderPage.getMessage();
+
+        if (messageError.description.includes('Hệ thống đang chạy batch')) {
+            console.log('Withdrawal money failed:', messageError);
+        } else {
+            await orderPage.verifyMessage(['Thông báo'], ['Đã chuyển thành công']);
+        }
+
+        await assetPage.openWithdrawalMoneyModal();
+        const newWdrawAvailUI = await assetPage.getValueByText('Số tiền có thể rút');
+        expect(NumberValidator.parseNumber(newWdrawAvailUI)).toEqual(NumberValidator.parseNumber(wdrawAvailUI) - amount);
+        await attachScreenshot(page, `Withdrawal Money ${sourceAccount}`);
+    });
+
 });

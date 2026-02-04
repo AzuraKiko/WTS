@@ -128,7 +128,7 @@ const assertMatchedOrPositive = (
 
 
 
-test.describe('Market Dashboard Automation Suite', () => {
+test.describe('Price Board Tests', () => {
     let priceBoardPage: PriceBoardPage;
     let marketApi: MarketApi;
     let marketGatewayApi: MarketGatewayApi;

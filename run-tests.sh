@@ -16,7 +16,7 @@ LIST_ONLY="false"
 SUITE_NAME=""
 TEST_PATHS=()
 OCR_PID=""
-ENABLE_OCR="true"
+ENABLE_OCR="false"
 
 print_help() {
   cat <<'EOF'

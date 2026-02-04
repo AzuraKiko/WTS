@@ -305,12 +305,10 @@ export class PriceBoardPage {
     }
 
     async isGlobalNoData(): Promise<boolean> {
-        const content = this.globalCard
-            .locator('.card-index-info__body').textContent();
-        if (content === null || content === undefined) {
-            return true;
-        }
-        return false;
+        const content = await this.globalCard
+            .locator('.card-index-info__body')
+            .textContent();
+        return content == null || content.trim() === '';
     }
 
     /**
@@ -335,12 +333,10 @@ export class PriceBoardPage {
     }
 
     async isCommodityNoData(): Promise<boolean> {
-        const content = this.commodityCard
-            .locator('.card-index-info__body').textContent();
-        if (content === null || content === undefined) {
-            return true;
-        }
-        return false;
+        const content = await this.commodityCard
+            .locator('.card-index-info__body')
+            .textContent();
+        return content == null || content.trim() === '';
     }
 
     // Hàm lấy cái nút Dropdown theo tên (ví dụ: "HNX")

@@ -13,6 +13,8 @@ const API_ENDPOINTS = {
     GET_LIST_STOCK: '/getliststockById',
     GET_CW: '/listCW.pt',
     GET_ETF: '/etf',
+    GET_MATCH_PRICE: '/getliststocktrade2',
+    GET_PRICE_ANALYSIS: '/getStepPrice2',
 
 };
 
@@ -127,10 +129,11 @@ export class MarketApi extends apiHelper {
         };
     }
 
-    async getDataLatestDvx(indexCode: string): Promise<any> {
-        const endpoint = `${API_ENDPOINTS.GET_LATEST_DVX}/${indexCode}`;
+
+    async getDataStock(indexCode: string, board: string): Promise<any> {
+        const endpoint = `${API_ENDPOINTS.GET_LATEST_DVX}/${indexCode}?board=${board}`;
         const response = await this.apiHelper.getFullResponse(endpoint);
-        return response.data[0];
+        return response.data;
     }
 
     async getListStockById(boardId: string, board: string, noetf?: string): Promise<any> {
@@ -168,6 +171,19 @@ export class MarketApi extends apiHelper {
     async getFirstETFCode(): Promise<any> {
         const response = await this.getETFData();
         return response[0]?.sym;
+    }
+
+
+    async getMatchPrice(symbol: string, board: string, nextKey?: string, count?: number): Promise<any> {
+        const endpoint = `${API_ENDPOINTS.GET_MATCH_PRICE}/${symbol}?board=${board}${nextKey ? `&nextKey=${nextKey}` : ''}${count ? `&count=${count}` : ''}`;
+        const response = await this.apiHelper.getFullResponse(endpoint);
+        return response.data;
+    }
+
+    async getPriceAnalysis(symbol: string, board: string): Promise<any> {
+        const endpoint = `${API_ENDPOINTS.GET_PRICE_ANALYSIS}/${symbol}?board=${board} : ''}`;
+        const response = await this.apiHelper.getFullResponse(endpoint);
+        return response.data;
     }
 }
 

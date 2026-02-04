@@ -1,6 +1,7 @@
 import { Page, Locator, expect } from "@playwright/test";
 import BasePage from "./BasePage";
 import { WaitUtils } from "../../helpers/uiUtils";
+import { NumberValidator } from "../../helpers/validationUtils";
 
 class StockDetailPage extends BasePage {
     modal: Locator;
@@ -25,6 +26,7 @@ class StockDetailPage extends BasePage {
     analysisTab: Locator;
     matchTableHeaders: Locator;
     matchTableRows: Locator;
+    matchTableScrollContainer: Locator;
     priceAnalysisTable: Locator;
     priceAnalysisTableRows: Locator;
 
@@ -101,6 +103,7 @@ class StockDetailPage extends BasePage {
 
         this.matchTableHeaders = this.leftPanel.locator(".match-analystic .grid-table thead tr th");
         this.matchTableRows = this.leftPanel.locator(".match-analystic .grid-table-header");
+        this.matchTableScrollContainer = this.leftPanel.locator(".match-analystic .thumb-vertical");
         this.priceAnalysisTable = this.leftPanel.locator(".price-analystic");
         this.priceAnalysisTableRows = this.leftPanel.locator(".price-analystic .pa-row.as-grid");
 
@@ -248,38 +251,39 @@ class StockDetailPage extends BasePage {
         await expect(this.ceilingPrice, "Ceiling price should be visible").toHaveText(/\S/);
     }
 
-    async expectProgressBarVisible(): Promise<void> {
-        await expect(this.modal.locator(".progress-bar"), "Progress bar should be visible").toBeVisible();
-    }
-
     async getSymbolInfo(): Promise<{
         symbolCode: string;
         symbolExchange: string;
         symbolName: string;
-        symbolPrice: string;
-        symbolChange: string;
-        symbolChangePercent: string;
-        floorPrice: string;
-        referencePrice: string;
-        ceilingPrice: string;
+        symbolPrice: number;
+        symbolChange: number;
+        symbolChangePercent: number;
+        floorPrice: number;
+        referencePrice: number;
+        ceilingPrice: number;
     }> {
         return {
             symbolCode: (await this.symbolCode.innerText()).trim(),
             symbolExchange: (await this.symbolExchange.innerText()).trim(),
             symbolName: (await this.symbolName.innerText()).trim(),
-            symbolPrice: (await this.symbolPrice.innerText()).trim(),
-            symbolChange: (await this.symbolChange.innerText()).trim(),
-            symbolChangePercent: (await this.symbolChangePercent.innerText()).trim(),
-            floorPrice: (await this.floorPrice.innerText()).trim(),
-            referencePrice: (await this.referencePrice.innerText()).trim(),
-            ceilingPrice: (await this.ceilingPrice.innerText()).trim(),
+            symbolPrice: NumberValidator.parseNumber(await this.symbolPrice.innerText()),
+            symbolChange: NumberValidator.parseNumber(await this.symbolChange.innerText()),
+            symbolChangePercent: NumberValidator.parseNumber(await this.symbolChangePercent.innerText()),
+            floorPrice: NumberValidator.parseNumber(await this.floorPrice.innerText()),
+            referencePrice: NumberValidator.parseNumber(await this.referencePrice.innerText()),
+            ceilingPrice: NumberValidator.parseNumber(await this.ceilingPrice.innerText()),
         };
+    }
+
+    async expectProgressBarVisible(): Promise<void> {
+        await expect(this.modal.locator(".progress-bar"), "Progress bar should be visible").toBeVisible();
     }
 
 
     async expectSymbolMatched(stockCode: string): Promise<void> {
         await expect(this.symbolCode, "Symbol code should match stock code").toHaveText(stockCode);
     }
+
 
     async expectMatchListHasData(): Promise<void> {
         await this.clickTabSafely(this.matchTab, "Lệnh khớp");

@@ -32,7 +32,7 @@ const createOrderParams = (overrides: Partial<any> = {}) => ({
 // Helper function for placing orders with error handling
 const placeOrderWithErrorHandling = async (orderParams: any, overrides: Partial<any> = {}) => {
     const { orderApi } = createFreshInstances();
-    const loginData = await getSharedLoginSession();
+    const loginData = await getSharedLoginSession("Matrix", true);
     const { session, token, acntNo, subAcntNormal } = loginData;
 
     return orderApi.placeNewOrder(
@@ -51,7 +51,8 @@ test.describe("OrderApi Tests", () => {
 
     test.beforeAll(async () => {
         try {
-            await getSharedLoginSession();
+            resetSharedLoginSession();
+            await getSharedLoginSession("Matrix", true);
             console.log("Shared login session established");
         } catch (error) {
             console.error("Failed to establish shared login session:", error);
