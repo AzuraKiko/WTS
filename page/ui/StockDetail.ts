@@ -107,6 +107,8 @@ class StockDetailPage extends BasePage {
     derivativeSymbolStatic!: Locator;
     derivativeSymbolStaticItems!: Locator;
     derivativeLoginButton!: Locator;
+    derivativeCloseButton!: Locator;
+    derivativeChartTab!: Locator;
     derivativeChartFrame!: Locator;
     derivativePriceListPanel!: Locator;
     derivativePriceListSteps!: Locator;
@@ -229,10 +231,10 @@ class StockDetailPage extends BasePage {
 
     private initDerivativeHeader(): void {
         this.derivativeHeader = this.derivativeModal.locator(".contract-detail-content__header");
-        this.derivativeSymbolCode = this.derivativeHeader.locator(".market__symbol .i").first();
-        this.derivativeSymbolPrice = this.derivativeHeader.locator(".market__symbol .i").nth(1);
-        this.derivativeSymbolChange = this.derivativeHeader.locator(".market__index-prices span.d-flex span.i").first();
-        this.derivativeSymbolChangePercent = this.derivativeHeader.locator(".market__index-prices span.d-flex span.i").nth(1);
+        this.derivativeSymbolCode = this.derivativeHeader.locator(".market__symbol span").first();
+        this.derivativeSymbolPrice = this.derivativeHeader.locator(".market__symbol span").nth(1);
+        this.derivativeSymbolChange = this.derivativeHeader.locator(".market__index-prices span.d-flex span").first();
+        this.derivativeSymbolChangePercent = this.derivativeHeader.locator(".market__index-prices span.d-flex span").nth(1);
 
         // Price info using helper
         const priceInfo = this.createPriceLocators(this.derivativeHeader, ".market__index-prices");
@@ -242,6 +244,7 @@ class StockDetailPage extends BasePage {
 
         this.derivativeSymbolStatic = this.derivativeHeader.locator(".market__index-statistic");
         this.derivativeLoginButton = this.derivativeHeader.locator(".btn--loginToOrder");
+        this.derivativeCloseButton = this.derivativeHeader.locator(".icon.iClose").locator('..');
     }
 
     private initDerivativePanels(): void {
@@ -249,20 +252,18 @@ class StockDetailPage extends BasePage {
         this.derivativePriceListPanel = this.derivativeModal.locator("#d_price-list");
         this.derivativePriceListSteps = this.derivativePriceListPanel.locator(SELECTORS.PRICE_LIST_STEP);
 
-        // Tabs
-        this.derivativeMatchTab = this.derivativeModal
-            .locator(".panel-header.panel-header--left ")
-            .filter({ hasText: "Chi tiết khớp" })
-            .first();
-        this.derivativeAnalysisTab = this.derivativeModal
-            .locator(".panel-header.panel-header--left ")
-            .filter({ hasText: "Phân tích giá" })
-            .first();
+        // Tabs (derivative uses .panel-tab, not .card-panel-header__title)
+        this.derivativeMatchTab = this.derivativeModal.locator(".panel-tab").filter({ hasText: "Chi tiết khớp" }).first();
+        this.derivativeAnalysisTab = this.derivativeModal.locator(".panel-tab").filter({ hasText: "Phân tích giá" }).first();
 
         // Match and analysis tables
         this.derivativeMatchTableHeaders = this.derivativeModal.locator(`${SELECTORS.MATCH_ANALYSTIC} ${SELECTORS.GRID_TABLE_HEADER}`);
         this.derivativeMatchTableRows = this.derivativeModal.locator(`${SELECTORS.MATCH_ANALYSTIC} ${SELECTORS.GRID_TABLE_BODY}`);
         this.derivativePriceAnalysisRows = this.derivativeModal.locator(`${SELECTORS.PRICE_ANALYSTIC} .pa-row.as-grid`);
+
+        // Chart (derivative uses .panel-tab, not .card-panel-header__title)
+        this.derivativeChartTab = this.derivativeModal.locator(".panel-tab").filter({ hasText: "Biểu đồ" }).first();
+        this.derivativeChartFrame = this.derivativeModal.locator("iframe.chart");
     }
 
     // Helper methods
@@ -308,7 +309,7 @@ class StockDetailPage extends BasePage {
         }
     }
 
-    async openFromPriceBoardFirstRow(): Promise<{ stockCode: string }> {
+    async openFromPriceBoardFirstRow(modal: Locator): Promise<{ stockCode: string }> {
         const firstRow = this.page.locator("table.price-table tbody tr").first();
         await firstRow.waitFor({ state: "visible", timeout: 15000 });
 
@@ -316,7 +317,7 @@ class StockDetailPage extends BasePage {
 
         await this.safeClick(firstRow.locator("td a").first());
         let opened = await WaitUtils.waitForCondition(
-            async () => await this.modal.isVisible(),
+            async () => await modal.isVisible(),
             { timeout: 10000, delay: 500, maxAttempts: 8 }
         );
 
@@ -324,7 +325,7 @@ class StockDetailPage extends BasePage {
             throw new Error("Stock detail modal did not open");
         }
 
-        await this.modal.waitFor({ state: "visible", timeout: 10000 });
+        await modal.waitFor({ state: "visible", timeout: 10000 });
         return { stockCode };
     }
 
@@ -521,6 +522,15 @@ class StockDetailPage extends BasePage {
         );
     }
 
+    async expectDerivativeChartVisible(): Promise<void> {
+        await this.clickTabSafely(this.derivativeChartTab, "Biểu đồ");
+        await expect(this.derivativeChartFrame, "Derivative chart iframe should be visible").toBeVisible();
+        await expect(this.derivativeChartFrame, "Derivative chart iframe should have src").toHaveAttribute(
+            "src",
+            /charts\.pinetree\.vn/
+        );
+    }
+
     async expectPriceHistoryHasData(): Promise<void> {
         await this.clickTabSafely(this.priceHistoryTab, "Lịch sử giá");
         await expect(this.priceHistoryPanel, "Price history panel should be visible").toBeVisible();
@@ -696,6 +706,11 @@ class StockDetailPage extends BasePage {
     async close(): Promise<void> {
         await this.safeClick(this.closeButton);
         await this.modal.waitFor({ state: "hidden", timeout: 10000 });
+    }
+
+    async closeDerivative(): Promise<void> {
+        await this.safeClick(this.derivativeCloseButton);
+        await this.derivativeModal.waitFor({ state: "hidden", timeout: 10000 });
     }
 }
 

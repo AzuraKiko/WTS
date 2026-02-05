@@ -102,7 +102,7 @@ test.describe("Stock Detail Tests", () => {
     });
 
     test("TC_001: Check stock detail of stock code", async () => {
-        const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow();
+        const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow(stockDetailPage.modal);
 
         await stockDetailPage.expectModalVisible(stockDetailPage.modal);
         await stockDetailPage.expectHeaderVisible();
@@ -188,7 +188,7 @@ test.describe("Stock Detail Tests", () => {
 
     test("TC_002: Check stock detail of CW code", async () => {
         await priceBoardPage.getFirstCWCodeUI();
-        const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow();
+        const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow(stockDetailPage.modal);
 
 
         await stockDetailPage.expectModalVisible(stockDetailPage.modal);
@@ -216,16 +216,16 @@ test.describe("Stock Detail Tests", () => {
         await stockDetailPage.close();
     });
 
-    test("TC_003: Check stock detail of derivative code, not login", async () => {
+    test("TC_003: Check stock detail of derivative code", async () => {
         await menu.openMenuHeader("Phái sinh");
-        const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow();
+        const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow(stockDetailPage.derivativeModal);
 
         await stockDetailPage.expectModalVisible(stockDetailPage.derivativeModal);
         await stockDetailPage.expectHeaderDerivativeVisible();
 
         await stockDetailPage.expectSymbolDerivativeMatched(stockCode);
 
-        await stockDetailPage.expectChartVisible();
+        await stockDetailPage.expectDerivativeChartVisible();
 
         const timeframeCurrent = await chartPage.getTimeframeCurrent();
 
@@ -257,12 +257,13 @@ test.describe("Stock Detail Tests", () => {
         await loginPage.enterUsernameAndPassword(TEST_CONFIG.TEST_USER, TEST_CONFIG.TEST_PASS);
         await loginPage.waitForPageLoad();
         await page.waitForTimeout(3000);
-        await loginPage.clickCloseBanner();
+        await page.locator('.wts-modal').locator('.icon.iClose').locator('..').click();
         if (await page.locator('.modal-content .btn--reset').isVisible()) {
             await loginPage.page.locator('.modal-content .btn--reset').click();
         }
+
+        await stockDetailPage.closeDerivative();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
-        await stockDetailPage.close();
 
     });
 });

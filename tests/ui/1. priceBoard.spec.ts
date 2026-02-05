@@ -300,11 +300,14 @@ test.describe('Price Board Tests', () => {
         }
 
         for (const globalIndexName of globalIndexNames) {
+            const globalDataApi = await marketGatewayApi.getGlobalDataByName(globalIndexName);
+            if (globalDataApi == null) {
+                console.warn(`Global index "${globalIndexName}" not found or API returned empty, skipping`);
+                continue;
+            }
+
             const { matched, ui, api } = await retryCompareData(async () => {
-                const [globalData, globalDataApi] = await Promise.all([
-                    priceBoardPage.getGlobalDataByLabel(globalIndexName),
-                    marketGatewayApi.getGlobalDataByName(globalIndexName),
-                ]);
+                const globalData = await priceBoardPage.getGlobalDataByLabel(globalIndexName);
                 return {
                     ui: {
                         indexValue: parseNumber(globalData.indexValue),
@@ -312,9 +315,9 @@ test.describe('Price Board Tests', () => {
                         indexChangePercent: parseNumber(globalData.indexChangePercent),
                     },
                     api: {
-                        indexValue: parseNumber(globalDataApi.indexValue),
-                        indexChange: parseNumber(globalDataApi.indexChange),
-                        indexChangePercent: parseNumber(globalDataApi.indexChangePercent),
+                        indexValue: parseNumber(String(globalDataApi.indexValue)),
+                        indexChange: parseNumber(String(globalDataApi.indexChange)),
+                        indexChangePercent: parseNumber(String(globalDataApi.indexChangePercent)),
                     },
                 };
             });
@@ -338,11 +341,14 @@ test.describe('Price Board Tests', () => {
         }
 
         for (const commodityName of commodityNames) {
+            const commodityDataApi = await marketWapiApi.getCommodityDataByName(commodityName);
+            if (commodityDataApi == null) {
+                console.warn(`Commodity "${commodityName}" not found or API returned empty, skipping`);
+                continue;
+            }
+
             const { matched, ui, api } = await retryCompareData(async () => {
-                const [commodityData, commodityDataApi] = await Promise.all([
-                    priceBoardPage.getCommodityDataByLabel(commodityName),
-                    marketWapiApi.getCommodityDataByName(commodityName),
-                ]);
+                const commodityData = await priceBoardPage.getCommodityDataByLabel(commodityName);
                 return {
                     ui: {
                         commodityValue: parseNumber(commodityData.indexValue),

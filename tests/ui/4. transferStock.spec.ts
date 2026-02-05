@@ -91,10 +91,9 @@ test.describe('Transfer Stock Tests', () => {
         let sourceSubAccountNo = getSubAccountNo(sourceAccount);
         let destinationSubAccountNo = getSubAccountNo(destinationAccount);
 
-        let [sourceStats, destinationStats] = await Promise.all([
-            transferStockPage.getSourceHoldingStats(),
-            transferStockPage.getDestinationHoldingStats(),
-        ]);
+        let sourceStats = await transferStockPage.getSourceHoldingStats();
+        console.log('sourceStats', sourceStats);
+
 
         if (maxAvailableStock.stocks.length < 1) {
             console.log('Không sở hữu mã CK để chuyển');
@@ -104,11 +103,13 @@ test.describe('Transfer Stock Tests', () => {
         await selectIfDifferent(
             sourceSubAccountNo,
             maxAvailableStock.subAcntNo,
-            transferStockPage.selectSourceAccount.bind(transferStockPage)
+            (target) => transferStockPage.selectSourceAccount(target)
         );
 
         sourceSubAccountNo = maxAvailableStock.subAcntNo;
+        await WaitUtils.delay(3000);
         sourceStats = await transferStockPage.getSourceHoldingStats();
+        console.log('sourceStats', sourceStats);
 
         const alternateSubAccountNo = availableSubAccounts.find(
             (subAcntNo) => subAcntNo !== sourceSubAccountNo && subAcntNo !== availableSubAccounts[2] && subAcntNo !== availableSubAccounts[3]
@@ -117,7 +118,8 @@ test.describe('Transfer Stock Tests', () => {
             await selectIfDifferent(
                 destinationSubAccountNo,
                 alternateSubAccountNo,
-                transferStockPage.selectDestinationAccount.bind(transferStockPage)
+                (target) => transferStockPage.selectDestinationAccount(target)
+
             );
             destinationSubAccountNo = alternateSubAccountNo;
         }

@@ -18,7 +18,7 @@ class LoginPage extends BasePage {
         this.passwordInput = page.locator('[name="password"]');
         this.loginButton = page.locator('.btn.btn-submit');
         this.verifyUser = page.locator('.header-btn .icon.iAccount + span');
-        this.closeBanner = page.locator('.icon.iClose').locator('..');
+        this.closeBanner = page.locator('.wts-modal').locator('.icon.iClose').locator('..');
     }
 
     async gotoWeb(baseURL: string) {

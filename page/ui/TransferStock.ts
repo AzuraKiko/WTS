@@ -123,23 +123,9 @@ class TransferStockPage extends BasePage {
         return value?.trim() || '';
     }
 
-    private async getHeaderDestinationStat(section: Locator, label: string): Promise<string> {
-        const container = section.locator('.sit-header__right > span').filter({ hasText: label });
-
-        const value = await container.locator('span').nth(1).textContent();
-
-        return value?.trim() || '';
-    }
-
     async getSourceHoldingStats(): Promise<{ stockCount: string; totalQty: string }> {
         const stockCount = await this.getHeaderSourceStat(this.sourceSection, 'Mã CP nắm giữ');
         const totalQty = await this.getHeaderSourceStat(this.sourceSection, 'KL nắm giữ');
-        return { stockCount, totalQty };
-    }
-
-    async getDestinationHoldingStats(): Promise<{ stockCount: string; totalQty: string }> {
-        const stockCount = await this.getHeaderDestinationStat(this.destinationSection, 'Mã CP nắm giữ');
-        const totalQty = await this.getHeaderDestinationStat(this.destinationSection, 'KL nắm giữ');
         return { stockCount, totalQty };
     }
 

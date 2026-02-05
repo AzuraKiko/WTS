@@ -190,9 +190,20 @@ export class MarketApi extends apiHelper {
 export class MarketGatewayApi extends apiHelper {
     apiHelper = new apiHelper({ baseUrl: TEST_CONFIG.BASE_URL });
 
-    async getGlobalDataByName(indexName: string): Promise<any> {
+    async getGlobalDataByName(indexName: string): Promise<{
+        indexValue: number;
+        indexChange: number;
+        indexChangePercent: number;
+    } | null> {
         const response = await this.apiHelper.get(API_ENDPOINTS.GLOBAL_MARKET);
-        const data = response.data.find((index: any) => index?.name === indexName);
+        const list = response?.data;
+        if (!Array.isArray(list) || list.length === 0) {
+            return null;
+        }
+        const data = list.find((index: any) => index?.name === indexName);
+        if (!data) {
+            return null;
+        }
         return {
             indexValue: data.closePrice,
             indexChange: data.changePriceValue,
@@ -204,9 +215,20 @@ export class MarketGatewayApi extends apiHelper {
 export class MarketWapiApi extends apiHelper {
     apiHelper = new apiHelper({ baseUrl: TEST_CONFIG.WAPI_URL });
 
-    async getCommodityDataByName(commodityName: string): Promise<any> {
+    async getCommodityDataByName(commodityName: string): Promise<{
+        indexValue: number;
+        indexChange: number;
+        indexChangePercent: number;
+    } | null> {
         const response = await this.apiHelper.get(API_ENDPOINTS.COMMODITY_MARKET);
-        const data = response.data.find((commodity: any) => commodity?.SymbolName === commodityName);
+        const list = response?.data;
+        if (!Array.isArray(list) || list.length === 0) {
+            return null;
+        }
+        const data = list.find((commodity: any) => commodity?.SymbolName === commodityName);
+        if (!data) {
+            return null;
+        }
         return {
             indexValue: data.Last,
             indexChange: data.Change,
