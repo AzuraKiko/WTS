@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
 import Menu from '../../page/ui/Menu';
 import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/MarketApi';
@@ -136,16 +136,10 @@ test.describe('Price Board Tests', () => {
     let marketGatewayApi: MarketGatewayApi;
     let marketWapiApi: MarketWapiApi;
     let menu: Menu;
-    let page: Page;
     let chartPage: ChartPage;
-    let context: BrowserContext;
 
 
-    test.beforeAll(async ({ browser }) => {
-        context = await browser.newContext({
-            recordVideo: { dir: 'test-results' },
-        });
-        page = await context.newPage();
+    test.beforeEach(async ({ page }) => {
         priceBoardPage = new PriceBoardPage(page);
         marketApi = new MarketApi();
         marketGatewayApi = new MarketGatewayApi();
@@ -154,10 +148,6 @@ test.describe('Price Board Tests', () => {
         chartPage = new ChartPage(page, page.frameLocator('iframe.chart'));
 
         await priceBoardPage.openPriceBoard();
-    });
-
-    test.afterAll(async () => {
-        await context.close();
     });
     // --- TEST CASE CHO BIỂU ĐỒ MINI CHART ---
 
@@ -247,7 +237,7 @@ test.describe('Price Board Tests', () => {
             await priceBoardPage.expectChartVisible();
             const timeframeCurrent = await chartPage.getTimeframeCurrent();
 
-            const chartResult = await chartHasDataPipeline(page, {
+            const chartResult = await chartHasDataPipeline(priceBoardPage.page, {
                 symbol: code,
                 timeframe: timeframeCurrent,
             }, {

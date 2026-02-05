@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext, Locator } from '@playwright/test';
+import { test, expect, Locator } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import OrderPage from '../../page/ui/OrderPage';
 import OrderBook from '../../page/ui/OrderBook';
@@ -19,15 +19,8 @@ test.describe('Order Management Tests', () => {
   let logoutPage: LogoutPage;
   let marketApi: MarketApi;
   let portfolioPage: PortfolioPage;
-  let page: Page;
-  let context: BrowserContext;
 
-
-  test.beforeAll(async ({ browser }) => {
-    context = await browser.newContext({
-      recordVideo: { dir: 'test-results' },
-    });
-    page = await context.newPage();
+  test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
     orderPage = new OrderPage(page);
     orderBook = new OrderBook(page);
@@ -41,13 +34,11 @@ test.describe('Order Management Tests', () => {
     await orderPage.navigateToOrder();
   });
 
-
-  test.afterAll(async () => {
+  test.afterEach(async ({ page }) => {
     await orderPage.closeOrder();
     await logoutPage.logout();
     expect(await logoutPage.verifyLogoutSuccess()).toBe(true);
     await attachScreenshot(page, 'After Logout');
-    await context.close();
   });
 
   test('TC_001: Check place and cancel a buy order', async () => {

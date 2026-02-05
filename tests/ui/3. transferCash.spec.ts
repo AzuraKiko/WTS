@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import TransferCashPage from '../../page/ui/TransferCash';
 import { TEST_CONFIG, isSystemBatching } from '../utils/testConfig';
@@ -37,8 +37,6 @@ test.describe('Transfer Cash Tests', () => {
     let maxWithdrawableSubAccount: { subAcntNo: string; wdrawAvail: number };
     let availableSubAccounts: string[] = [];
     let cashTransferHistAPI: any[] = [];
-    let page: Page;
-    let context: BrowserContext;
     let session = '';
     let acntNo = '';
 
@@ -60,11 +58,7 @@ test.describe('Transfer Cash Tests', () => {
         });
     };
 
-    test.beforeAll(async ({ browser }) => {
-        context = await browser.newContext({
-            recordVideo: { dir: 'test-results' },
-        });
-        page = await context.newPage();
+    test.beforeEach(async ({ page }) => {
         loginPage = new LoginPage(page);
         transferCashPage = new TransferCashPage(page);
         orderPage = new OrderPage(page);
@@ -89,12 +83,11 @@ test.describe('Transfer Cash Tests', () => {
         await transferCashPage.navigateToTransferCash();
     });
 
-    test.afterAll(async () => {
-        await context.close();
+    test.afterEach(async () => {
         resetSharedLoginSession();
     });
 
-    test('TC_001: Check transfer cash function', async () => {
+    test('TC_001: Check transfer cash function', async ({ page }) => {
 
         const title = await transferCashPage.getTitle();
         expect(title).toContain('Chuyển tiền tiểu khoản');
@@ -256,7 +249,7 @@ test.describe('Transfer Cash Tests', () => {
     });
 
 
-    test('TC_002: Check history table', async () => {
+    test('TC_002: Check history table', async ({ page }) => {
 
         // Check history table
         const headers = await transferCashPage.getHistoryTableHeaders();
@@ -325,7 +318,7 @@ test.describe('Transfer Cash Tests', () => {
     });
 
 
-    test('TC_003: Check withdrawal money function', async () => {
+    test('TC_003: Check withdrawal money function', async ({ page }) => {
         await assetPage.menu.openSubMenu('Tài sản', 'Tổng quan');
         if (batching) {
             test.skip(true, 'Hệ thống đang chạy batch');

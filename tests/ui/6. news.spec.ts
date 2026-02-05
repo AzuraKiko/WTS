@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import Menu from '../../page/ui/Menu';
 import LoginPage from '../../page/ui/LoginPage';
 import { TEST_CONFIG } from '../utils/testConfig';
@@ -12,16 +12,10 @@ import {
 
 test.describe('News Tests', () => {
     let menu: Menu;
-    let page: Page;
-    let context: BrowserContext;
     let loginPage: LoginPage;
     let newsPage: NewsPage;
 
-    test.beforeAll(async ({ browser }) => {
-        context = await browser.newContext({
-            recordVideo: { dir: 'test-results' },
-        });
-        page = await context.newPage();
+    test.beforeEach(async ({ page }) => {
         menu = new Menu(page);
         newsPage = new NewsPage(page);
         loginPage = new LoginPage(page);
@@ -35,14 +29,9 @@ test.describe('News Tests', () => {
             await page.waitForTimeout(3000);
         }
         await menu.openMenuHeader('Tin tức');
-
     });
 
-    test.afterAll(async () => {
-        await context.close();
-    });
-
-    test('TC_001: Check news data', async () => {
+    test('TC_001: Check news data', async ({ page }) => {
         const newsHeader = page.getByText('Bảng tin', { exact: true });
         await expect(newsHeader).toBeVisible();
 

@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import TransferStockPage from '../../page/ui/TransferStock';
 import { TEST_CONFIG, isSystemBatching } from '../utils/testConfig';
@@ -31,17 +31,11 @@ test.describe('Transfer Stock Tests', () => {
     let availableStocks: any[] = [];
     let maxAvailableStock: { subAcntNo: string; stocks: any[] };
     let stockTransferHistAPI: any[] = [];
-    let page: Page;
-    let context: BrowserContext;
 
     let getAvailStockListApi = new getAvailStockList({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
     availableSubAccounts = getGlobalAvailableSubAccounts();
 
-    test.beforeAll(async ({ browser }) => {
-        context = await browser.newContext({
-            recordVideo: { dir: 'test-results' },
-        });
-        page = await context.newPage();
+    test.beforeEach(async ({ page }) => {
         loginPage = new LoginPage(page);
         transferStockPage = new TransferStockPage(page);
         orderPage = new OrderPage(page);
@@ -84,12 +78,11 @@ test.describe('Transfer Stock Tests', () => {
         await transferStockPage.navigateToTransferStock();
     });
 
-    test.afterAll(async () => {
-        await context.close();
+    test.afterEach(async () => {
         resetSharedLoginSession();
     });
 
-    test('TC_001: Check transfer stock function', async () => {
+    test('TC_001: Check transfer stock function', async ({ page }) => {
 
         const title = await transferStockPage.getTitle();
         expect(title).toContain('Chuyển cổ phiếu');
@@ -228,7 +221,7 @@ test.describe('Transfer Stock Tests', () => {
         console.log('updated', updated);
     });
 
-    test('TC_002: Check history table', async () => {
+    test('TC_002: Check history table', async ({ page }) => {
         const sourceAccount = await transferStockPage.getSourceAccountValue();
         let sourceSubAccountNo = getSubAccountNo(sourceAccount);
 

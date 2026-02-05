@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import AssetPage, { parseAsset, countAssetLabelMatches } from '../../page/ui/Asset';
 import { NumberValidator } from '../../helpers/validationUtils';
@@ -24,8 +24,6 @@ test.describe('Asset Summary Tests', () => {
     let loginPage: LoginPage;
     let assetPage: AssetPage;
     let orderPage: OrderPage;
-    let page: Page;
-    let context: BrowserContext;
 
     const overviewLabels = [
         'Tổng tài sản',
@@ -71,11 +69,7 @@ test.describe('Asset Summary Tests', () => {
         }
     };
 
-    test.beforeAll(async ({ browser }) => {
-        context = await browser.newContext({
-            recordVideo: { dir: 'test-results' },
-        });
-        page = await context.newPage();
+    test.beforeEach(async ({ page }) => {
         loginPage = new LoginPage(page);
         assetPage = new AssetPage(page);
         orderPage = new OrderPage(page);
@@ -85,12 +79,8 @@ test.describe('Asset Summary Tests', () => {
         await assetPage.menu.openMenuHeader('Tài sản');
     });
 
-    test.afterAll(async () => {
-        await context.close();
-    });
 
-
-    test('TC_001: Check asset summary data', async () => {
+    test('TC_001: Check asset summary data', async ({ page }) => {
         await assetPage.navigateToAssetSummary();
 
         const listSubAccountTabs = await assetPage.getListSubAccountTabs();
@@ -165,7 +155,7 @@ test.describe('Asset Summary Tests', () => {
     });
 
 
-    test('TC_002: Check portfolio data', async () => {
+    test('TC_002: Check portfolio data', async ({ page }) => {
         await assetPage.navigateToPortfolio();
 
         await verifyOverviewLabels();
@@ -288,7 +278,7 @@ test.describe('Asset Summary Tests', () => {
         await attachScreenshot(page, `Portfolio ${tabActive}`);
     });
 
-    test('TC_003: Check investment performance data', async () => {
+    test('TC_003: Check investment performance data', async ({ page }) => {
         await assetPage.navigateToInvestmentPerformance();
 
         const listSubAccountTabs = await assetPage.getListSubAccountTabs();

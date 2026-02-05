@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { PriceBoardPage } from "../../page/ui/PriceBoard";
 import StockDetailPage from "../../page/ui/StockDetail";
 import { attachScreenshot } from "../../helpers/reporterHelper";
@@ -71,8 +71,6 @@ async function expectPriceAnalysisMatchesAPI(
 }
 
 test.describe("Stock Detail Tests", () => {
-    let page: Page;
-    let context: BrowserContext;
     let priceBoardPage: PriceBoardPage;
     let stockDetailPage: StockDetailPage;
     let marketApi: MarketApi;
@@ -81,11 +79,7 @@ test.describe("Stock Detail Tests", () => {
     let loginPage: LoginPage;
 
 
-    test.beforeAll(async ({ browser }) => {
-        context = await browser.newContext({
-            recordVideo: { dir: 'test-results' },
-        });
-        page = await context.newPage();
+    test.beforeEach(async ({ page }) => {
         priceBoardPage = new PriceBoardPage(page);
         stockDetailPage = new StockDetailPage(page);
         marketApi = new MarketApi();
@@ -101,11 +95,7 @@ test.describe("Stock Detail Tests", () => {
         ).toBeVisible();
     });
 
-    test.afterAll(async () => {
-        await context.close();
-    });
-
-    test("TC_001: Check stock detail of stock code", async () => {
+    test("TC_001: Check stock detail of stock code", async ({ page }) => {
         const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow(stockDetailPage.modal);
 
         await stockDetailPage.expectModalVisible(stockDetailPage.modal);
@@ -192,7 +182,7 @@ test.describe("Stock Detail Tests", () => {
         await stockDetailPage.close();
     });
 
-    test("TC_002: Check stock detail of CW code", async () => {
+    test("TC_002: Check stock detail of CW code", async ({ page }) => {        
         await priceBoardPage.getFirstCWCodeUI();
         const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow(stockDetailPage.modal);
 
@@ -222,7 +212,7 @@ test.describe("Stock Detail Tests", () => {
         await stockDetailPage.close();
     });
 
-    test("TC_003: Check stock detail of derivative code", async () => {
+    test("TC_003: Check stock detail of derivative code", async ({ page }) => {
         await menu.openMenuHeader("Phái sinh");
         const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow(stockDetailPage.derivativeModal);
 

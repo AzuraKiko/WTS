@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext, type Locator } from '@playwright/test';
+import { test, expect, type Locator } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import Menu from '../../page/ui/Menu';
 import { TEST_CONFIG } from '../utils/testConfig';
@@ -18,18 +18,12 @@ const getTextList = async (locator: Locator): Promise<string[]> =>
         .then(texts => texts.map(text => text.trim()).filter(Boolean));
 
 test.describe('PineB Tests', () => {
-    let page: Page;
-    let context: BrowserContext;
     let loginPage: LoginPage;
     let menu: Menu;
     let bondListApi: BondListApi;
 
 
-    test.beforeAll(async ({ browser }) => {
-        context = await browser.newContext({
-            recordVideo: { dir: 'test-results' },
-        });
-        page = await context.newPage();
+    test.beforeEach(async ({ page }) => {
         loginPage = new LoginPage(page);
         menu = new Menu(page);
         bondListApi = new BondListApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
@@ -42,14 +36,9 @@ test.describe('PineB Tests', () => {
             await page.waitForTimeout(3000);
         }
         await menu.openMenuHeader('Trái phiếu');
-
     });
 
-    test.afterAll(async () => {
-        await context.close();
-    });
-
-    test('TC_001: Check data on PineB page', async () => {
+    test('TC_001: Check data on PineB page', async ({ page }) => {
         const bondView: Locator = page.locator('.bond-content');
         const tabGroup: Locator = bondView.locator('.bond-header__left');
         const filterGroup: Locator = bondView.locator('.bond-layout__filters');
