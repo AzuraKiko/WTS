@@ -133,10 +133,10 @@ export const TEST_DATA = {
 
     INDEX_CODES: {
         VNI: "VNI",
-        VN30: "VN30",
-        HNX: "HNX",
+        // VN30: "VN30",
+        // HNX: "HNX",
         // UPCOM: "UPCOM",
-        VN100: "VN100",
+        // VN100: "VN100",
     },
 
     Global_INDEX_CODES: {

@@ -32,8 +32,14 @@ test.describe('Order Management Tests', () => {
     await loginPage.loginSuccess();
     expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
     await attachScreenshot(page, 'After Login');
+  
+    if (await orderPage.isSystemBatching()) {
+      test.skip(true, 'Hệ thống đang chạy batch');
+    }
+  
     await orderPage.navigateToOrder();
   });
+
 
   test.afterAll(async () => {
     await orderPage.closeOrder();

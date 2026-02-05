@@ -385,6 +385,19 @@ class OrderPage extends BasePage {
         }
     }
 
+    async isSystemBatching(): Promise<boolean> {
+        await this.safeClick(this.orderButton);
+        if (await this.titleMessage.isVisible({ timeout: 5000 })) {
+            const messageError = await this.getMessage();
+            if (messageError.description.includes('Hệ thống đang chạy batch')) {
+                return true;
+            }
+            return false;
+        }
+        await this.closeOrder();
+        return false;
+    }
+
     async switchToNormalTab(): Promise<void> {
         await this.safeClick(this.normalTab);
     }

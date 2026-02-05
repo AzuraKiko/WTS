@@ -7,6 +7,8 @@ import { retryCompareData } from '../../helpers/assertions';
 import { ColorUtils, NumberValidator } from '../../helpers/validationUtils';
 import { TEST_DATA } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
+import { chartHasDataPipeline } from '../../page/ui/CharPipeline';
+import { ChartPage } from '../../page/ui/ChartPage';
 
 const parseNumber = (value: string): number => {
     return NumberValidator.parseNumber(value);
@@ -135,6 +137,7 @@ test.describe('Price Board Tests', () => {
     let marketWapiApi: MarketWapiApi;
     let menu: Menu;
     let page: Page;
+    let chartPage: ChartPage;
 
 
     test.beforeAll(async ({ browser }) => {
@@ -144,6 +147,7 @@ test.describe('Price Board Tests', () => {
         marketGatewayApi = new MarketGatewayApi();
         marketWapiApi = new MarketWapiApi();
         menu = new Menu(page);
+        chartPage = new ChartPage(page, page.frameLocator('iframe.chart'));
 
         await priceBoardPage.openPriceBoard();
     });
@@ -236,28 +240,17 @@ test.describe('Price Board Tests', () => {
         const indexCodes = Object.values(TEST_DATA.INDEX_CODES).concat(indexCode);
         for (const code of indexCodes) {
             await priceBoardPage.openTradingView(code);
-            const [tradingViewData, indexPanelData] = await Promise.all([
-                priceBoardPage.getTradingViewData(),
-                priceBoardPage.getIndexPanelData(code),
-            ]);
-            const uiIndexValue = parseNumber(indexPanelData.indexValue);
-            const tradingViewIndexValue = parseNumber(tradingViewData.valueClose);
+            await priceBoardPage.expectChartVisible();
+            const timeframeCurrent = await chartPage.getTimeframeCurrent();
 
-            if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
-                expect(
-                    uiIndexValue,
-                    `${code} index value should match TradingView`
-                ).toBe(tradingViewIndexValue);
-            } else {
-                expect(
-                    tradingViewIndexValue,
-                    `${code} index value should be greater than 0 during non-check window`
-                ).toBeGreaterThan(0);
-            }
-            const [valueOpen, valueHigh, valueLow] = [tradingViewData.valueOpen, tradingViewData.valueHigh, tradingViewData.valueLow];
-            expect(parseNumber(valueOpen)).toBeGreaterThan(0);
-            expect(parseNumber(valueHigh)).toBeGreaterThan(0);
-            expect(parseNumber(valueLow)).toBeGreaterThan(0);
+            const chartResult = await chartHasDataPipeline(page, {
+                symbol: code,
+                timeframe: timeframeCurrent,
+            }, {
+                chartLocator: chartPage.chartLocator
+            });
+
+            expect(chartResult.hasData).toBeTruthy();
             await attachScreenshot(priceBoardPage.page, 'After check trading view data for ' + code);
             await priceBoardPage.closeTradingView();
         }

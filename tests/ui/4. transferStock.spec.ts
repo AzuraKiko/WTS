@@ -30,6 +30,7 @@ test.describe('Transfer Stock Tests', () => {
     let maxAvailableStock: { subAcntNo: string; stocks: any[] };
     let stockTransferHistAPI: any[] = [];
     let page: Page;
+    let isBatching = false;
 
     let getAvailStockListApi = new getAvailStockList({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
 
@@ -38,34 +39,36 @@ test.describe('Transfer Stock Tests', () => {
         loginPage = new LoginPage(page);
         transferStockPage = new TransferStockPage(page);
         orderPage = new OrderPage(page);
+        isBatching = await orderPage.isSystemBatching();
 
-        const loginData = await getSharedLoginSession("Matrix", true);
-        const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
-        availableSubAccounts = buildAvailableSubAccounts(loginData);
+        if (!isBatching) {
+            const loginData = await getSharedLoginSession("Matrix", true);
+            const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
+            availableSubAccounts = buildAvailableSubAccounts(loginData);
 
 
-        async function getAvailStockListSubAccount(subAcntNo: string): Promise<any[]> {
-            const response = await getAvailStockListApi.getAvailStockList({
-                user: TEST_CONFIG.TEST_USER,
-                session,
-                acntNo,
-                subAcntNo,
-                rqId: uuidv4(),
-            });
-            return response?.data?.data?.list ?? [];
+            async function getAvailStockListSubAccount(subAcntNo: string): Promise<any[]> {
+                const response = await getAvailStockListApi.getAvailStockList({
+                    user: TEST_CONFIG.TEST_USER,
+                    session,
+                    acntNo,
+                    subAcntNo,
+                    rqId: uuidv4(),
+                });
+                return response?.data?.data?.list ?? [];
+            }
+            availableStocks = await Promise.all(
+                availableSubAccounts.map(async (subAcntNo) => ({
+                    subAcntNo,
+                    stocks: await getAvailStockListSubAccount(subAcntNo),
+                }))
+            );
+
+            maxAvailableStock = availableStocks.reduce(
+                (max, current) => (current.stocks.length > max.stocks.length ? current : max),
+                availableStocks[0] ?? { subAcntNo: "", stocks: [] }
+            );
         }
-        availableStocks = await Promise.all(
-            availableSubAccounts.map(async (subAcntNo) => ({
-                subAcntNo,
-                stocks: await getAvailStockListSubAccount(subAcntNo),
-            }))
-        );
-
-        maxAvailableStock = availableStocks.reduce(
-            (max, current) => (current.stocks.length > max.stocks.length ? current : max),
-            availableStocks[0] ?? { subAcntNo: "", stocks: [] }
-        );
-
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
@@ -94,6 +97,11 @@ test.describe('Transfer Stock Tests', () => {
         let sourceStats = await transferStockPage.getSourceHoldingStats();
         console.log('sourceStats', sourceStats);
 
+
+        if (isBatching) {
+            console.log('Hệ thống đang chạy batch');
+            return;
+        }
 
         if (maxAvailableStock.stocks.length < 1) {
             console.log('Không sở hữu mã CK để chuyển');

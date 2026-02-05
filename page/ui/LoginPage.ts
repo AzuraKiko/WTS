@@ -86,7 +86,6 @@ class LoginPage extends BasePage {
         const text = await this.verifyUser.textContent();
         return text?.trim() === username;
     }
-
 }
 
 export default LoginPage;

@@ -39,6 +39,8 @@ test.describe('Transfer Cash Tests', () => {
     let page: Page;
     let session = '';
     let acntNo = '';
+    let isBatching = false;
+
 
     let assetApi = createAssetApi();
 
@@ -62,14 +64,17 @@ test.describe('Transfer Cash Tests', () => {
         transferCashPage = new TransferCashPage(page);
         orderPage = new OrderPage(page);
         assetPage = new AssetPage(page);
+        isBatching = await orderPage.isSystemBatching();
 
-        const loginData = await getSharedLoginSession("Matrix", true);
-        const { session: sessionValue, acntNo: acntNoValue, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
-        session = sessionValue;
-        acntNo = acntNoValue;
-        availableSubAccounts = buildAvailableSubAccounts(loginData);
+        if (!isBatching) {
+            const loginData = await getSharedLoginSession("Matrix", true);
+            const { session: sessionValue, acntNo: acntNoValue, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
+            session = sessionValue;
+            acntNo = acntNoValue;
+            availableSubAccounts = buildAvailableSubAccounts(loginData);
 
-        await refreshMaxWithdrawable();
+            await refreshMaxWithdrawable();
+        }
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
@@ -83,6 +88,7 @@ test.describe('Transfer Cash Tests', () => {
     });
 
     test('TC_001: Check transfer cash function', async () => {
+
         const title = await transferCashPage.getTitle();
         expect(title).toContain('Chuyển tiền tiểu khoản');
 
@@ -105,6 +111,11 @@ test.describe('Transfer Cash Tests', () => {
         // Check transfer content
         const note = await transferCashPage.getTransferContent();
         expect(note).toContain(`chuyển tiền online từ ${sourceSubAccountNo} đến ${destinationSubAccountNo}`);
+
+        if (isBatching) {
+            console.log('Hệ thống đang chạy batch');
+            return;
+        }
 
         if (maxWithdrawableSubAccount.wdrawAvail <= 0) {
             console.log('Không có tiểu khoản có tiền để chuyển');
@@ -236,6 +247,9 @@ test.describe('Transfer Cash Tests', () => {
 
     test('TC_003: Check withdrawal money function', async () => {
         await assetPage.menu.openSubMenu('Tài sản', 'Tổng quan');
+        if (isBatching) {
+            test.skip(true, 'Hệ thống đang chạy batch');
+        }
         await assetPage.openWithdrawalMoneyModal();
         let sourceAccount = await assetPage.getSelectValue();
         if (sourceAccount !== maxWithdrawableSubAccount.subAcntNo) {

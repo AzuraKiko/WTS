@@ -169,63 +169,13 @@ export class PriceBoardPage {
         await indexPanel.openTradingView.click();
         await expect(this.page.locator('.modal-dialog .market-index-modal__header')).toContainText('Chỉ số thị trường');
     }
-
-    /**
-     * Lấy data của trang Trading View
-     */
-    async getTradingViewData() {
-        // 1. Outer TradingView iframe
-        const outerFrame = this.page.frameLocator(
-            'iframe[title="exchangeChart"]'
-        );
-
-        // 2. Inner TradingView iframe (nơi canvas thật sự tồn tại)
-        const tvFrame = outerFrame.frameLocator('iframe');
-
-        // 3. Canvas
-        const canvas = tvFrame.locator('canvas').first();
-        await expect(canvas).toBeAttached({ timeout: 30000 });
-
-        // // 4. Trigger render (TradingView thường cần interaction)
-        // await canvas.hover().catch(() => { });
-        // await canvas.click({ position: { x: 50, y: 50 } }).catch(() => { });
-
-        // 5. Helper lấy OHLC
-        const getValue = async (label: string) => {
-            const row = tvFrame
-                .locator('[class*="valueItem-"]')
-                .filter({
-                    has: tvFrame
-                        .locator('[class*="valueTitle-"]')
-                        .filter({ hasText: label }),
-                })
-                .first();
-
-            await expect(row).toBeAttached({ timeout: 10000 });
-
-            return (await row
-                .locator('[class*="valueValue-"]')
-                .innerText()).trim();
-        };
-
-        // 6. Đợi data settle
-        await this.page.waitForTimeout(1500);
-
-        const [valueClose, valueOpen, valueHigh, valueLow] = await Promise.all([
-            getValue('C'),
-            getValue('O'),
-            getValue('H'),
-            getValue('H'),
-        ]);
-
-        return {
-            valueClose,
-            valueOpen,
-            valueHigh,
-            valueLow,
-        };
+    
+    async expectChartVisible() {
+        // Kiểm tra trực tiếp element iframe (Locator), không dùng FrameLocator
+        const chartIframe = this.page.locator('iframe.chart');
+        await expect(chartIframe).toBeVisible();
+        await expect(chartIframe).toHaveAttribute('src', /charts\.pinetree\.vn/);
     }
-
     /**
      * Đóng trang Trading View
      */
