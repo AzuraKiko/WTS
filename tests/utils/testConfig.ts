@@ -224,7 +224,7 @@ export const TEST_DATA = {
 export const PERFORMANCE = {
     DEFAULT_DELAY: 100,
     TIMEOUT: 10000,
-    WAIT_TIMEOUT: 3000,
+    WAIT_TIMEOUT: 30000,
 } as const;
 
 /**

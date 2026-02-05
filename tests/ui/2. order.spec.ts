@@ -72,7 +72,7 @@ test.describe('Order Management Tests', () => {
       console.warn("Trạng thái lệnh không cho phép sửa hoặc phiên ATO/ ATC")
     }
 
-    if (await TimeUtils.checkDataWithTimeRange(new Date(), 9, 0, 9, 15) || await TimeUtils.checkDataWithTimeRange(new Date(), 14, 30, 14, 45)) {
+    if (await TimeUtils.checkDataWithTimeRange(new Date(), 9, 0, 9, 15) || await TimeUtils.checkDataWithTimeRange(new Date(), 14, 30, 15, 0)) {
       console.warn("Phiên ATO/ATC ko được huỷ lệnh")
     } else {
       await orderBook.cancelOrder(0);

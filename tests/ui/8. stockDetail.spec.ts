@@ -143,6 +143,8 @@ test.describe("Stock Detail Tests", () => {
                 await stockDetailPage.clickOddLotSwitch();
                 await WaitUtils.delay(3000);
                 await expectMatchListMatchesAPI(stockDetailPage, marketApi, stockCode, "G4");
+                await stockDetailPage.clickOddLotSwitch();
+                await WaitUtils.delay(3000);
             }
 
             await stockDetailPage.expectPriceAnalysisListHasData();

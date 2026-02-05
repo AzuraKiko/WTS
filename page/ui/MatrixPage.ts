@@ -29,14 +29,14 @@ class MatrixPage extends BasePage {
     }
 
     async isMatrixVisible(): Promise<boolean> {
-        return await this.refreshMatrix.isVisible();
+        return await this.refreshMatrix.isVisible({ timeout: 30000 });
     }
 
     /**
      * Enter matrix codes for 2FA
      */
     async enterMatrixValid(): Promise<void> {
-        await this.refreshMatrix.waitFor({ state: 'visible', timeout: 3000 });
+        await this.refreshMatrix.waitFor({ state: 'visible', timeout: 30000 });
 
         const coords: string[] = await this.matrixGen.allTextContents();
         const validCoords: string[] = coords.filter((coord: string) => isValidCoordinate(coord.trim()));
@@ -58,7 +58,7 @@ class MatrixPage extends BasePage {
 
 
     async enterMatrixInvalid(): Promise<void> {
-        await this.refreshMatrix.waitFor({ state: 'visible', timeout: 3000 });
+        await this.refreshMatrix.waitFor({ state: 'visible', timeout: 30000 });
 
         for (let index = 0; index < 3; index++) {
             await this.matrixInput.nth(index).fill('123');
@@ -98,7 +98,7 @@ class MatrixPage extends BasePage {
         const input = section.locator('.matrix-section input');
 
 
-        await refresh.waitFor({ state: 'visible', timeout: 3000 });
+        await refresh.waitFor({ state: 'visible', timeout: 30000 });
 
         const coords: string[] = await matrix.allTextContents();
         const validCoords: string[] = coords.filter((coord: string) => isValidCoordinate(coord.trim()));

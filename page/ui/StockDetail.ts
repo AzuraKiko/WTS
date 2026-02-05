@@ -138,7 +138,7 @@ class StockDetailPage extends BasePage {
     private initStockHeader(): void {
         this.header = this.modal.locator(".stock-detail-modal-header");
         this.headerTitle = this.header.getByText("Chi tiết mã", { exact: true });
-        this.oddLotSwitch = this.header.locator('input[type="checkbox"][role="switch"]');
+        this.oddLotSwitch = this.header.locator('.react-switch-handle');
         this.closeButton = this.header.locator(".btn-icon .iClose");
     }
 
