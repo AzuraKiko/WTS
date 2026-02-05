@@ -4,151 +4,182 @@ import { WaitUtils } from "../../helpers/uiUtils";
 import { NumberValidator } from "../../helpers/validationUtils";
 import LoginPage from "./LoginPage";
 
-class StockDetailPage extends BasePage {
-    loginPage: LoginPage;
-    modal: Locator;
-    header: Locator;
-    headerTitle: Locator;
-    oddLotSwitch: Locator;
-    closeButton: Locator;
+// Common selector patterns
+const SELECTORS = {
+    PRICE_CLASSES: {
+        FLOOR: ".f",
+        REFERENCE: ".r",
+        CEILING: ".c",
+    },
+    MATCH_ANALYSTIC: ".match-analystic",
+    PRICE_ANALYSTIC: ".price-analystic",
+    GRID_TABLE_HEADER: ".grid-table-header div",
+    GRID_TABLE_BODY: ".grid-table-body",
+    PRICE_LIST_STEP: ".price-list-step",
+} as const;
 
-    leftPanel: Locator;
-    symbolSearchInput: Locator;
-    symbolCode: Locator;
-    symbolExchange: Locator;
-    symbolName: Locator;
-    symbolPrice: Locator;
-    symbolChange: Locator;
-    symbolChangePercent: Locator;
+interface PriceInfo {
     floorPrice: Locator;
     referencePrice: Locator;
     ceilingPrice: Locator;
+}
 
-    matchTab: Locator;
-    analysisTab: Locator;
-    matchTableHeaders: Locator;
-    matchTableRows: Locator;
-    matchTableScrollContainer: Locator;
-    priceAnalysisTable: Locator;
-    priceAnalysisTableRows: Locator;
+class StockDetailPage extends BasePage {
+    loginPage: LoginPage;
+    modal!: Locator;
+    header!: Locator;
+    headerTitle!: Locator;
+    oddLotSwitch!: Locator;
+    closeButton!: Locator;
 
-    centerPanel: Locator;
-    chartTab: Locator;
-    priceHistoryTab: Locator;
-    financeTab: Locator;
-    chartFrame: Locator;
+    leftPanel!: Locator;
+    symbolSearchInput!: Locator;
+    symbolCode!: Locator;
+    symbolExchange!: Locator;
+    symbolName!: Locator;
+    symbolPrice!: Locator;
+    symbolChange!: Locator;
+    symbolChangePercent!: Locator;
+    floorPrice!: Locator;
+    referencePrice!: Locator;
+    ceilingPrice!: Locator;
 
-    priceHistoryPanel: Locator;
-    priceHistoryChart: Locator;
-    priceHistoryRangeButtons: Locator;
-    priceHistoryStatsButtons: Locator;
-    priceTableHeaders: Locator;
-    priceHistoryTableRows: Locator;
-    financePanel: Locator;
-    financeTabs: Locator;
-    financePeriodButtons: Locator;
-    financeTableRows: Locator;
+    matchTab!: Locator;
+    analysisTab!: Locator;
+    matchTableHeaders!: Locator;
+    matchTableRows!: Locator;
+    matchTableScrollContainer!: Locator;
+    priceAnalysisTable!: Locator;
+    priceAnalysisTableRows!: Locator;
 
-    rightPanel: Locator;
-    profileTab: Locator;
-    newsTab: Locator;
-    eventTab: Locator;
-    newsItems: Locator;
-    eventItems: Locator;
+    centerPanel!: Locator;
+    chartTab!: Locator;
+    priceHistoryTab!: Locator;
+    financeTab!: Locator;
+    chartFrame!: Locator;
 
-    profileTabBody: Locator;
-    profileTitleName: Locator;
-    profileAddress: Locator;
-    profilePhone: Locator;
-    profileMail: Locator;
-    profileIntro: Locator;
-    profileBadges: Locator;
-    profileListings: Locator;
-    profileChart: Locator;
-    cwProfile: Locator;
-    cwProfileChart: Locator;
-    cwProfileItems: Locator;
-    cwProfileBaseSymbol: Locator;
+    priceHistoryPanel!: Locator;
+    priceHistoryChart!: Locator;
+    priceHistoryRangeButtons!: Locator;
+    priceHistoryStatsButtons!: Locator;
+    priceTableHeaders!: Locator;
+    priceHistoryTableRows!: Locator;
+    financePanel!: Locator;
+    financeTabs!: Locator;
+    financePeriodButtons!: Locator;
+    financeTableRows!: Locator;
 
-    priceListPanel: Locator;
-    priceListSteps: Locator;
-    chartListPanel: Locator;
+    rightPanel!: Locator;
+    profileTab!: Locator;
+    newsTab!: Locator;
+    eventTab!: Locator;
+    newsItems!: Locator;
+    eventItems!: Locator;
 
+    profileTabBody!: Locator;
+    profileTitleName!: Locator;
+    profileAddress!: Locator;
+    profilePhone!: Locator;
+    profileMail!: Locator;
+    profileIntro!: Locator;
+    profileBadges!: Locator;
+    profileListings!: Locator;
+    profileChart!: Locator;
+    cwProfile!: Locator;
+    cwProfileChart!: Locator;
+    cwProfileItems!: Locator;
+    cwProfileBaseSymbol!: Locator;
 
-    derivativeModal: Locator;
-    derivativeHeader: Locator;
-    derivativeSymbolCode: Locator;
-    derivativeSymbolPrice: Locator;
-    derivativeSymbolChange: Locator;
-    derivativeSymbolChangePercent: Locator;
-    derivativeFloorPrice: Locator;
-    derivativeReferencePrice: Locator;
-    derivativeCeilingPrice: Locator;
+    priceListPanel!: Locator;
+    priceListSteps!: Locator;
+    chartListPanel!: Locator;
 
-    derivativeSymbolStatic: Locator;
-    derivativeSymbolStaticItems: Locator;
-    derivativeLoginButton: Locator;
-    derivativeChartFrame: Locator;
-    derivativePriceListPanel: Locator;
-    derivativePriceListSteps: Locator;
-    derivativeMatchTab: Locator;
-    derivativeAnalysisTab: Locator;
-    derivativeMatchTableHeaders: Locator;
-    derivativeMatchTableRows: Locator;
-    derivativePriceAnalysisRows: Locator;
+    derivativeModal!: Locator;
+    derivativeHeader!: Locator;
+    derivativeSymbolCode!: Locator;
+    derivativeSymbolPrice!: Locator;
+    derivativeSymbolChange!: Locator;
+    derivativeSymbolChangePercent!: Locator;
+    derivativeFloorPrice!: Locator;
+    derivativeReferencePrice!: Locator;
+    derivativeCeilingPrice!: Locator;
 
+    derivativeSymbolStatic!: Locator;
+    derivativeSymbolStaticItems!: Locator;
+    derivativeLoginButton!: Locator;
+    derivativeChartFrame!: Locator;
+    derivativePriceListPanel!: Locator;
+    derivativePriceListSteps!: Locator;
+    derivativeMatchTab!: Locator;
+    derivativeAnalysisTab!: Locator;
+    derivativeMatchTableHeaders!: Locator;
+    derivativeMatchTableRows!: Locator;
+    derivativePriceAnalysisRows!: Locator;
 
     constructor(page: Page) {
         super(page);
         this.loginPage = new LoginPage(page);
+
+        // Stock modal initialization
         this.modal = page.locator(".stock-detail-modal");
+        this.initStockHeader();
+        this.initStockLeftPanel();
+        this.initStockCenterPanel();
+        this.initStockRightPanel();
+
+        // Derivative modal initialization
+        this.derivativeModal = page.locator(".contract-detail-content.derivative-detail-content");
+        this.initDerivativeHeader();
+        this.initDerivativePanels();
+    }
+
+    private initStockHeader(): void {
         this.header = this.modal.locator(".stock-detail-modal-header");
         this.headerTitle = this.header.getByText("Chi tiết mã", { exact: true });
         this.oddLotSwitch = this.header.locator('input[type="checkbox"][role="switch"]');
         this.closeButton = this.header.locator(".btn-icon .iClose");
+    }
 
+    private initStockLeftPanel(): void {
         this.leftPanel = this.modal.locator(".column-panel.left-panel");
         this.symbolSearchInput = this.leftPanel.locator(".card-panel-header__input");
+
+        // Symbol info
         this.symbolCode = this.leftPanel.locator(".symbol-brand__name");
         this.symbolExchange = this.leftPanel.locator(".symbol-brand__exchange");
         this.symbolName = this.leftPanel.locator(".symbol-name");
         this.symbolPrice = this.leftPanel.locator(".symbol-price--big");
         this.symbolChange = this.leftPanel.locator(".symbol-price > span:nth-child(2)");
         this.symbolChangePercent = this.leftPanel.locator(".symbol-price > span:nth-child(3)");
-        this.floorPrice = this.leftPanel.locator(".symbol-open-price .f");
-        this.referencePrice = this.leftPanel.locator(".symbol-open-price .r");
-        this.ceilingPrice = this.leftPanel.locator(".symbol-open-price .c");
 
-        this.matchTab = this.leftPanel
-            .locator(".card-panel.price-tabs .card-panel-header__title")
-            .filter({ hasText: "Lệnh khớp" })
-            .first();
-        this.analysisTab = this.leftPanel
-            .locator(".card-panel.price-tabs .card-panel-header__title")
-            .filter({ hasText: "Phân tích giá" })
-            .first();
+        // Price info using helper
+        const priceInfo = this.createPriceLocators(this.leftPanel, ".symbol-open-price");
+        this.floorPrice = priceInfo.floorPrice;
+        this.referencePrice = priceInfo.referencePrice;
+        this.ceilingPrice = priceInfo.ceilingPrice;
 
-        this.matchTableHeaders = this.leftPanel.locator(".match-analystic .grid-table thead tr th");
-        this.matchTableRows = this.leftPanel.locator(".match-analystic .grid-table-body");
-        this.matchTableScrollContainer = this.leftPanel.locator(".match-analystic .thumb-vertical");
-        this.priceAnalysisTable = this.leftPanel.locator(".price-analystic");
-        this.priceAnalysisTableRows = this.leftPanel.locator(".price-analystic .pa-row.as-grid");
+        // Tabs
+        this.matchTab = this.createTabLocator(this.leftPanel, ".card-panel.price-tabs", "Lệnh khớp");
+        this.analysisTab = this.createTabLocator(this.leftPanel, ".card-panel.price-tabs", "Phân tích giá");
 
+        // Match and analysis tables
+        this.matchTableHeaders = this.leftPanel.locator(`${SELECTORS.MATCH_ANALYSTIC} ${SELECTORS.GRID_TABLE_HEADER}`);
+        this.matchTableRows = this.leftPanel.locator(`${SELECTORS.MATCH_ANALYSTIC} ${SELECTORS.GRID_TABLE_BODY}`);
+        this.matchTableScrollContainer = this.leftPanel.locator(`${SELECTORS.MATCH_ANALYSTIC} .thumb-vertical`);
+        this.priceAnalysisTable = this.leftPanel.locator(SELECTORS.PRICE_ANALYSTIC);
+        this.priceAnalysisTableRows = this.leftPanel.locator(`${SELECTORS.PRICE_ANALYSTIC} .pa-row.as-grid`);
+    }
+
+    private initStockCenterPanel(): void {
         this.centerPanel = this.modal.locator(".column-panel.center-panel");
-        this.chartTab = this.centerPanel
-            .locator(".card-panel.center-tabs .card-panel-header__title")
-            .filter({ hasText: "Biểu đồ" })
-            .first();
-        this.priceHistoryTab = this.centerPanel
-            .locator(".card-panel.center-tabs .card-panel-header__title")
-            .filter({ hasText: "Lịch sử giá" })
-            .first();
-        this.financeTab = this.centerPanel
-            .locator(".card-panel.center-tabs .card-panel-header__title")
-            .filter({ hasText: "Tài chính" })
-            .first();
+
+        // Tabs
+        this.chartTab = this.createTabLocator(this.centerPanel, ".card-panel.center-tabs", "Biểu đồ");
+        this.priceHistoryTab = this.createTabLocator(this.centerPanel, ".card-panel.center-tabs", "Lịch sử giá");
+        this.financeTab = this.createTabLocator(this.centerPanel, ".card-panel.center-tabs", "Tài chính");
         this.chartFrame = this.centerPanel.locator("iframe.chart");
 
+        // Price history
         this.priceHistoryPanel = this.centerPanel.locator(".trading-data");
         this.priceHistoryChart = this.priceHistoryPanel.locator(".highcharts-root");
         this.priceHistoryRangeButtons = this.priceHistoryPanel.locator(".btn-group").first().locator("button");
@@ -156,28 +187,24 @@ class StockDetailPage extends BasePage {
         this.priceTableHeaders = this.priceHistoryPanel.locator("table.table-bordered thead tr");
         this.priceHistoryTableRows = this.priceHistoryPanel.locator("table tbody tr");
 
+        // Finance
         this.financePanel = this.centerPanel.locator(".finance");
         this.financeTabs = this.financePanel.locator(".finance-header .tabs .tab");
         this.financePeriodButtons = this.financePanel.locator(".finance-header .btn-group button");
         this.financeTableRows = this.financePanel.locator("table tbody tr");
+    }
 
-
+    private initStockRightPanel(): void {
         this.rightPanel = this.modal.locator(".column-panel.right-panel");
-        this.profileTab = this.rightPanel
-            .locator(".card-panel.tabs .card-panel-header__title")
-            .filter({ hasText: "Hồ sơ" })
-            .first();
-        this.newsTab = this.rightPanel
-            .locator(".card-panel.tabs .card-panel-header__title")
-            .filter({ hasText: "Tin tức" })
-            .first();
-        this.eventTab = this.rightPanel
-            .locator(".card-panel.tabs .card-panel-header__title")
-            .filter({ hasText: "Sự kiện" })
-            .first();
+
+        // Tabs
+        this.profileTab = this.createTabLocator(this.rightPanel, ".card-panel.tabs", "Hồ sơ");
+        this.newsTab = this.createTabLocator(this.rightPanel, ".card-panel.tabs", "Tin tức");
+        this.eventTab = this.createTabLocator(this.rightPanel, ".card-panel.tabs", "Sự kiện");
         this.newsItems = this.rightPanel.locator(".news-tab .news");
         this.eventItems = this.rightPanel.locator(".event-tab .event");
 
+        // Profile
         this.profileTabBody = this.rightPanel.locator(".profile-tab");
         this.profileTitleName = this.profileTabBody.locator(".profile-title__name");
         this.profileAddress = this.profileTabBody.locator(".profile-desc__address span").nth(1);
@@ -188,52 +215,70 @@ class StockDetailPage extends BasePage {
         this.profileListings = this.profileTabBody.locator(".listing");
         this.profileChart = this.profileTabBody.locator(".highcharts-root");
 
+        // CW Profile
         this.cwProfile = this.profileTabBody.locator(".cw-profile");
         this.cwProfileChart = this.cwProfile.locator(".highcharts-root");
         this.cwProfileItems = this.cwProfile.locator(".cw-profile__item");
         this.cwProfileBaseSymbol = this.cwProfile.locator(".cw-profile__item .d");
 
+        // Price list
         this.priceListPanel = this.rightPanel.locator(".card-panel.price-list .price-list");
-        this.priceListSteps = this.priceListPanel.locator(".price-list-step");
+        this.priceListSteps = this.priceListPanel.locator(SELECTORS.PRICE_LIST_STEP);
         this.chartListPanel = this.rightPanel.locator(".price-list-total");
+    }
 
-
-        // Derivative detail (for not-logged-in derivative codes)
-        this.derivativeModal = this.page.locator(".contract-detail-content.derivative-detail-content");
+    private initDerivativeHeader(): void {
         this.derivativeHeader = this.derivativeModal.locator(".contract-detail-content__header");
         this.derivativeSymbolCode = this.derivativeHeader.locator(".market__symbol .i").first();
         this.derivativeSymbolPrice = this.derivativeHeader.locator(".market__symbol .i").nth(1);
-        this.derivativeSymbolChange = this.derivativeHeader
-            .locator(".market__index-prices span.d-flex span.i")
-            .first();
-        this.derivativeSymbolChangePercent = this.derivativeHeader
-            .locator(".market__index-prices span.d-flex span.i")
-            .nth(1);
-        this.derivativeCeilingPrice = this.derivativeHeader.locator(".market__index-prices .c");
-        this.derivativeReferencePrice = this.derivativeHeader.locator(".market__index-prices .r");
-        this.derivativeFloorPrice = this.derivativeHeader.locator(".market__index-prices .f");
-        this.derivativeSymbolStatic = this.derivativeHeader.locator("market__index-statistic");
+        this.derivativeSymbolChange = this.derivativeHeader.locator(".market__index-prices span.d-flex span.i").first();
+        this.derivativeSymbolChangePercent = this.derivativeHeader.locator(".market__index-prices span.d-flex span.i").nth(1);
+
+        // Price info using helper
+        const priceInfo = this.createPriceLocators(this.derivativeHeader, ".market__index-prices");
+        this.derivativeCeilingPrice = priceInfo.ceilingPrice;
+        this.derivativeReferencePrice = priceInfo.referencePrice;
+        this.derivativeFloorPrice = priceInfo.floorPrice;
+
+        this.derivativeSymbolStatic = this.derivativeHeader.locator(".market__index-statistic");
         this.derivativeLoginButton = this.derivativeHeader.locator(".btn--loginToOrder");
+    }
 
+    private initDerivativePanels(): void {
+        // Price list
         this.derivativePriceListPanel = this.derivativeModal.locator("#d_price-list");
-        this.derivativePriceListSteps = this.derivativePriceListPanel.locator(".price-list-step");
+        this.derivativePriceListSteps = this.derivativePriceListPanel.locator(SELECTORS.PRICE_LIST_STEP);
 
+        // Tabs
         this.derivativeMatchTab = this.derivativeModal
             .locator(".panel-header.panel-header--left ")
             .filter({ hasText: "Chi tiết khớp" })
             .first();
-
-        this.derivativeMatchTableHeaders = this.derivativeModal.locator(
-            ".match-analystic .grid-table-header div",
-        );
-        this.derivativeMatchTableRows = this.derivativeModal.locator(".match-analystic .grid-table-body");
-
         this.derivativeAnalysisTab = this.derivativeModal
             .locator(".panel-header.panel-header--left ")
             .filter({ hasText: "Phân tích giá" })
             .first();
 
-        this.derivativePriceAnalysisRows = this.derivativeModal.locator(".price-analystic .pa-row.as-grid");
+        // Match and analysis tables
+        this.derivativeMatchTableHeaders = this.derivativeModal.locator(`${SELECTORS.MATCH_ANALYSTIC} ${SELECTORS.GRID_TABLE_HEADER}`);
+        this.derivativeMatchTableRows = this.derivativeModal.locator(`${SELECTORS.MATCH_ANALYSTIC} ${SELECTORS.GRID_TABLE_BODY}`);
+        this.derivativePriceAnalysisRows = this.derivativeModal.locator(`${SELECTORS.PRICE_ANALYSTIC} .pa-row.as-grid`);
+    }
+
+    // Helper methods
+    private createTabLocator(parent: Locator, panelSelector: string, tabText: string): Locator {
+        return parent
+            .locator(`${panelSelector} .card-panel-header__title`)
+            .filter({ hasText: tabText })
+            .first();
+    }
+
+    private createPriceLocators(parent: Locator, containerSelector: string): PriceInfo {
+        return {
+            floorPrice: parent.locator(`${containerSelector} ${SELECTORS.PRICE_CLASSES.FLOOR}`),
+            referencePrice: parent.locator(`${containerSelector} ${SELECTORS.PRICE_CLASSES.REFERENCE}`),
+            ceilingPrice: parent.locator(`${containerSelector} ${SELECTORS.PRICE_CLASSES.CEILING}`),
+        };
     }
 
     private async clickTabSafely(tab: Locator, label: string): Promise<void> {
@@ -296,13 +341,13 @@ class StockDetailPage extends BasePage {
 
     async expectHeaderDerivativeVisible(): Promise<void> {
         await expect(this.derivativeHeader, "Derivative detail header should be visible").toBeVisible();
-        await expect(this.derivativeSymbolCode, "Derivative symbol code should be visible").toBeVisible();
-        await expect(this.derivativeSymbolPrice, "Derivative symbol price should be visible").toBeVisible();
-        await expect(this.derivativeSymbolChange, "Derivative symbol change should be visible").toBeVisible();
-        await expect(this.derivativeSymbolChangePercent, "Derivative symbol change percent should be visible").toBeVisible();
-        await expect(this.derivativeFloorPrice, "Derivative floor price should be visible").toBeVisible();
-        await expect(this.derivativeReferencePrice, "Derivative reference price should be visible").toBeVisible();
-        await expect(this.derivativeCeilingPrice, "Derivative ceiling price should be visible").toBeVisible();
+        await expect(this.derivativeSymbolCode, "Derivative symbol code should be visible").toHaveText(/\S/);
+        await expect(this.derivativeSymbolPrice, "Derivative symbol price should be visible").toHaveText(/\S/);
+        await expect(this.derivativeSymbolChange, "Derivative symbol change should be visible").toHaveText(/\S/);
+        await expect(this.derivativeSymbolChangePercent, "Derivative symbol change percent should be visible").toHaveText(/\S/);
+        await expect(this.derivativeFloorPrice, "Derivative floor price should be visible").toHaveText(/\S/);
+        await expect(this.derivativeReferencePrice, "Derivative reference price should be visible").toHaveText(/\S/);
+        await expect(this.derivativeCeilingPrice, "Derivative ceiling price should be visible").toHaveText(/\S/);
         await expect(this.derivativeSymbolStatic, "Derivative symbol static should be visible").toBeVisible();
         await expect(this.derivativeLoginButton, "Login to place order button should be visible").toBeVisible();
     }

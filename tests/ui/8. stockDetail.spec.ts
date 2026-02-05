@@ -11,6 +11,27 @@ import Menu from "../../page/ui/Menu";
 import { TEST_CONFIG } from "../utils/testConfig";
 import LoginPage from "../../page/ui/LoginPage";
 
+// Helper function to calculate change value based on color indicator
+function calculateChange(apiResponse: any): number {
+    if (!apiResponse) return 0;
+    const change = NumberValidator.parseNumber(apiResponse.change);
+    return apiResponse.cl === "d" ? -change : apiResponse.cl === "i" ? change : 0;
+}
+
+// Helper function to compare UI and API data
+function expectDataMatches<T extends Record<string, any>>(
+    uiData: T,
+    apiData: T,
+    dataType: string
+): void {
+    Object.keys(uiData).forEach((key) => {
+        expect(
+            uiData[key],
+            `${dataType} ${key} should match API`,
+        ).toBe(apiData[key as keyof T]);
+    });
+}
+
 async function expectMatchListMatchesAPI(
     stockDetailPage: StockDetailPage,
     marketApi: MarketApi,
@@ -19,25 +40,16 @@ async function expectMatchListMatchesAPI(
 ) {
     const matchListUI = await stockDetailPage.getFirstMatchListRowData();
     const matchListAPIresponse = await marketApi.getMatchPrice(stockCode, board);
+    const firstMatch = matchListAPIresponse[0];
+
     const matchListAPI = {
-        date: matchListAPIresponse[0]?.time,
-        lastPrice: NumberValidator.parseNumber(matchListAPIresponse[0]?.lastPrice),
-        change: NumberValidator.parseNumber(
-            matchListAPIresponse[0]?.cl === "d"
-                ? -matchListAPIresponse[0]?.change
-                : matchListAPIresponse[0]?.cl === "i"
-                    ? matchListAPIresponse[0]?.change
-                    : 0,
-        ),
-        lastVol: NumberValidator.parseNumber(matchListAPIresponse[0]?.lastVol),
+        date: firstMatch?.time,
+        lastPrice: NumberValidator.parseNumber(firstMatch?.lastPrice),
+        change: calculateChange(firstMatch),
+        lastVol: NumberValidator.parseNumber(firstMatch?.lastVol),
     };
 
-    Object.keys(matchListUI).forEach((key) => {
-        expect(
-            matchListUI[key],
-            `Match list ${key} should match API`,
-        ).toBe(matchListAPI[key as keyof typeof matchListAPI]);
-    });
+    expectDataMatches(matchListUI, matchListAPI, "Match list");
 }
 
 async function expectPriceAnalysisMatchesAPI(
@@ -48,17 +60,14 @@ async function expectPriceAnalysisMatchesAPI(
 ) {
     const priceAnalysisUI = await stockDetailPage.getFirstPriceAnalysisRowData();
     const priceAnalysisAPIresponse = await marketApi.getPriceAnalysis(stockCode, board);
+    const firstAnalysis = priceAnalysisAPIresponse[0];
+
     const priceAnalysisAPI = {
-        price: NumberValidator.parseNumber(priceAnalysisAPIresponse[0]?.price),
-        total: NumberValidator.parseNumber(priceAnalysisAPIresponse[0]?.total),
+        price: NumberValidator.parseNumber(firstAnalysis?.price),
+        total: NumberValidator.parseNumber(firstAnalysis?.total),
     };
 
-    Object.keys(priceAnalysisUI).forEach((key) => {
-        expect(
-            priceAnalysisUI[key],
-            `Price analysis ${key} should match API`,
-        ).toBe(priceAnalysisAPI[key as keyof typeof priceAnalysisAPI]);
-    });
+    expectDataMatches(priceAnalysisUI, priceAnalysisAPI, "Price analysis");
 }
 
 test.describe("Stock Detail Tests", () => {
@@ -120,9 +129,7 @@ test.describe("Stock Detail Tests", () => {
             symbolInfoAPI.symbolChangePercent = 0;
         }
 
-        Object.keys(symbolInfoUI).forEach((key) => {
-            expect(symbolInfoUI[key], `Symbol info ${key} should match API`).toBe(symbolInfoAPI[key]);
-        });
+        expectDataMatches(symbolInfoUI, symbolInfoAPI, "Symbol info");
 
         if (await TimeUtils.checkDataWithTimeRange(new Date(), 8, 15, 9, 15)) {
             console.warn("Clear data at the beginning of the day (8h15)");
