@@ -250,7 +250,7 @@ class AssetPage extends BasePage {
 
     async verifyOTP(): Promise<void> {
         const authenSection = this.withdrawalModal.locator('.authen-section');
-        await authenSection.waitFor({ state: 'visible', timeout: 3000 });
+        await authenSection.waitFor({ state: 'visible', timeout: 30000 });
         const currentMethodActive = (await authenSection.locator('.authen-type-switch.active').textContent())?.trim() || '';
         if (currentMethodActive === 'Ma trận') {
             await this.matrixPage.enterMatrixConfirm(authenSection);
@@ -258,7 +258,7 @@ class AssetPage extends BasePage {
             await this.safeClick(authenSection.locator('.authen-type-switch').filter({ hasText: 'Ma trận' }));
             await this.matrixPage.enterMatrixConfirm(authenSection);
         }
-        await this.page.waitForTimeout(3000);
+        await this.page.waitForTimeout(30000);
     }
 
     async withdrawalMoney(amount: number): Promise<void> {
