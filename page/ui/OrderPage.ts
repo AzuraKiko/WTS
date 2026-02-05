@@ -114,8 +114,8 @@ class OrderPage extends BasePage {
     // Constants
     private static readonly DEFAULT_QUANTITY = 1;
     private static readonly NAVIGATION_TIMEOUT = 3000;
-    private static readonly MATRIX_TIMEOUT = 5000;
-    private static readonly MESSAGE_TIMEOUT = 3000;
+    private static readonly MATRIX_TIMEOUT = 10000;
+    private static readonly MESSAGE_TIMEOUT = 10000;
 
     // Element groups for better organization
     private elements!: OrderPageElements;
@@ -385,16 +385,14 @@ class OrderPage extends BasePage {
         }
     }
 
-    async isSystemBatching(): Promise<boolean> {
-        await this.safeClick(this.orderButton);
-        if (await this.titleMessage.isVisible({ timeout: 5000 })) {
+    async isSystemBatchingUI(): Promise<boolean> {
+        if (await this.titleMessage.isVisible({ timeout: OrderPage.MESSAGE_TIMEOUT })) {
             const messageError = await this.getMessage();
-            if (messageError.description.includes('Hệ thống đang chạy batch')) {
+            if (messageError.description.includes('Hệ thống đang chạy batch') || messageError.description.includes('Hệ thống đang xử lý batch cuối ngày')) {
                 return true;
             }
             return false;
         }
-        await this.closeOrder();
         return false;
     }
 

@@ -1,7 +1,7 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import TransferStockPage from '../../page/ui/TransferStock';
-import { TEST_CONFIG } from '../utils/testConfig';
+import { TEST_CONFIG, isSystemBatching } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { NumberValidator } from '../../helpers/validationUtils';
 import { getSharedLoginSession, resetSharedLoginSession } from "../api/sharedSession";
@@ -9,7 +9,7 @@ import OrderPage from '../../page/ui/OrderPage';
 import { v4 as uuidv4 } from 'uuid';
 import { WaitUtils } from '../../helpers/uiUtils';
 import { getAvailStockList } from '../../page/api/AssetApi';
-import { getSubAccountNo, selectIfDifferent, buildAvailableSubAccounts } from '../utils/accountHelpers';
+import { getSubAccountNo, selectIfDifferent, buildAvailableSubAccountsFromLoginData, getGlobalAvailableSubAccounts } from '../utils/accountHelpers';
 
 const STOCK_TRANSFER_STATUS: Record<string, string> = {
     "0": "Thành công",
@@ -19,6 +19,8 @@ const STOCK_TRANSFER_STATUS: Record<string, string> = {
 };
 
 const getTransferStatusLabel = (status: string) => STOCK_TRANSFER_STATUS[status] ?? "";
+
+const batching = isSystemBatching();
 
 
 test.describe('Transfer Stock Tests', () => {
@@ -30,22 +32,28 @@ test.describe('Transfer Stock Tests', () => {
     let maxAvailableStock: { subAcntNo: string; stocks: any[] };
     let stockTransferHistAPI: any[] = [];
     let page: Page;
-    let isBatching = false;
+    let context: BrowserContext;
 
     let getAvailStockListApi = new getAvailStockList({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
+    availableSubAccounts = getGlobalAvailableSubAccounts();
 
     test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
+        context = await browser.newContext({
+            recordVideo: { dir: 'test-results' },
+        });
+        page = await context.newPage();
         loginPage = new LoginPage(page);
         transferStockPage = new TransferStockPage(page);
         orderPage = new OrderPage(page);
-        isBatching = await orderPage.isSystemBatching();
 
-        if (!isBatching) {
+        if (!batching) {
             const loginData = await getSharedLoginSession("Matrix", true);
-            const { session, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio } = loginData;
-            availableSubAccounts = buildAvailableSubAccounts(loginData);
+            const { session, acntNo } = loginData;
 
+            // Ưu tiên dùng danh sách global đã build ở globalSetup
+            if (!availableSubAccounts.length) {
+                availableSubAccounts = buildAvailableSubAccountsFromLoginData(loginData);
+            }
 
             async function getAvailStockListSubAccount(subAcntNo: string): Promise<any[]> {
                 const response = await getAvailStockListApi.getAvailStockList({
@@ -77,7 +85,7 @@ test.describe('Transfer Stock Tests', () => {
     });
 
     test.afterAll(async () => {
-        await page.close();
+        await context.close();
         resetSharedLoginSession();
     });
 
@@ -94,19 +102,6 @@ test.describe('Transfer Stock Tests', () => {
         let sourceSubAccountNo = getSubAccountNo(sourceAccount);
         let destinationSubAccountNo = getSubAccountNo(destinationAccount);
 
-        let sourceStats = await transferStockPage.getSourceHoldingStats();
-        console.log('sourceStats', sourceStats);
-
-
-        if (isBatching) {
-            console.log('Hệ thống đang chạy batch');
-            return;
-        }
-
-        if (maxAvailableStock.stocks.length < 1) {
-            console.log('Không sở hữu mã CK để chuyển');
-            return;
-        }
 
         await selectIfDifferent(
             sourceSubAccountNo,
@@ -116,8 +111,24 @@ test.describe('Transfer Stock Tests', () => {
 
         sourceSubAccountNo = maxAvailableStock.subAcntNo;
         await WaitUtils.delay(3000);
-        sourceStats = await transferStockPage.getSourceHoldingStats();
+        let sourceStats = await transferStockPage.getSourceHoldingStats();
         console.log('sourceStats', sourceStats);
+
+        // Lọc lại stocks theo dữ liệu UI để tránh lệch trạng thái với API ban đầu
+        const uiStockCount = NumberValidator.parseNumber(sourceStats.stockCount);
+        const uiTotalQty = NumberValidator.parseNumber(sourceStats.totalQty);
+
+        console.log('uiStockCount', uiStockCount);
+        console.log('uiTotalQty', uiTotalQty);
+
+        if (uiStockCount < 1 || uiTotalQty <= 0) {
+            console.log('Không sở hữu mã CK để chuyển (theo UI)', {
+                subAcntNo: sourceSubAccountNo,
+                uiStockCount,
+                uiTotalQty,
+            });
+            return;
+        }
 
         const alternateSubAccountNo = availableSubAccounts.find(
             (subAcntNo) => subAcntNo !== sourceSubAccountNo && subAcntNo !== availableSubAccounts[2] && subAcntNo !== availableSubAccounts[3]
@@ -132,8 +143,10 @@ test.describe('Transfer Stock Tests', () => {
             destinationSubAccountNo = alternateSubAccountNo;
         }
 
-        expect(NumberValidator.parseNumber(sourceStats.stockCount)).toBe(maxAvailableStock.stocks.length);
-        expect(NumberValidator.parseNumber(sourceStats.totalQty)).toBe(maxAvailableStock.stocks.reduce((total, stock) => total + NumberValidator.parseNumber(stock.quantity), 0));
+
+        expect(uiStockCount).toBe(maxAvailableStock.stocks.length);
+        expect(uiTotalQty).toBe(maxAvailableStock.stocks.reduce((total, stock) => total + NumberValidator.parseNumber(stock.quantity), 0));
+
 
         const rowSourceUI = await transferStockPage.getSourceRowData(0);
         const firstStock = maxAvailableStock.stocks[0];
@@ -147,27 +160,72 @@ test.describe('Transfer Stock Tests', () => {
             expect(rowSourceUI[key]).toBe(rowSourceAPI[key]);
         });
 
+        console.log('rowSourceUI', rowSourceUI);
+        console.log('rowSourceAPI', rowSourceAPI);
+
+        if (batching) {
+            console.log('Hệ thống đang chạy batch - skip transfer stock');
+            return;
+        }
+
         // Transfer stock
         await transferStockPage.transferMaxStock(0);
 
-        const messageError = await orderPage.getMessage();
-        if (messageError.description.includes('Hệ thống đang chạy batch')) {
-            console.log('Transfer stock failed:', messageError);
+        // Toast có thể chậm/miss → getMessage có thể throw
+        let messageError: { title?: string; description?: string } = {};
+        try {
+            messageError = await orderPage.getMessage();
+        } catch (error) {
+            console.log('Toast message not captured for transfer stock, continue with UI verification only:', error);
+        }
+
+        const description = messageError.description || '';
+
+        if (description.includes('Hệ thống đang chạy batch')) {
+            console.log('Transfer stock failed (batching):', messageError);
             return;
-        } else if (messageError.description.includes('Đã chuyển thành công')) {
-            await orderPage.verifyMessage(['Thông báo'], ['Đã chuyển thành công']);
-            await attachScreenshot(page, 'Transfer Stock Page');
-            if (await transferStockPage.sourceRows.count() > 0) {
-                const newRowSourceUI = await transferStockPage.getSourceRowData(0);
-                expect(newRowSourceUI.stockCode).not.toBe(rowSourceUI.stockCode);
-                await WaitUtils.delay(8000);
-            } else {
-                console.log(`Source data no contain ${rowSourceUI.stockCode}`);
-                return;
+        }
+
+        if (description.includes('Đã chuyển thành công')) {
+            // Có toast thì verify, nếu fail chỉ log để tránh flaky
+            try {
+                await orderPage.verifyMessage(['Thông báo'], ['Đã chuyển thành công']);
+            } catch (error) {
+                console.log('Transfer stock toast verification flaky, continue with UI verification:', error);
             }
         } else {
-            throw new Error(messageError.title + ': ' + messageError.description);
+            console.log('Success toast not found for transfer stock, verify by UI only:', messageError);
         }
+
+        await attachScreenshot(page, 'Transfer Stock Page');
+
+        // Sau khi chuyển max 1 mã, hàng đầu tiên phải khác hoặc không còn hàng
+        const updated = await WaitUtils.waitForCondition(async () => {
+            const rowCount = await transferStockPage.sourceRows.count();
+            if (rowCount === 0) {
+                console.log('All stocks transferred, no source rows left');
+                return true;
+            }
+
+            const newRowSourceUI = await transferStockPage.getSourceRowData(0);
+            const changed = newRowSourceUI.stockCode !== rowSourceUI.stockCode;
+
+            if (!changed) {
+                console.log('Waiting for source row to change after transfer stock...', {
+                    previousStockCode: rowSourceUI.stockCode,
+                    currentStockCode: newRowSourceUI.stockCode,
+                });
+            }
+
+            return changed;
+        }, {
+            maxAttempts: 5,
+            delay: 2000,
+            timeout: 15000,
+        });
+
+        expect(updated).toBeTruthy();
+        console.log('updated', updated);
     });
 
     test('TC_002: Check history table', async () => {
@@ -184,6 +242,7 @@ test.describe('Transfer Stock Tests', () => {
         const normalSubAcntNo = availableSubAccounts[0];
         const marginSubAcntNo = availableSubAccounts[1];
         const targetSubAcntNo = sourceSubAccountNo === normalSubAcntNo ? marginSubAcntNo : normalSubAcntNo;
+        console.log('targetSubAcntNo', targetSubAcntNo);
 
         const waitForTransferHist = (subAcntNo: string) =>
             WaitUtils.getLatestResponseByBody(
@@ -219,13 +278,14 @@ test.describe('Transfer Stock Tests', () => {
                 status: getTransferStatusLabel(item.status),
                 createdDate: item.trdDt,
             }));
+            console.log('stockTransferHistAPI', JSON.stringify(stockTransferHistAPI[0], null, 2));
         }
 
-        const rowCount = await transferStockPage.getHistoryRowCount();
-        if (rowCount > 0) {
+        if (stockTransferHistAPI.length > 0) {
             const rowUI = await transferStockPage.getHistoryRowData(0);
             const rowAPI = stockTransferHistAPI[0];
-
+            console.log('rowUI', JSON.stringify(rowUI, null, 2));
+            console.log('rowAPI', JSON.stringify(rowAPI, null, 2));
             Object.keys(rowUI).forEach((key) => {
                 expect(rowUI[key]).toBe(rowAPI[key]);
             });

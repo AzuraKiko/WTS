@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import Menu from '../../page/ui/Menu';
 import LoginPage from '../../page/ui/LoginPage';
 import { TEST_CONFIG } from '../utils/testConfig';
@@ -13,11 +13,15 @@ import {
 test.describe('News Tests', () => {
     let menu: Menu;
     let page: Page;
+    let context: BrowserContext;
     let loginPage: LoginPage;
     let newsPage: NewsPage;
 
     test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
+        context = await browser.newContext({
+            recordVideo: { dir: 'test-results' },
+        });
+        page = await context.newPage();
         menu = new Menu(page);
         newsPage = new NewsPage(page);
         loginPage = new LoginPage(page);
@@ -35,7 +39,7 @@ test.describe('News Tests', () => {
     });
 
     test.afterAll(async () => {
-        await page.close();
+        await context.close();
     });
 
     test('TC_001: Check news data', async () => {

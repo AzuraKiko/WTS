@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import AssetPage, { parseAsset, countAssetLabelMatches } from '../../page/ui/Asset';
 import { NumberValidator } from '../../helpers/validationUtils';
@@ -25,6 +25,7 @@ test.describe('Asset Summary Tests', () => {
     let assetPage: AssetPage;
     let orderPage: OrderPage;
     let page: Page;
+    let context: BrowserContext;
 
     const overviewLabels = [
         'Tổng tài sản',
@@ -71,7 +72,10 @@ test.describe('Asset Summary Tests', () => {
     };
 
     test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
+        context = await browser.newContext({
+            recordVideo: { dir: 'test-results' },
+        });
+        page = await context.newPage();
         loginPage = new LoginPage(page);
         assetPage = new AssetPage(page);
         orderPage = new OrderPage(page);
@@ -82,7 +86,7 @@ test.describe('Asset Summary Tests', () => {
     });
 
     test.afterAll(async () => {
-        await page.close();
+        await context.close();
     });
 
 

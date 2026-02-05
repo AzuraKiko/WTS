@@ -7,7 +7,8 @@ import {
     ERROR_MESSAGES,
     TEST_DATA,
     delay,
-    assertionHelpers
+    assertionHelpers,
+    isSystemBatching
 } from "../utils/testConfig";
 
 // Constants
@@ -81,6 +82,7 @@ test.describe("OrderApi Tests", () => {
     });
 
     test.describe("placeNewOrder method", () => {
+        test.skip(isSystemBatching(), 'Hệ thống đang chạy batch - skip Order API tests');
         test("2. should successfully place a buy order", async () => {
             const orderParams = createOrderParams();
             const response = await placeOrderWithErrorHandling(orderParams);

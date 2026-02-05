@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Locator } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext, type Locator } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import Menu from '../../page/ui/Menu';
 import { TEST_CONFIG } from '../utils/testConfig';
@@ -19,13 +19,17 @@ const getTextList = async (locator: Locator): Promise<string[]> =>
 
 test.describe('PineB Tests', () => {
     let page: Page;
+    let context: BrowserContext;
     let loginPage: LoginPage;
     let menu: Menu;
     let bondListApi: BondListApi;
 
 
     test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
+        context = await browser.newContext({
+            recordVideo: { dir: 'test-results' },
+        });
+        page = await context.newPage();
         loginPage = new LoginPage(page);
         menu = new Menu(page);
         bondListApi = new BondListApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
@@ -42,7 +46,7 @@ test.describe('PineB Tests', () => {
     });
 
     test.afterAll(async () => {
-        await page.close();
+        await context.close();
     });
 
     test('TC_001: Check data on PineB page', async () => {

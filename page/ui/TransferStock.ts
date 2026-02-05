@@ -6,7 +6,7 @@ import MatrixPage from './MatrixPage';
 import { NumberValidator } from '../../helpers/validationUtils';
 import OrderPage from './OrderPage';
 
-
+const timeout = 10000;
 export interface TransferStockRow {
     stockCode: string;
     holdingQty: number;
@@ -81,12 +81,12 @@ class TransferStockPage extends BasePage {
     async navigateToTransferStock(): Promise<void> {
         await this.menu.openMenuHeader('Tiện ích');
         await this.menu.openSubMenu('Tiện ích', 'Chuyển cổ phiếu');
-        await this.container.waitFor({ state: 'visible', timeout: 10000 });
-        await this.title.waitFor({ state: 'visible', timeout: 10000 });
+        await this.container.waitFor({ state: 'visible', timeout: timeout });
+        await this.title.waitFor({ state: 'visible', timeout: timeout });
     }
 
     async getTitle(): Promise<string> {
-        await this.title.waitFor({ state: 'visible', timeout: 10000 });
+        await this.title.waitFor({ state: 'visible', timeout: timeout });
         const title = await this.title.textContent() || '';
         return title?.trim() || '';
     }
@@ -185,7 +185,7 @@ class TransferStockPage extends BasePage {
         await this.submitTransferStock();
         if (await this.matrixPage.isMatrixVisible()) {
             await this.matrixPage.enterMatrixValid();
-            await this.page.waitForTimeout(3000);
+            await this.page.waitForTimeout(timeout);
             await this.orderPage.closeAllToastMessages();
             await this.submitTransferStock();
         }
@@ -196,7 +196,7 @@ class TransferStockPage extends BasePage {
         await this.submitTransferStock();
         if (await this.matrixPage.isMatrixVisible()) {
             await this.matrixPage.enterMatrixValid();
-            await this.page.waitForTimeout(3000);
+            await this.page.waitForTimeout(timeout);
             await this.orderPage.closeAllToastMessages();
             await this.submitTransferStock();
         }

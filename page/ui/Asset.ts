@@ -19,6 +19,8 @@ export const ASSET_LABELS: Record<string, string[]> = {
     mgDebt: ['Tổng dư nợ margin']
 };
 
+ const timeout = 10000;
+
 
 export type AssetData = ReturnType<typeof parseAsset>;
 
@@ -72,7 +74,7 @@ class AssetPage extends BasePage {
 
     async navigateToAssetSummary(): Promise<void> {
         await this.menu.clickSubMenu('Tài sản', 'Tổng quan');
-        await this.page.waitForTimeout(3000);
+        await this.page.waitForTimeout(timeout);
     }
 
     async cropAssetSummary(): Promise<Buffer> {
@@ -99,7 +101,7 @@ class AssetPage extends BasePage {
         await this.ensureVisible(tab);
 
         try {
-            await tab.click({ timeout: 10000 });
+            await tab.click({ timeout: timeout });
             return;
         } catch {
             // fallback to avoid overlay intercept in headless
@@ -148,7 +150,7 @@ class AssetPage extends BasePage {
 
     async navigateToPortfolio(): Promise<void> {
         await this.menu.clickSubMenu('Tài sản', 'Danh mục');
-        await this.page.waitForTimeout(3000);
+        await this.page.waitForTimeout(timeout);
     }
 
     async getTableByText(text: string): Promise<{
@@ -186,7 +188,7 @@ class AssetPage extends BasePage {
 
     async navigateToInvestmentPerformance(): Promise<void> {
         await this.menu.clickSubMenu('Tài sản', 'Hiệu suất đầu tư');
-        await this.page.waitForTimeout(3000);
+        await this.page.waitForTimeout(timeout);
     }
 
     async getListPerformanceTabs(): Promise<string[]> {
@@ -200,20 +202,20 @@ class AssetPage extends BasePage {
     async selectCalendarChart(): Promise<void> {
         const calendarBtn = this.viewAsset.locator('div:has(> .icon.iCalendar2)'); // find the first div that has the icon.iCalendar2 class
         await this.safeClick(calendarBtn);
-        await this.page.waitForTimeout(3000);
+        await this.page.waitForTimeout(timeout);
     }
 
     async selectLineChart(): Promise<void> {
         const lineBtn = this.viewAsset.locator('div:has(> .icon.iChart3 )'); // find the first div that has the icon.iChart3 class
         await this.safeClick(lineBtn);
-        await this.page.waitForTimeout(3000);
+        await this.page.waitForTimeout(timeout);
     }
 
     async openWithdrawalMoneyModal(): Promise<void> {
         await this.safeClick(this.withdrawalButton);
         if (await this.matrixPage.isMatrixVisible()) {
             await this.matrixPage.enterMatrixValid();
-            await this.page.waitForTimeout(3000);
+            await this.page.waitForTimeout(timeout);
             await this.safeClick(this.withdrawalButton);
         }
         await this.withdrawalModal.waitFor({ state: 'visible' });
@@ -250,7 +252,7 @@ class AssetPage extends BasePage {
 
     async verifyOTP(): Promise<void> {
         const authenSection = this.withdrawalModal.locator('.authen-section');
-        await authenSection.waitFor({ state: 'visible', timeout: 30000 });
+        await authenSection.waitFor({ state: 'visible', timeout: timeout });
         const currentMethodActive = (await authenSection.locator('.authen-type-switch.active').textContent())?.trim() || '';
         if (currentMethodActive === 'Ma trận') {
             await this.matrixPage.enterMatrixConfirm(authenSection);
@@ -258,14 +260,14 @@ class AssetPage extends BasePage {
             await this.safeClick(authenSection.locator('.authen-type-switch').filter({ hasText: 'Ma trận' }));
             await this.matrixPage.enterMatrixConfirm(authenSection);
         }
-        await this.page.waitForTimeout(30000);
+        await this.page.waitForTimeout(timeout);
     }
 
     async withdrawalMoney(amount: number): Promise<void> {
         await this.fillAmount(amount.toString());
         await this.submitWithdrawal();
 
-        await this.withdrawalModalConfirm.waitFor({ state: 'visible', timeout: 3000 });
+        await this.withdrawalModalConfirm.waitFor({ state: 'visible', timeout: timeout });
         await this.verifyOTP();
         await this.clickConfirmWithdrawal();
     }

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 import { PriceBoardPage } from "../../page/ui/PriceBoard";
 import StockDetailPage from "../../page/ui/StockDetail";
 import { attachScreenshot } from "../../helpers/reporterHelper";
@@ -72,6 +72,7 @@ async function expectPriceAnalysisMatchesAPI(
 
 test.describe("Stock Detail Tests", () => {
     let page: Page;
+    let context: BrowserContext;
     let priceBoardPage: PriceBoardPage;
     let stockDetailPage: StockDetailPage;
     let marketApi: MarketApi;
@@ -81,7 +82,10 @@ test.describe("Stock Detail Tests", () => {
 
 
     test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
+        context = await browser.newContext({
+            recordVideo: { dir: 'test-results' },
+        });
+        page = await context.newPage();
         priceBoardPage = new PriceBoardPage(page);
         stockDetailPage = new StockDetailPage(page);
         marketApi = new MarketApi();
@@ -98,7 +102,7 @@ test.describe("Stock Detail Tests", () => {
     });
 
     test.afterAll(async () => {
-        await page.close();
+        await context.close();
     });
 
     test("TC_001: Check stock detail of stock code", async () => {

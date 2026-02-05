@@ -47,7 +47,7 @@ export interface MessageVerification {
  */
 export class ScrollUtils {
     private static readonly DEFAULT_SCROLL_AMOUNT = 100;
-    private static readonly DEFAULT_TIMEOUT = 1000;
+    private static readonly DEFAULT_TIMEOUT = 10000;
     private static readonly MAX_SCROLL_ATTEMPTS = 50;
 
     /**

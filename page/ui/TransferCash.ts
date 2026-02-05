@@ -6,6 +6,7 @@ import MatrixPage from './MatrixPage';
 import { NumberValidator } from '../../helpers/validationUtils';
 import OrderPage from './OrderPage';
 
+const timeout = 10000;
 interface TransferCashAccountInfo {
     balance: string;
     withdrawable: string;
@@ -70,12 +71,12 @@ class TransferCashPage extends BasePage {
     async navigateToTransferCash(): Promise<void> {
         await this.menu.openMenuHeader('Tiện ích');
         await this.menu.openSubMenu('Tiện ích', 'Chuyển tiền giữa các tiểu khoản');
-        await this.container.waitFor({ state: 'visible', timeout: 10000 });
-        await this.title.waitFor({ state: 'visible', timeout: 10000 });
+        await this.container.waitFor({ state: 'visible', timeout: timeout });
+        await this.title.waitFor({ state: 'visible', timeout: timeout });
     }
 
     async getTitle(): Promise<string> {
-        await this.title.waitFor({ state: 'visible', timeout: 10000 });
+        await this.title.waitFor({ state: 'visible', timeout: timeout });
         const title = await this.title.textContent() || '';
         return title?.trim() || '';
     }
@@ -141,7 +142,7 @@ class TransferCashPage extends BasePage {
         await this.submitTransfer();
         if (await this.matrixPage.isMatrixVisible()) {
             await this.matrixPage.enterMatrixValid();
-            await this.page.waitForTimeout(3000);
+            await this.page.waitForTimeout(timeout);
             await this.orderPage.closeAllToastMessages();
             await this.submitTransfer();
         }

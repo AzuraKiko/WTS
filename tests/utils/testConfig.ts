@@ -80,6 +80,13 @@ export const TEST_CONFIG = {
 } as const;
 
 /**
+ * Global batch status helper
+ * - Giá trị được set một lần trong globalSetup (process.env.IS_BATCHING)
+ * - Dùng trong các file test để quyết định skip khi hệ thống đang chạy batch
+ */
+export const isSystemBatching = (): boolean => process.env.IS_BATCHING === 'true';
+
+/**
  * Common Error Messages
  * Centralized error message constants for consistent testing
  */

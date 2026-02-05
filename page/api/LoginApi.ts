@@ -318,6 +318,60 @@ export default class LoginApi {
         }
         return { session, cif, token, acntNo, subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio };
     }
+
+    async isSystemBatchingApi(): Promise<boolean> {
+        let session: string = "";
+        const loginResponse = await this.loginApi(
+            TEST_CONFIG.TEST_USER,
+            TEST_CONFIG.TEST_PASS_ENCRYPT,
+            TEST_CONFIG.TEST_USER
+        );
+        if (loginResponse.data) {
+            session = loginResponse.data.session;
+        }
+        const authResponse = await this.generateAuth(TEST_CONFIG.TEST_USER, session);
+        if (authResponse.rc !== 1 && (authResponse.data.message.includes("Hệ thống đang chạy batch") || authResponse.data.message.includes("Hệ thống đang xử lý batch cuối ngày"))) {
+            return true;
+        }
+        return false;
+    }
+
+    async getAvailableSubAccountsApi(): Promise<string[]> {
+        let subAcntNormal: string = "";
+        let subAcntMargin: string = "";
+        let subAcntDerivative: string = "";
+        let subAcntFolio: string = "";
+
+        const loginResponse = await this.loginApi(
+            TEST_CONFIG.TEST_USER,
+            TEST_CONFIG.TEST_PASS_ENCRYPT,
+            TEST_CONFIG.TEST_USER
+        );
+
+        if (loginResponse.data) {
+            // Get account information
+            if (loginResponse.data.custInfo?.normal && loginResponse.data.custInfo.normal.length > 0) {
+                const account: any = loginResponse.data.custInfo.normal.find((it: any) => it.subAcntNo.includes("N"));
+                subAcntNormal = account?.subAcntNo;
+            }
+            if (loginResponse.data.custInfo?.normal && loginResponse.data.custInfo.normal.length > 0) {
+                const account: any = loginResponse.data.custInfo.normal.find((it: any) => it.subAcntNo.includes("M"));
+                subAcntMargin = account?.subAcntNo;
+            }
+            if (loginResponse.data.custInfo?.normal && loginResponse.data.custInfo.normal.length > 0) {
+                const account: any = loginResponse.data.custInfo.normal.find((it: any) => it.subAcntNo.includes("D"));
+                subAcntDerivative = account?.subAcntNo;
+            }
+            if (loginResponse.data.custInfo?.normal && loginResponse.data.custInfo.normal.length > 0) {
+                const account: any = loginResponse.data.custInfo.normal.find((it: any) => it.subAcntNo.includes("P"));
+                subAcntFolio = account?.subAcntNo;
+            }
+        } else {
+            throw new Error("Login failed, no data returned.");
+        }
+
+        return [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio];
+    }
 }
 
 

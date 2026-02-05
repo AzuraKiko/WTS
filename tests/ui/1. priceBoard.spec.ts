@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { PriceBoardPage } from '../../page/ui/PriceBoard';
 import Menu from '../../page/ui/Menu';
 import { MarketApi, MarketGatewayApi, MarketWapiApi } from '../../page/api/MarketApi';
@@ -138,10 +138,14 @@ test.describe('Price Board Tests', () => {
     let menu: Menu;
     let page: Page;
     let chartPage: ChartPage;
+    let context: BrowserContext;
 
 
     test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
+        context = await browser.newContext({
+            recordVideo: { dir: 'test-results' },
+        });
+        page = await context.newPage();
         priceBoardPage = new PriceBoardPage(page);
         marketApi = new MarketApi();
         marketGatewayApi = new MarketGatewayApi();
@@ -153,7 +157,7 @@ test.describe('Price Board Tests', () => {
     });
 
     test.afterAll(async () => {
-        await page.close();
+        await context.close();
     });
     // --- TEST CASE CHO BIỂU ĐỒ MINI CHART ---
 

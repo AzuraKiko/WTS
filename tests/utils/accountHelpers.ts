@@ -16,7 +16,10 @@ export const selectIfDifferent = async (
     }
 };
 
-export const buildAvailableSubAccounts = (loginData: {
+export const buildAvailableSubAccounts = (availableSubAccounts: string[]) =>
+    availableSubAccounts.filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
+
+export const buildAvailableSubAccountsFromLoginData = (loginData: {
     subAcntNormal?: string;
     subAcntMargin?: string;
     subAcntDerivative?: string;
@@ -54,3 +57,18 @@ export const refreshMaxWithdrawableSubAccount = async (
         entries[0] ?? { subAcntNo: "", wdrawAvail: 0 }
     );
 };
+
+/**
+ * Read globally prepared availableSubAccounts from environment (set in globalSetup)
+ */
+export const getGlobalAvailableSubAccounts = (): string[] => {
+    const raw = process.env.AVAILABLE_SUBACCOUNTS;
+    if (!raw) return [];
+    try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+

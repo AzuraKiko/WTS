@@ -37,14 +37,7 @@ class MatrixPage extends BasePage {
      */
     async enterMatrixValid(): Promise<void> {
         await this.refreshMatrix.waitFor({ state: 'visible', timeout: 30000 });
-
-        const coords: string[] = await this.matrixGen.allTextContents();
-        const validCoords: string[] = coords.filter((coord: string) => isValidCoordinate(coord.trim()));
-
-        if (validCoords.length < 3) {
-            throw new Error(`Expected 3 valid coordinates, but got ${validCoords.length}. Coordinates: ${coords.join(', ')}`);
-        }
-
+        const validCoords = await this.getValidMatrixCoords(this.matrixGen);
         const matrixValues: string[] = getMatrixCodes(validCoords.slice(0, 3));
 
         // Use for...of loop instead of forEach for proper async handling
@@ -99,20 +92,45 @@ class MatrixPage extends BasePage {
 
 
         await refresh.waitFor({ state: 'visible', timeout: 30000 });
-
-        const coords: string[] = await matrix.allTextContents();
-        const validCoords: string[] = coords.filter((coord: string) => isValidCoordinate(coord.trim()));
-
-        if (validCoords.length < 3) {
-            throw new Error(`Expected 3 valid coordinates, but got ${validCoords.length}. Coordinates: ${coords.join(', ')}`);
-        }
-
+        const validCoords = await this.getValidMatrixCoords(matrix);
         const matrixValues: string[] = getMatrixCodes(validCoords.slice(0, 3));
 
         // Use for...of loop instead of forEach for proper async handling
         for (let index = 0; index < matrixValues.length; index++) {
             await input.nth(index).fill(matrixValues[index]);
         }
+    }
+
+    /**
+     * Matrix text đôi khi load chậm, cần retry trước khi throw lỗi.
+     */
+    private async getValidMatrixCoords(container: Locator): Promise<string[]> {
+        const maxAttempts = 5;
+        const delayMs = 1000;
+        let lastCoords: string[] = [];
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            const coords: string[] = await container.allTextContents();
+            lastCoords = coords;
+            const validCoords: string[] = coords
+                .map((coord: string) => coord.trim())
+                .filter((coord: string) => isValidCoordinate(coord));
+
+            if (validCoords.length >= 3) {
+                return validCoords;
+            }
+
+            // Lần cuối thì không cần chờ nữa
+            if (attempt < maxAttempts) {
+                console.log(`Matrix coords not ready (attempt ${attempt}/${maxAttempts}). Current valid: ${validCoords.length}, all coords: ${coords.join(', ')}`);
+                await this.page.waitForTimeout(delayMs);
+            }
+        }
+
+        throw new Error(
+            `Expected at least 3 valid matrix coordinates after ${maxAttempts} attempts, but got ${lastCoords.length
+            }. Coordinates: ${lastCoords.join(', ')}`
+        );
     }
 
 }

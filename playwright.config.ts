@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+    globalSetup: './tests/utils/globalSetup.ts',
     testDir: './tests', //testDir: Đường dẫn đến thư mục chứa các file test. Trong trường hợp này, Playwright sẽ tìm và chạy các test trong thư mục ./tests
     timeout: 300000, //Thời gian tối đa cho mỗi test (120 giây)
     expect: {
@@ -21,7 +22,7 @@ export default defineConfig({
         // baseURL: 'https://portal-tradeforgood-uat.equix.app', //URL cơ sở cho tất cả các test. Khi bạn sử dụng page.goto('/products'), nó sẽ điều hướng đến https://www.demoblaze.com/products.
         trace: 'on-first-retry', //Cấu hình khi nào Playwright nên thu thập trace (dấu vết) để debug. 'on-first-retry' có nghĩa là trace chỉ được thu thập khi test thất bại và được chạy lại lần đầu tiên. Trace bao gồm ảnh chụp màn hình, DOM, network requests, v.v.
         screenshot: 'only-on-failure',
-        video: 'on', // Chỉ quay video khi fail và retry lần đầu
+        video: 'on', 
         // Các options khác:
         // 'on-first-retry', - Chỉ quay video khi fail và retry lần đầu
         // 'off' - Tắt hoàn toàn
@@ -35,7 +36,7 @@ export default defineConfig({
             name: 'Chrome',
             use: {
                 browserName: 'chromium',
-                headless: false, //false nghĩa là trình duyệt sẽ hiển thị UI (có thể nhìn thấy), true sẽ chạy ẩn
+                headless: true, //false nghĩa là trình duyệt sẽ hiển thị UI (có thể nhìn thấy), true sẽ chạy ẩn
                 // viewport: null, //null nghĩa là sử dụng kích thước cửa sổ trình duyệt mặc định thay vì kích thước cố định
                 viewport: { width: 1920, height: 1080 },
                 launchOptions: {

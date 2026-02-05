@@ -1,17 +1,18 @@
-import { test, expect, type Page, Locator } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext, Locator } from '@playwright/test';
 import LoginPage from '../../page/ui/LoginPage';
 import OrderPage from '../../page/ui/OrderPage';
 import OrderBook from '../../page/ui/OrderBook';
-import { getRandomStockCode, TEST_CONFIG } from '../utils/testConfig';
+import { getRandomStockCode, TEST_CONFIG, isSystemBatching } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import LogoutPage from "../../page/ui/LogoutPage";
 import { MarketApi } from '../../page/api/MarketApi';
 import PortfolioPage from '../../page/ui/PortfolioPage';
 import { TimeUtils } from '../../helpers/uiUtils';
 
-
+const batching = isSystemBatching();
 
 test.describe('Order Management Tests', () => {
+  test.skip(batching, 'Hệ thống đang chạy batch - skip Order UI tests');
   let loginPage: LoginPage;
   let orderPage: OrderPage;
   let orderBook: OrderBook;
@@ -19,9 +20,14 @@ test.describe('Order Management Tests', () => {
   let marketApi: MarketApi;
   let portfolioPage: PortfolioPage;
   let page: Page;
+  let context: BrowserContext;
+
 
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
+    context = await browser.newContext({
+      recordVideo: { dir: 'test-results' },
+    });
+    page = await context.newPage();
     loginPage = new LoginPage(page);
     orderPage = new OrderPage(page);
     orderBook = new OrderBook(page);
@@ -32,11 +38,6 @@ test.describe('Order Management Tests', () => {
     await loginPage.loginSuccess();
     expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
     await attachScreenshot(page, 'After Login');
-  
-    if (await orderPage.isSystemBatching()) {
-      test.skip(true, 'Hệ thống đang chạy batch');
-    }
-  
     await orderPage.navigateToOrder();
   });
 
@@ -46,7 +47,7 @@ test.describe('Order Management Tests', () => {
     await logoutPage.logout();
     expect(await logoutPage.verifyLogoutSuccess()).toBe(true);
     await attachScreenshot(page, 'After Logout');
-    await page.close();
+    await context.close();
   });
 
   test('TC_001: Check place and cancel a buy order', async () => {
@@ -70,6 +71,7 @@ test.describe('Order Management Tests', () => {
     }
 
     expect(await orderPage.getStockCodeInDayRowData(0)).toBe(stockCode);
+    console.log('stockCode in Table Order In Day:', await orderPage.getStockCodeInDayRowData(0));
 
     if (await orderBook.isModifyOrderEnabled(0) && await TimeUtils.checkDataWithTimeRange(new Date(), 9, 16, 14, 30)) {
       await orderBook.modifyOrder(0, undefined, 2);
