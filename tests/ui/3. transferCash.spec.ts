@@ -131,7 +131,7 @@ test.describe('Transfer Cash Tests', () => {
         // Quyết định có chuyển hay không dựa trên withdrawable thực tế từ UI,
         // tránh phụ thuộc vào maxWithdrawableSubAccount.wdrawAvail dễ sai/leak state.
         const currentWithdrawable = NumberValidator.parseNumber(sourceAccountInfo.withdrawable);
-        const amount = 10000;
+        const amount = 1000;
 
         if (currentWithdrawable < amount) {
             console.log('Không đủ số dư có thể rút để chuyển', {
