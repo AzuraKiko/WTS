@@ -4,16 +4,16 @@ import TransferCashPage from '../../page/ui/TransferCash';
 import { TEST_CONFIG, isSystemBatching } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { NumberValidator } from '../../helpers/validationUtils';
-import { getSharedLoginSession, resetSharedLoginSession } from "../api/sharedSession";
 import OrderPage from '../../page/ui/OrderPage';
 import { WaitUtils } from '../../helpers/uiUtils';
+import LoginApi from '../../page/api/LoginApi';
 import {
     createAssetApi,
     refreshMaxWithdrawableSubAccount,
     getSubAccountNo,
     selectIfDifferent,
     getGlobalAvailableSubAccounts,
-    buildAvailableSubAccountsFromLoginData,
+    buildAvailableSubAccounts,
 } from '../utils/accountHelpers';
 import AssetPage from '../../page/ui/Asset';
 
@@ -34,6 +34,7 @@ test.describe('Transfer Cash Tests', () => {
     let transferCashPage: TransferCashPage;
     let orderPage: OrderPage;
     let assetPage: AssetPage;
+    let loginApi: LoginApi;
     let maxWithdrawableSubAccount: { subAcntNo: string; wdrawAvail: number };
     let availableSubAccounts: string[] = [];
     let cashTransferHistAPI: any[] = [];
@@ -63,28 +64,22 @@ test.describe('Transfer Cash Tests', () => {
         transferCashPage = new TransferCashPage(page);
         orderPage = new OrderPage(page);
         assetPage = new AssetPage(page);
+        loginApi = new LoginApi(TEST_CONFIG.WEB_LOGIN_URL);
 
-        if (!batching) {
-            const loginData = await getSharedLoginSession("Matrix", true);
-            const { session: sessionValue, acntNo: acntNoValue } = loginData;
-            session = sessionValue;
-            acntNo = acntNoValue;
+        const loginData = await loginApi.getAvailableSubAccountsApi();
+        session = loginData.session;
+        acntNo = loginData.acntNo;
 
-            if (!availableSubAccounts.length) {
-                availableSubAccounts = buildAvailableSubAccountsFromLoginData(loginData);
-            }
-
-            await refreshMaxWithdrawable();
+        if (!availableSubAccounts.length) {
+            availableSubAccounts = buildAvailableSubAccounts(loginData.subAccounts);
         }
+
+        await refreshMaxWithdrawable();
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
         await attachScreenshot(page, 'After Login');
         await transferCashPage.navigateToTransferCash();
-    });
-
-    test.afterEach(async () => {
-        resetSharedLoginSession();
     });
 
     test('TC_001: Check transfer cash function', async ({ page }) => {
@@ -112,13 +107,8 @@ test.describe('Transfer Cash Tests', () => {
         const note = await transferCashPage.getTransferContent();
         expect(note).toContain(`chuyển tiền online từ ${sourceSubAccountNo} đến ${destinationSubAccountNo}`);
 
-        if (batching) {
-            console.log('Hệ thống đang chạy batch - skip transfer cash');
-            return;
-        }
+        test.skip(batching, 'Hệ thống đang chạy batch - skip transfer cash');
 
-        // Luôn refresh lại tiểu khoản rút tối đa để tránh dùng data cũ
-        await refreshMaxWithdrawable();
 
         await selectIfDifferent(
             sourceSubAccountNo,
@@ -128,8 +118,6 @@ test.describe('Transfer Cash Tests', () => {
         sourceSubAccountNo = maxWithdrawableSubAccount.subAcntNo;
         sourceAccountInfo = await transferCashPage.getSourceAccountInfo();
 
-        // Quyết định có chuyển hay không dựa trên withdrawable thực tế từ UI,
-        // tránh phụ thuộc vào maxWithdrawableSubAccount.wdrawAvail dễ sai/leak state.
         const currentWithdrawable = NumberValidator.parseNumber(sourceAccountInfo.withdrawable);
         const amount = 1000;
 
@@ -320,9 +308,8 @@ test.describe('Transfer Cash Tests', () => {
 
     test('TC_003: Check withdrawal money function', async ({ page }) => {
         await assetPage.menu.openSubMenu('Tài sản', 'Tổng quan');
-        if (batching) {
-            test.skip(true, 'Hệ thống đang chạy batch');
-        }
+        test.skip(batching, 'Hệ thống đang chạy batch - skip withdrawal money');
+
 
         await assetPage.openWithdrawalMoneyModal();
         let sourceAccount = await assetPage.getSelectValue();

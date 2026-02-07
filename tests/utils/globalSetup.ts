@@ -24,7 +24,7 @@ async function globalSetup() {
     try {
         // Login một lần để lấy danh sách tiểu khoản khả dụng
         const availableSubAccounts = await loginApi.getAvailableSubAccountsApi();
-        const availableSubAccountsFiltered = buildAvailableSubAccounts(availableSubAccounts);
+        const availableSubAccountsFiltered = buildAvailableSubAccounts(availableSubAccounts.subAccounts);
         process.env.AVAILABLE_SUBACCOUNTS = JSON.stringify(availableSubAccountsFiltered);
         console.log(`[GlobalSetup] AVAILABLE_SUBACCOUNTS = ${process.env.AVAILABLE_SUBACCOUNTS}`);
     } catch (error) {

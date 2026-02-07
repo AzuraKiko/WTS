@@ -13,8 +13,7 @@ const batching = isSystemBatching();
 
 test.describe('Order Management Tests', () => {
   test.skip(batching, 'Hệ thống đang chạy batch - skip Order UI tests');
-  console.warn('Thông báo: Hệ thống đang chạy batch - skip Order UI tests');
-  
+
   let loginPage: LoginPage;
   let orderPage: OrderPage;
   let orderBook: OrderBook;
@@ -73,7 +72,7 @@ test.describe('Order Management Tests', () => {
       console.warn("Trạng thái lệnh không cho phép sửa hoặc phiên ATO/ ATC")
     }
 
-    if (await TimeUtils.checkDataWithTimeRange(new Date(), 9, 0, 9, 15) || await TimeUtils.checkDataWithTimeRange(new Date(), 14, 30, 15, 0)) {
+    if ((await TimeUtils.checkDataWithTimeRange(new Date(), 9, 0, 9, 15) || await TimeUtils.checkDataWithTimeRange(new Date(), 14, 30, 15, 0)) && !TimeUtils.isWeekend()) {
       console.warn("Phiên ATO/ATC ko được huỷ lệnh")
     } else {
       await orderBook.cancelOrder(0);

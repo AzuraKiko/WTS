@@ -4,12 +4,12 @@ import TransferStockPage from '../../page/ui/TransferStock';
 import { TEST_CONFIG, isSystemBatching } from '../utils/testConfig';
 import { attachScreenshot } from '../../helpers/reporterHelper';
 import { NumberValidator } from '../../helpers/validationUtils';
-import { getSharedLoginSession, resetSharedLoginSession } from "../api/sharedSession";
 import OrderPage from '../../page/ui/OrderPage';
 import { v4 as uuidv4 } from 'uuid';
 import { WaitUtils } from '../../helpers/uiUtils';
 import { getAvailStockList } from '../../page/api/AssetApi';
-import { getSubAccountNo, selectIfDifferent, buildAvailableSubAccountsFromLoginData, getGlobalAvailableSubAccounts } from '../utils/accountHelpers';
+import { getSubAccountNo, selectIfDifferent, buildAvailableSubAccounts, getGlobalAvailableSubAccounts } from '../utils/accountHelpers';
+import LoginApi from '../../page/api/LoginApi';
 
 const STOCK_TRANSFER_STATUS: Record<string, string> = {
     "0": "Thành công",
@@ -27,6 +27,9 @@ test.describe('Transfer Stock Tests', () => {
     let loginPage: LoginPage;
     let transferStockPage: TransferStockPage;
     let orderPage: OrderPage;
+    let loginApi: LoginApi;
+    let session = '';
+    let acntNo = '';
     let availableSubAccounts: string[] = [];
     let availableStocks: any[] = [];
     let maxAvailableStock: { subAcntNo: string; stocks: any[] };
@@ -39,38 +42,40 @@ test.describe('Transfer Stock Tests', () => {
         loginPage = new LoginPage(page);
         transferStockPage = new TransferStockPage(page);
         orderPage = new OrderPage(page);
+        loginApi = new LoginApi(TEST_CONFIG.WEB_LOGIN_URL);
 
-        if (!batching) {
-            const loginData = await getSharedLoginSession("Matrix", true);
-            const { session, acntNo } = loginData;
+        const loginData = await loginApi.getAvailableSubAccountsApi();
+        session = loginData.session;
+        acntNo = loginData.acntNo;
+        console.log('session', session);
+        console.log('acntNo', acntNo);
 
-            // Ưu tiên dùng danh sách global đã build ở globalSetup
-            if (!availableSubAccounts.length) {
-                availableSubAccounts = buildAvailableSubAccountsFromLoginData(loginData);
-            }
-
-            async function getAvailStockListSubAccount(subAcntNo: string): Promise<any[]> {
-                const response = await getAvailStockListApi.getAvailStockList({
-                    user: TEST_CONFIG.TEST_USER,
-                    session,
-                    acntNo,
-                    subAcntNo,
-                    rqId: uuidv4(),
-                });
-                return response?.data?.data?.list ?? [];
-            }
-            availableStocks = await Promise.all(
-                availableSubAccounts.map(async (subAcntNo) => ({
-                    subAcntNo,
-                    stocks: await getAvailStockListSubAccount(subAcntNo),
-                }))
-            );
-
-            maxAvailableStock = availableStocks.reduce(
-                (max, current) => (current.stocks.length > max.stocks.length ? current : max),
-                availableStocks[0] ?? { subAcntNo: "", stocks: [] }
-            );
+        if (!availableSubAccounts.length) {
+            availableSubAccounts = buildAvailableSubAccounts(loginData.subAccounts);
         }
+
+        async function getAvailStockListSubAccount(subAcntNo: string): Promise<any[]> {
+            const response = await getAvailStockListApi.getAvailStockList({
+                user: TEST_CONFIG.TEST_USER,
+                session,
+                acntNo,
+                subAcntNo,
+                rqId: uuidv4(),
+            });
+            return response?.data?.data?.list ?? [];
+        }
+        availableStocks = await Promise.all(
+            availableSubAccounts.map(async (subAcntNo) => ({
+                subAcntNo,
+                stocks: await getAvailStockListSubAccount(subAcntNo),
+            }))
+        );
+
+        maxAvailableStock = availableStocks.reduce(
+            (max, current) => (current.stocks.length > max.stocks.length ? current : max),
+            availableStocks[0] ?? { subAcntNo: "", stocks: [] }
+        );
+
 
         await loginPage.loginSuccess();
         expect(await loginPage.verifyLoginSuccess(TEST_CONFIG.TEST_USER)).toBeTruthy();
@@ -78,9 +83,6 @@ test.describe('Transfer Stock Tests', () => {
         await transferStockPage.navigateToTransferStock();
     });
 
-    test.afterEach(async () => {
-        resetSharedLoginSession();
-    });
 
     test('TC_001: Check transfer stock function', async ({ page }) => {
 
@@ -156,10 +158,7 @@ test.describe('Transfer Stock Tests', () => {
         console.log('rowSourceUI', rowSourceUI);
         console.log('rowSourceAPI', rowSourceAPI);
 
-        if (batching) {
-            console.log('Hệ thống đang chạy batch - skip transfer stock');
-            return;
-        }
+        test.skip(batching, 'Hệ thống đang chạy batch - skip transfer stock');
 
         // Transfer stock
         await transferStockPage.transferMaxStock(0);

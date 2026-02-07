@@ -19,14 +19,6 @@ export const selectIfDifferent = async (
 export const buildAvailableSubAccounts = (availableSubAccounts: string[]) =>
     availableSubAccounts.filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
 
-export const buildAvailableSubAccountsFromLoginData = (loginData: {
-    subAcntNormal?: string;
-    subAcntMargin?: string;
-    subAcntDerivative?: string;
-    subAcntFolio?: string;
-}) =>
-    [loginData.subAcntNormal, loginData.subAcntMargin, loginData.subAcntDerivative, loginData.subAcntFolio]
-        .filter((subAcntNo): subAcntNo is string => Boolean(subAcntNo && subAcntNo.trim() !== ""));
 
 export const createAssetApi = () => new AssetApi({ baseUrl: TEST_CONFIG.WEB_LOGIN_URL });
 

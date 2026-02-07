@@ -21,8 +21,8 @@ export interface ENVConfig {
  * Centralizes environment variable handling across all tests
  */
 export const getEnvironment = () => {
-    let env = process.env.NODE_ENV?.toUpperCase() || 'UAT';
-    if (env === 'PRODUCTION') env = 'UAT';
+    let env = process.env.NODE_ENV?.toUpperCase() || 'PROD';
+    if (env === 'PRODUCTION') env = 'PROD';
     return env;
 };
 
@@ -84,7 +84,7 @@ export const TEST_CONFIG = {
  * - Giá trị được set một lần trong globalSetup (process.env.IS_BATCHING)
  * - Dùng trong các file test để quyết định skip khi hệ thống đang chạy batch
  */
-export const isSystemBatching = (): boolean => process.env.IS_BATCHING === 'true';
+export const isSystemBatching = (): boolean => process.env.IS_BATCHING === 'true' ? true : false;
 
 /**
  * Common Error Messages

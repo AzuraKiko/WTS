@@ -328,6 +328,7 @@ export default class LoginApi {
         );
         if (loginResponse.data) {
             session = loginResponse.data.session;
+
         }
         const authResponse = await this.generateAuth(TEST_CONFIG.TEST_USER, session);
         if (authResponse.rc !== 1 && (authResponse.data.message.includes("Hệ thống đang chạy batch") || authResponse.data.message.includes("Hệ thống đang xử lý batch cuối ngày"))) {
@@ -336,11 +337,14 @@ export default class LoginApi {
         return false;
     }
 
-    async getAvailableSubAccountsApi(): Promise<string[]> {
+    async getAvailableSubAccountsApi(): Promise<{ session: string, cif: string, acntNo: string, subAccounts: string[] }> {
+        let acntNo: string = "";
         let subAcntNormal: string = "";
         let subAcntMargin: string = "";
         let subAcntDerivative: string = "";
         let subAcntFolio: string = "";
+        let session: string = "";
+        let cif: string = "";
 
         const loginResponse = await this.loginApi(
             TEST_CONFIG.TEST_USER,
@@ -349,6 +353,9 @@ export default class LoginApi {
         );
 
         if (loginResponse.data) {
+            session = loginResponse.data.session;
+            cif = loginResponse.data.cif;
+            acntNo = loginResponse.data.custInfo?.normal?.[0]?.acntNo ?? "";
             // Get account information
             if (loginResponse.data.custInfo?.normal && loginResponse.data.custInfo.normal.length > 0) {
                 const account: any = loginResponse.data.custInfo.normal.find((it: any) => it.subAcntNo.includes("N"));
@@ -370,7 +377,12 @@ export default class LoginApi {
             throw new Error("Login failed, no data returned.");
         }
 
-        return [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio];
+        return {
+            session: session,
+            cif: cif,
+            acntNo: acntNo,
+            subAccounts: [subAcntNormal, subAcntMargin, subAcntDerivative, subAcntFolio]
+        };
     }
 }
 
