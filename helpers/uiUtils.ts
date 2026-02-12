@@ -356,6 +356,34 @@ export class InteractionUtils {
         await locator.scrollIntoViewIfNeeded().catch(() => undefined);
         await locator.waitFor({ state: 'visible', timeout });
     }
+
+    static async isElementDisplayed(
+        locator: Locator,
+        timeout = InteractionUtils.DEFAULT_TIMEOUT
+    ): Promise<boolean> {
+        try {
+            if (timeout > 0) {
+                await locator.waitFor({ state: 'visible', timeout });
+            }
+            return await locator.isVisible();
+        } catch {
+            return false;
+        }
+    }
+
+    static async isElementNotDisplayed(
+        locator: Locator,
+        timeout = InteractionUtils.DEFAULT_TIMEOUT
+    ): Promise<boolean> {
+        try {
+            if (timeout > 0) {
+                await locator.waitFor({ state: 'hidden', timeout });
+            }
+            return !await locator.isVisible();
+        } catch {
+            return false;
+        }
+    }
 }
 
 /**

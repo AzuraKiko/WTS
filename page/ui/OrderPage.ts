@@ -4,7 +4,7 @@ import { getRandomStockCode } from '../../tests/utils/testConfig';
 import MatrixPage from './MatrixPage';
 import OrderBook from './OrderBook';
 import PortfolioPage from './PortfolioPage';
-import { FormUtils, TableUtils, CommonSelectors } from '../../helpers/uiUtils';
+import { FormUtils, TableUtils, CommonSelectors, InteractionUtils } from '../../helpers/uiUtils';
 
 // Interface definitions for better type safety
 interface OrderFormData {
@@ -992,9 +992,8 @@ class OrderPage extends BasePage {
     }
 
     async getStockCodeInDayRowData(rowIndex: number): Promise<any> {
-        await this.orderIndayTab.waitFor({ state: 'visible' });
         const rows = await this.page.locator('.asset-panel .table.table-fix tbody tr').nth(rowIndex);
-        if (await rows.isVisible()) {
+        if (await InteractionUtils.isElementDisplayed(rows)) {
             return await rows.locator('td:nth-child(1)').textContent();
         }
         return '';
