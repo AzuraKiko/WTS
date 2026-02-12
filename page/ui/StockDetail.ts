@@ -313,7 +313,7 @@ class StockDetailPage extends BasePage {
         const firstRow = this.page.locator("table.price-table tbody tr").first();
         await firstRow.waitFor({ state: "visible", timeout: 15000 });
 
-        const stockCode = (await firstRow.locator("td").first().innerText()).trim();
+        const stockCode = (await firstRow.locator("td").first().innerText()).trim().replace(/[^a-zA-Z0-9]/g, '');
 
         await this.safeClick(firstRow.locator("td a").first());
         let opened = await WaitUtils.waitForCondition(

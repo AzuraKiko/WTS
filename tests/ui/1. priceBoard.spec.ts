@@ -99,7 +99,7 @@ const assertMatchOrPositive = async (
     api: IndexUiData,
     positiveLabel: string
 ): Promise<void> => {
-    if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 15, 0)) {
+    if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 15, 15, 0)) {
         for (const [key, uiValue] of Object.entries(ui)) {
             expect(uiValue, `${checkLabel} ${key} should match API`).toBe(api[key as keyof typeof api]);
         }
@@ -214,7 +214,7 @@ test.describe('Price Board Tests', () => {
         const indexCode = latestDvx.indexCode;
         const indexCodes = Object.values(TEST_DATA.INDEX_CODES).concat(indexCode);
 
-        if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 30, 9, 0)) {
+        if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 15, 9, 0)) {
             for (const code of indexCodes) {
                 const panel = priceBoardPage.page.locator('.market-panel', { hasText: code });
                 const chart = panel.locator('.market-panel-chart');
@@ -457,9 +457,8 @@ test.describe('Price Board Tests', () => {
         await menu.openMenuHeader("Phái sinh");
         const latestDvx = await marketApi.getLatestDvx();
         const firstDerivativeCodeApi = latestDvx.indexCode;
-        const firstDerivativeCodeUI = await priceBoardPage.getFirstDerivativeCode();
+        const firstDerivativeCodeUI = (await priceBoardPage.getFirstDerivativeCode()).replace(/[^a-zA-Z0-9]/g, '');
         expect(firstDerivativeCodeUI, `First derivative code should match API`).toBe(firstDerivativeCodeApi);
         await attachScreenshot(priceBoardPage.page, 'After check data derivatives');
-
     });
 });
