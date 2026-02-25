@@ -57,6 +57,7 @@ test.describe('Transfer Cash Tests', () => {
             acntNo,
             availableSubAccounts,
         });
+        console.log('maxWithdrawableSubAccount', maxWithdrawableSubAccount);
     };
 
     test.beforeEach(async ({ page }) => {
@@ -322,6 +323,8 @@ test.describe('Transfer Cash Tests', () => {
             assetPage.getValueByText('Số tiền có thể rút'),
             maxWithdrawableSubAccount.wdrawAvail,
         ]);
+
+
         console.log('wdrawAvailUI', wdrawAvailUI);
         console.log('wdrawAvailAPI', wdrawAvailAPI);
         expect(NumberValidator.parseNumber(wdrawAvailUI)).toBe(wdrawAvailAPI);
@@ -332,6 +335,12 @@ test.describe('Transfer Cash Tests', () => {
             test.skip(true, 'Không có tiểu khoản có tiền để rút');
         }
 
+        const nameOwnerBank = await assetPage.getValueByText('Chủ tài khoản');
+
+        if (nameOwnerBank === null || nameOwnerBank === '') {
+            console.log('Chưa kết nối tài khoản ngân hàng');
+            test.skip(true, 'Chưa kết nối tài khoản ngân hàng');
+        }
         // Check withdrawal money
         const amount = 2000;
 

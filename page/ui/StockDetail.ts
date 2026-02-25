@@ -239,7 +239,7 @@ class StockDetailPage extends BasePage {
         // Price info using helper
         const priceInfo = this.createPriceLocators(this.derivativeHeader, ".market__index-prices");
         this.derivativeCeilingPrice = priceInfo.ceilingPrice;
-        this.derivativeReferencePrice = priceInfo.referencePrice;
+        this.derivativeReferencePrice = this.derivativeHeader.locator(".market__index-prices span.r").last();
         this.derivativeFloorPrice = priceInfo.floorPrice;
 
         this.derivativeSymbolStatic = this.derivativeHeader.locator(".market__index-statistic");

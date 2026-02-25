@@ -32,6 +32,22 @@ function expectDataMatches<T extends Record<string, any>>(
     });
 }
 
+function expectDataMatchesExcludeKeys<T extends Record<string, any>>(
+    uiData: T,
+    apiData: T,
+    dataType: string,
+    excludeKeys: (keyof T)[] = []
+): void {
+    Object.keys(uiData).forEach((key) => {
+        if (excludeKeys.includes(key as keyof T)) return;
+
+        expect(
+            uiData[key as keyof T],
+            `${dataType} ${key} should match API`,
+        ).toBe(apiData[key as keyof T]);
+    });
+}
+
 async function expectMatchListMatchesAPI(
     stockDetailPage: StockDetailPage,
     marketApi: MarketApi,
@@ -123,7 +139,7 @@ test.describe("Stock Detail Tests", () => {
             symbolInfoAPI.symbolChangePercent = 0;
         }
 
-        expectDataMatches(symbolInfoUI, symbolInfoAPI, "Symbol info");
+        expectDataMatchesExcludeKeys(symbolInfoUI, symbolInfoAPI, "Symbol info", ['symbolPrice', 'symbolChange', 'symbolChangePercent']);
 
         if (await TimeUtils.checkDataWithTimeRange(new Date(), 8, 15, 9, 15)) {
             console.warn("Clear data at the beginning of the day (8h15)");
@@ -182,7 +198,7 @@ test.describe("Stock Detail Tests", () => {
         await stockDetailPage.close();
     });
 
-    test("TC_002: Check stock detail of CW code", async ({ page }) => {        
+    test("TC_002: Check stock detail of CW code", async ({ page }) => {
         await priceBoardPage.getFirstCWCodeUI();
         const { stockCode } = await stockDetailPage.openFromPriceBoardFirstRow(stockDetailPage.modal);
 

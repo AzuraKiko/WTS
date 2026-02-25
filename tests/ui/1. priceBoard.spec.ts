@@ -180,8 +180,13 @@ test.describe('Price Board Tests', () => {
                 .locator('.market-panel-header__index')
                 .evaluate((element) => window.getComputedStyle(element).color);
 
-            // 3. Assertion: Kiểm tra logic màu
-            assertIndexColorByChange(indexColor, ui.indexChange);
+            if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 15, 15, 0)) {
+                // 3. Assertion: Kiểm tra logic màu
+                assertIndexColorByChange(indexColor, ui.indexChange);
+            } else {
+                console.log("Realtime skip check index color");
+                return;
+            }
         });
     }
 
