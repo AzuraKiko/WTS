@@ -280,8 +280,19 @@ test.describe('Price Board Tests', () => {
             };
 
         });
-
-
+        if (await TimeUtils.checkDataWithExcludeTimeRange(new Date(), 8, 15, 15, 0)) {
+            assertMatchedOrPositive(
+                matched,
+                ui,
+                api,
+                `Overview data`,
+                ui.totalValue,
+                `Overview data total value should be greater than 0`
+            );
+        } else {
+            console.log("Realtime skip check overview data");
+            return;
+        }
     });
 
     test('TC_006: Check global data', async () => {

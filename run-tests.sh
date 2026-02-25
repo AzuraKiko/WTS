@@ -8,7 +8,8 @@ ENV_NAME="${NODE_ENV:-}"
 PROJECT_NAME=""
 GREP_PATTERN=""
 WORKERS=""
-REPORTER="html"
+# REPORTER="html"
+REPORTER="allure-playwright"
 OPEN_REPORT="true"
 REPEAT_EACH=""
 REPEAT_RUNS=""
@@ -36,9 +37,10 @@ Options:
   -w, --workers <n>          Override số workers
   -n, --repeat-each <n>      Chạy mỗi test N lần liên tiếp (kiểm tra độ ổn định)
   -n, --repeat-runs <n>      Chạy cả suite N lần liên tiếp (kiểm tra độ ổn định)
-  -s, --suite <api|ui>       Chạy theo suite tests/api hoặc tests/ui
-      --api                  Chạy tests/api
-      --ui-tests             Chạy tests/ui
+  -s, --suite <api|ui|ui-simple>  Chạy theo suite tests/api, tests/ui hoặc tests/uiSimple
+      --api                       Chạy tests/api
+      --ui-tests                  Chạy tests/ui
+      --ui-simple-tests           Chạy tests/uiSimple
   -r, --reporter <name>      html | allure | <custom>
       --open-report          Mở báo cáo sau khi chạy (html/allure)
       --no-ocr               Không khởi động OCR service
@@ -54,6 +56,7 @@ Examples:
   ./run-tests.sh tests/api/login.spec.ts tests/ui/1.\ priceBoard.spec.ts
   ./run-tests.sh --api
   ./run-tests.sh --ui-tests
+  ./run-tests.sh --ui-simple-tests
   ./run-tests.sh -r allure --open-report
   ./run-tests.sh --api
   ./run-tests.sh --ui-tests
@@ -121,6 +124,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --ui-tests)
       SUITE_NAME="ui"
+      shift
+      ;;
+    --ui-simple-tests)
+      SUITE_NAME="ui-simple"
       shift
       ;;
     -r|--reporter)
@@ -247,6 +254,8 @@ if [[ "$SUITE_NAME" == "api" ]]; then
   TEST_PATHS+=("tests/api")
 elif [[ "$SUITE_NAME" == "ui" ]]; then
   TEST_PATHS+=("tests/ui")
+elif [[ "$SUITE_NAME" == "ui-simple" ]]; then
+  TEST_PATHS+=("tests/uiSimple")
 fi
 
 if [[ ${#TEST_PATHS[@]} -gt 0 ]]; then

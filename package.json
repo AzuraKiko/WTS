@@ -15,6 +15,7 @@
     "test:dev:chrome": "cross-env NODE_ENV=dev npx playwright test --config=playwright.config.ts --project=Chrome",
     "test:uat:chrome": "cross-env NODE_ENV=uat npx playwright test --config=playwright.config.ts --project=Chrome",
     "test:prod:chrome": "cross-env NODE_ENV=prod npx playwright test --config=playwright.config.ts --project=Chrome",
+    "test:dev:uiSimple": "cross-env NODE_ENV=dev ./run-tests.sh --ui-simple-tests",
     "ocr:build": "tsc -p ocr-service/tsconfig.json",
     "ocr:start": "node ocr-service/dist/server.js"
   },
