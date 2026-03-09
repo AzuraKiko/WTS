@@ -503,8 +503,19 @@ class OrderPage extends BasePage {
      */
     async submitOrder(): Promise<void> {
         try {
-            await this.safeClick(this.placeOrderButton);
-            await this.safeClick(this.confirmOrderButton);
+            // await this.safeClick(this.placeOrderButton);
+            // await this.safeClick(this.confirmOrderButton);
+            this.placeOrderButton.dblclick();
+            this.confirmOrderButton.dblclick();
+
+            // for (let i = 0; i < 3; i++) {
+            //     this.placeOrderButton.click();
+            // }
+
+            // for (let i = 0; i < 3; i++) {
+            //     this.confirmOrderButton.click();
+            // }
+
         } catch (error) {
             throw new Error(`Failed to submit order: ${error}`);
         }

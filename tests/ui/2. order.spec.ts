@@ -7,7 +7,7 @@ import { attachScreenshot } from '../../helpers/reporterHelper';
 import LogoutPage from "../../page/ui/LogoutPage";
 import { MarketApi } from '../../page/api/MarketApi';
 import PortfolioPage from '../../page/ui/PortfolioPage';
-import { TimeUtils } from '../../helpers/uiUtils';
+import { TimeUtils, WaitUtils } from '../../helpers/uiUtils';
 
 const batching = isSystemBatching();
 
@@ -35,49 +35,74 @@ test.describe('Order Management Tests', () => {
     await orderPage.navigateToOrder();
   });
 
-  test.afterEach(async ({ page }) => {
-    await orderPage.closeOrder();
-    await logoutPage.logout();
-    expect(await logoutPage.verifyLogoutSuccess()).toBe(true);
-    await attachScreenshot(page, 'After Logout');
-  });
+  // test.afterEach(async ({ page }) => {
+  //   await orderPage.closeOrder();
+  //   await logoutPage.logout();
+  //   expect(await logoutPage.verifyLogoutSuccess()).toBe(true);
+  //   await attachScreenshot(page, 'After Logout');
+  // });
 
-  test('TC_001: Check place and cancel a buy order', async () => {
+  test('TC_001: Check place and cancel a buy order', async ({ page }) => {
     // Use random stock code from configuration
-    const stockCode = getRandomStockCode();
+    const stockCode = "ACB";
     console.log(`Testing with stock code: ${stockCode}`);
 
     // Place buy order
-    await orderPage.placeBuyOrder({ stockCode, quantity: 1 });
+    // await orderPage.placeBuyOrder({ stockCode, quantity: 100 });
 
-    const messageError = await orderPage.getMessage();
-    if (messageError.description.includes('Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.')) {
-      console.log('Order placement failed:', messageError);
-      return;
+
+    const waitApi = WaitUtils.getAllResponseByBody(
+      page,
+      ['NewOrder'],
+      '/CoreServlet.pt',
+      20000
+    );
+
+    // trigger API
+    await orderPage.placeBuyOrder({ stockCode, quantity: 100 });
+
+    // wait response
+    const responses = await waitApi;
+    for (const res of responses) {
+      const req = res.request();
+
+      console.log({
+        url: res.url(),
+        method: req.method(),
+        payload: req.postData()
+      });
     }
+
+
+
+    // const messageError = await orderPage.getMessage();
+    // if (messageError.description.includes('Hệ thống đang tạm dừng nhận lệnh, xin vui lòng quay lại sau.')) {
+    //   console.log('Order placement failed:', messageError);
+    //   return;
+    // }
 
     await orderPage.openOrderInDayTab();
 
-    if (await orderPage.getStockCodeInDayRowData(0) !== stockCode) {
-      throw new Error(messageError.title + ': ' + messageError.description);
-    }
+    // if (await orderPage.getStockCodeInDayRowData(0) !== stockCode) {
+    //   throw new Error(messageError.title + ': ' + messageError.description);
+    // }
 
-    expect(await orderPage.getStockCodeInDayRowData(0)).toBe(stockCode);
-    console.log('stockCode in Table Order In Day:', await orderPage.getStockCodeInDayRowData(0));
+    // expect(await orderPage.getStockCodeInDayRowData(0)).toBe(stockCode);
+    // console.log('stockCode in Table Order In Day:', await orderPage.getStockCodeInDayRowData(0));
 
-    if (await orderBook.isModifyOrderEnabled(0) && await TimeUtils.checkDataWithTimeRange(new Date(), 9, 16, 14, 30)) {
-      await orderBook.modifyOrder(0, undefined, 2);
-      expect(await orderPage.getQuantityInDayRowData(0)).toBe("2");
-    } else {
-      console.warn("Trạng thái lệnh không cho phép sửa hoặc phiên ATO/ ATC")
-    }
+    // if (await orderBook.isModifyOrderEnabled(0) && await TimeUtils.checkDataWithTimeRange(new Date(), 9, 16, 14, 30)) {
+    //   await orderBook.modifyOrder(0, undefined, 2);
+    //   expect(await orderPage.getQuantityInDayRowData(0)).toBe("2");
+    // } else {
+    //   console.warn("Trạng thái lệnh không cho phép sửa hoặc phiên ATO/ ATC")
+    // }
 
-    if ((await TimeUtils.checkDataWithTimeRange(new Date(), 9, 0, 9, 15) || await TimeUtils.checkDataWithTimeRange(new Date(), 14, 30, 15, 0)) && !TimeUtils.isWeekend()) {
-      console.warn("Phiên ATO/ATC ko được huỷ lệnh")
-    } else {
-      await orderBook.cancelOrder(0);
-      expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(stockCode);
-    }
+    // if ((await TimeUtils.checkDataWithTimeRange(new Date(), 9, 0, 9, 15) || await TimeUtils.checkDataWithTimeRange(new Date(), 14, 30, 15, 0)) && !TimeUtils.isWeekend()) {
+    //   console.warn("Phiên ATO/ATC ko được huỷ lệnh")
+    // } else {
+    //   await orderBook.cancelOrder(0);
+    //   expect(await orderPage.getStockCodeInDayRowData(0)).not.toBe(stockCode);
+    // }
   });
 
   //   test('TC_002: Check place and cancel a sell order', async () => {

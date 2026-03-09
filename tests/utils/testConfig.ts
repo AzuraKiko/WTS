@@ -21,8 +21,8 @@ export interface ENVConfig {
  * Centralizes environment variable handling across all tests
  */
 export const getEnvironment = () => {
-    let env = process.env.NODE_ENV?.toUpperCase() || 'PROD';
-    if (env === 'PRODUCTION') env = 'PROD';
+    let env = process.env.NODE_ENV?.toUpperCase() || 'UAT';
+    if (env === 'PRODUCTION') env = 'UAT';
     return env;
 };
 

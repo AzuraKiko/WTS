@@ -339,6 +339,88 @@ export class WaitUtils {
         return latestResponse;
     }
 
+    static async getAllResponseByBodyTrigger(
+        page: Page,
+        trigger: () => Promise<void>,
+        keys: string[],
+        urlIncludes: string,
+        timeout = 5000,
+    ): Promise<Response[]> {
+
+        const allResponses: Response[] = [];
+
+        const handler = async (response: Response) => {
+            try {
+                if (!response.url().includes(urlIncludes)) return;
+                if (response.status() !== 200) return;
+
+                const request = response.request();
+                const postData = request.postData();
+
+                if (!postData) return;
+
+                if (!keys.every(key => postData.includes(key))) return;
+
+                allResponses.push(response);
+
+            } catch {
+                console.log('No response captured by body', keys, urlIncludes);
+            }
+        };
+
+        page.on('response', handler);
+
+        try {
+            await trigger();
+
+            // chờ API settle
+            await page.waitForTimeout(timeout);
+
+        } finally {
+            page.off('response', handler);
+        }
+
+        return allResponses;
+    }
+
+    static async getAllResponseByBody(
+        page: Page,
+        keys: string[],
+        urlIncludes: string,
+        timeout = 5000
+    ): Promise<Response[]> {
+
+        const allResponses: Response[] = [];
+
+        const handler = async (response: Response) => {
+            try {
+                if (!response.url().includes(urlIncludes)) return;
+                if (response.status() !== 200) return;
+
+                const request = response.request();
+                const postData = request.postData();
+                if (!postData) return;
+
+                if (!keys.every(key => postData.includes(key))) return;
+
+                allResponses.push(response);
+
+            } catch (e) {
+                console.log('No response captured by body', keys, urlIncludes);
+            }
+        };
+
+        page.on('response', handler);
+
+        try {
+            await page.waitForTimeout(timeout);
+        } finally {
+            page.off('response', handler);
+        }
+
+        return allResponses;
+    }
+
 }
 
 /**

@@ -36,9 +36,9 @@ export default defineConfig({
             name: 'Chrome',
             use: {
                 browserName: 'chromium',
-                headless: true, //false nghĩa là trình duyệt sẽ hiển thị UI (có thể nhìn thấy), true sẽ chạy ẩn
-                // viewport: null, //null nghĩa là sử dụng kích thước cửa sổ trình duyệt mặc định thay vì kích thước cố định
-                viewport: { width: 1920, height: 1080 },
+                headless: false, //false nghĩa là trình duyệt sẽ hiển thị UI (có thể nhìn thấy), true sẽ chạy ẩn
+                viewport: null, //null nghĩa là sử dụng kích thước cửa sổ trình duyệt mặc định thay vì kích thước cố định
+                // viewport: { width: 1920, height: 1080 },
                 launchOptions: {
                     slowMo: 100, //Làm chậm tất cả các thao tác của Playwright (tính bằng mili giây) để dễ theo dõi. Ở đây là 100ms.
                     args: ['--start-maximized']
